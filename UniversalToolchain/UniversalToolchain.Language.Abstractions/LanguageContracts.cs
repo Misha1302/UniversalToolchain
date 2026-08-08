@@ -67,6 +67,39 @@ public sealed class LanguageDefinition
         IReadOnlyDictionary<LanguageCapabilityId, LanguageContributionId>? capabilityProviders = null,
         IEnumerable<LanguageContributionId>? excludedContributions = null,
         LanguageArtifactContract? entryArtifact = null)
+        : this(
+            id,
+            version,
+            toolchainApiVersion,
+            selectedFeatures,
+            backends,
+            runtimeProvider,
+            runtimePolicy,
+            metadata,
+            slotOverrides,
+            capabilityProviders,
+            excludedContributions,
+            entryArtifact,
+            [],
+            [])
+    {
+    }
+
+    public LanguageDefinition(
+        LanguageId id,
+        LanguageVersion version,
+        ToolchainApiVersion toolchainApiVersion,
+        IEnumerable<LanguageFeatureId> selectedFeatures,
+        IEnumerable<BackendId> backends,
+        LanguageRuntimeProviderReference? runtimeProvider,
+        LanguageRuntimePolicy? runtimePolicy,
+        IReadOnlyDictionary<string, string>? metadata,
+        IEnumerable<LanguageSlotOverride>? slotOverrides,
+        IReadOnlyDictionary<LanguageCapabilityId, LanguageContributionId>? capabilityProviders,
+        IEnumerable<LanguageContributionId>? excludedContributions,
+        LanguageArtifactContract? entryArtifact,
+        IEnumerable<LanguageContributionOrderConstraint>? contributionOrderConstraints,
+        IEnumerable<LanguageIntrinsicPolicyDirective>? intrinsicPolicy)
     {
         Id = id;
         Version = version;
@@ -80,6 +113,8 @@ public sealed class LanguageDefinition
         CapabilityProviders = SnapshotDictionary(capabilityProviders);
         ExcludedContributions = SnapshotDistinct(excludedContributions ?? [], nameof(excludedContributions));
         EntryArtifact = entryArtifact ?? StandardLanguageArtifactKinds.SourceText.Contract;
+        ContributionOrderConstraints = SnapshotOrderConstraints(contributionOrderConstraints);
+        IntrinsicPolicy = SnapshotIntrinsicPolicy(intrinsicPolicy);
 
         if (SelectedFeatures.Count == 0 && Backends.Count == 0)
             throw new ArgumentException(
@@ -88,7 +123,6 @@ public sealed class LanguageDefinition
         if (Backends.Count == 0 && RuntimeProvider != null)
             throw new ArgumentException("A runtime provider cannot be selected for a planning-only language definition.", nameof(runtimeProvider));
     }
-
 
     public LanguageId Id { get; }
     public LanguageVersion Version { get; }
@@ -102,6 +136,8 @@ public sealed class LanguageDefinition
     public IReadOnlyDictionary<LanguageCapabilityId, LanguageContributionId> CapabilityProviders { get; }
     public IReadOnlyList<LanguageContributionId> ExcludedContributions { get; }
     public LanguageArtifactContract EntryArtifact { get; }
+    public IReadOnlyList<LanguageContributionOrderConstraint> ContributionOrderConstraints { get; }
+    public IReadOnlyList<LanguageIntrinsicPolicyDirective> IntrinsicPolicy { get; }
     public bool IsExecutable => Backends.Count != 0;
 
     private static IReadOnlyList<T> SnapshotDistinct<T>(IEnumerable<T> values, string paramName)
@@ -136,6 +172,41 @@ public sealed class LanguageDefinition
         if (result.Select(static x => x.Slot).Distinct().Count() != result.Length)
             throw new ArgumentException("Only one explicit override may be declared per language slot.", nameof(values));
         return new ReadOnlyCollection<LanguageSlotOverride>(result);
+    }
+
+    private static IReadOnlyList<LanguageContributionOrderConstraint> SnapshotOrderConstraints(
+        IEnumerable<LanguageContributionOrderConstraint>? values)
+    {
+        var result = (values ?? [])
+            .Distinct()
+            .OrderBy(static x => x.Source.Value, StringComparer.Ordinal)
+            .ThenBy(static x => x.Target.Value, StringComparer.Ordinal)
+            .ThenBy(static x => x.Kind)
+            .ToArray();
+        return new ReadOnlyCollection<LanguageContributionOrderConstraint>(result);
+    }
+
+    private static IReadOnlyList<LanguageIntrinsicPolicyDirective> SnapshotIntrinsicPolicy(
+        IEnumerable<LanguageIntrinsicPolicyDirective>? values)
+    {
+        var map = new Dictionary<(LanguageIntrinsicId Intrinsic, BackendId? Backend), bool>();
+        foreach (var directive in values ?? [])
+        {
+            var key = (directive.Intrinsic, directive.Backend);
+            if (map.TryGetValue(key, out var existing) && existing != directive.Allowed)
+            {
+                throw new ArgumentException(
+                    $"Intrinsic policy for '{directive.Intrinsic.Value}' has contradictory values for backend '{directive.Backend?.Value ?? "*"}'.",
+                    nameof(values));
+            }
+            map[key] = directive.Allowed;
+        }
+
+        return new ReadOnlyCollection<LanguageIntrinsicPolicyDirective>(map
+            .OrderBy(static pair => pair.Key.Intrinsic.Value, StringComparer.Ordinal)
+            .ThenBy(static pair => pair.Key.Backend?.Value ?? string.Empty, StringComparer.Ordinal)
+            .Select(static pair => new LanguageIntrinsicPolicyDirective(pair.Key.Intrinsic, pair.Value, pair.Key.Backend))
+            .ToArray());
     }
 }
 
