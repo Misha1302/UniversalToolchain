@@ -1,4 +1,3 @@
-using NumbersModule.Core;
 using UniversalToolchain.Wist;
 
 namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
@@ -13,7 +12,7 @@ public class ParametersSetterModulePipelineTests
     {
         using var h = new ModulePipelineTestHelper();
         using var engine = CreateEngine(h);
-        var value = engine.Evaluate<object?>("arg1", new Dictionary<string, object?> { ["arg1"] = 7 });
+        var value = engine.Evaluate<object?>("arg1", new Dictionary<string, object?> { ["arg1"] = 7.0 });
         Assert.That(ModulePipelineTestHelper.AsNumber(value), Is.EqualTo(7));
     }
 
@@ -24,8 +23,8 @@ public class ParametersSetterModulePipelineTests
         using var engine = CreateEngine(h);
         var value = engine.Evaluate<object?>("a + b", new Dictionary<string, object?>
         {
-            ["a"] = new RealNumberImpl(2),
-            ["b"] = new RealNumberImpl(3)
+            ["a"] = 2.0,
+            ["b"] = 3.0
         });
         Assert.That(ModulePipelineTestHelper.AsNumber(value), Is.EqualTo(5));
     }
@@ -53,7 +52,7 @@ public class ParametersSetterModulePipelineTests
     {
         using var h = new ModulePipelineTestHelper();
         using var engine = CreateEngine(h);
-        var first = engine.Evaluate<object?>("a", new Dictionary<string, object?> { ["a"] = new RealNumberImpl(2) });
+        var first = engine.Evaluate<object?>("a", new Dictionary<string, object?> { ["a"] = 2.0 });
         var ex = Assert.Catch(() => engine.Evaluate<object?>("a", new Dictionary<string, object?>()));
         Assert.That(ModulePipelineTestHelper.AsNumber(first), Is.EqualTo(2));
         Assert.That(ex, Is.Not.Null);
