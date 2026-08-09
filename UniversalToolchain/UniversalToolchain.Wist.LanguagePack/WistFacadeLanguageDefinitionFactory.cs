@@ -61,6 +61,12 @@ internal static class WistFacadeLanguageDefinitionFactory
         var selectedFeatures = new List<LanguageFeatureId>();
         var selectedAliases = new HashSet<string>(StringComparer.Ordinal);
         var excludedAliases = ExpandModuleAliases(slice.ExcludeModules, groups).ToHashSet(StringComparer.Ordinal);
+        var excludedContributions = excludedAliases
+            .Select(alias => WistRuntimeComponentCatalog
+                .GetRequiredAlias(alias, WistRuntimeComponentKind.Module)
+                .ContributionId)
+            .Distinct()
+            .ToArray();
 
         foreach (var alias in ExpandModuleAliases(slice.UseModules, groups))
         {
@@ -71,8 +77,6 @@ internal static class WistFacadeLanguageDefinitionFactory
             if (selectedAliases.Add(alias))
                 selectedFeatures.Add(component.FeatureId);
         }
-        foreach (var alias in excludedAliases)
-            _ = WistRuntimeComponentCatalog.GetRequiredAlias(alias, WistRuntimeComponentKind.Module);
 
         foreach (var optimizer in slice.OptimizerDirectives)
         {
@@ -171,7 +175,7 @@ internal static class WistFacadeLanguageDefinitionFactory
             },
             null,
             null,
-            null,
+            excludedContributions,
             StandardLanguageArtifactKinds.SourceText.Contract,
             orderConstraints,
             intrinsicPolicy);
