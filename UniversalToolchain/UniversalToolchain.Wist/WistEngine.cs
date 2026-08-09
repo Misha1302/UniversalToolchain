@@ -2,6 +2,7 @@ using ExceptionsManager;
 using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
 using UniversalToolchain.LanguageSdk;
+using UniversalToolchain.ModuleContracts;
 using UniversalToolchain.Runtime;
 using UniversalToolchain.Wist.LanguagePack;
 
@@ -80,7 +81,9 @@ public sealed class WistEngine : IDisposable
         var runtime = LanguageRuntime.Create(
             plan,
             new ILanguageRouteComponentSource[] { package },
-            new LanguageRuntimeOptions(runtimeAssemblies));
+            WistModuleContractRouteObserver.CreateRuntimeOptions(
+                runtimeAssemblies,
+                CreateModuleContractOptions(optionsSnapshot.VerificationPolicy)));
 
         try
         {
@@ -319,6 +322,24 @@ public sealed class WistEngine : IDisposable
                         new WistSsaTraceEntry(entry.Stage, entry.Message, entry.InstructionCount))
                     : []));
     }
+
+    private static ModuleContractVerificationOptions CreateModuleContractOptions(WistVerificationPolicy policy) =>
+        new ModuleContractVerificationOptions
+        {
+            Mode = ModuleContractVerificationMode.Strict,
+            PipelineOptions = ModuleContractPipelineProfiles.StrictEnforced with
+            {
+                VerificationPolicy = policy switch
+                {
+                    WistVerificationPolicy.P0Structural => ModuleContractVerificationPolicy.P0Structural,
+                    WistVerificationPolicy.P1Invalidation => ModuleContractVerificationPolicy.P1Invalidation,
+                    WistVerificationPolicy.P2Selective => ModuleContractVerificationPolicy.P2Selective,
+                    WistVerificationPolicy.P3Always => ModuleContractVerificationPolicy.P3Always,
+                    _ => throw new ArgumentOutOfRangeException(nameof(policy), policy, "Unknown Wist verification policy.")
+                }
+            },
+            DiagnosticSink = new InMemoryModuleContractDiagnosticSink()
+        }.SnapshotValidated();
 
     private static WistVerificationPolicy RequireVerificationPolicy(WistVerificationPolicy policy) =>
         Enum.IsDefined(policy)

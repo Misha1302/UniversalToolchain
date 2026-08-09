@@ -5,3 +5,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Wistc")]
 [assembly: InternalsVisibleTo("Tests")]
 [assembly: InternalsVisibleTo("UniversalToolchain.Testing.Infrastructure")]
+[assembly: InternalsVisibleTo("UniversalToolchain.EndToEndExperiments")]

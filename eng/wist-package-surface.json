@@ -42,6 +42,7 @@
     "ScopesModule.dll",
     "SemicolonAsNewLineModule.dll",
     "SettableGettableModule.dll",
+    "System.Reflection.MetadataLoadContext.dll",
     "UniversalIntermediateRepresentation.dll",
     "UniversalToolchain.Air.Analysis.dll",
     "UniversalToolchain.Capabilities.Abstractions.dll",
@@ -52,7 +53,6 @@
     "UniversalToolchain.Dialects.Frontend.dll",
     "UniversalToolchain.Dialects.Integration.dll",
     "UniversalToolchain.Dialects.Parsing.dll",
-    "UniversalToolchain.Dialects.Wist.dll",
     "UniversalToolchain.ExpressionTyping.Abstractions.dll",
     "UniversalToolchain.FeatureSdk.dll",
     "UniversalToolchain.Functions.Abstractions.dll",
@@ -90,7 +90,6 @@
     "SafeMathFunctionsModule.dialect.runtime.json",
     "ScopesModule.dialect.runtime.json",
     "SemicolonAsNewLineModule.dialect.runtime.json",
-    "UniversalToolchain.Dialects.Wist.dialect.runtime.json",
     "UniversalToolchain.Ssa.Optimization.dialect.runtime.json",
     "VariablesModule.dialect.runtime.json",
     "WhitespacesModule.dialect.runtime.json"
@@ -128,7 +127,6 @@
     "SafeMathFunctionsModule.dialect.runtime.json": "d397980c444035bc8dc6a0a40e06888315ca09f75505ac1f6a04ff91eb924047",
     "ScopesModule.dialect.runtime.json": "8f26334e1e795919e87b5640ea1bbc61df90b05aa7c035f1a660e1a9bfed8cda",
     "SemicolonAsNewLineModule.dialect.runtime.json": "79b2543df8bcef92e39445d71d964a2c101a0692930c4eed92131bae66159fa0",
-    "UniversalToolchain.Dialects.Wist.dialect.runtime.json": "8d0420d4ee22e95023d5b7f93f27545958ea68352cdc6dbced9e01837bf1f7d8",
     "UniversalToolchain.Ssa.Optimization.dialect.runtime.json": "c24a2930450df34dce63ba16615a89bd1fb108cff1a20d7e9656812b1ebda8f0",
     "VariablesModule.dialect.runtime.json": "8d63c31a99b39ed2364bd4959558f9323c142804f0c76f267075e1ce67edc8f5",
     "WhitespacesModule.dialect.runtime.json": "aeea3ac61821f85008b73289cceeccdb0b1ad64e2e3200f913e10387db33c253"

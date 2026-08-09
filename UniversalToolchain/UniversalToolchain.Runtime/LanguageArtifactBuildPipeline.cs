@@ -51,8 +51,9 @@ internal sealed class LanguageArtifactBuildPipeline : ILanguageArtifactBuildSess
         var buildContext = new LanguageArtifactBuildContext(_plan, request, _options, executionRequest);
         LanguageArtifact current = request.Input;
         var steps = new List<LanguageArtifactBuildStep>(route.Steps.Count);
-        foreach (var step in route.Steps)
+        for (var stepIndex = 0; stepIndex < route.Steps.Count; stepIndex++)
         {
+            var step = route.Steps[stepIndex];
             if (current.Contract != step.SourceContract)
             {
                 throw new InvalidOperationException(
@@ -69,6 +70,8 @@ internal sealed class LanguageArtifactBuildPipeline : ILanguageArtifactBuildSess
                 throw new InvalidOperationException(
                     $"Transformer '{step.ContributionId.Value}' returned '{current.Contract}', but the build route requires '{step.TargetContract}'.");
             }
+            LanguageArtifactRouteObservationDispatcher.Notify(
+                _plan, executionRequest, _options, request.Backend, route.Steps, stepIndex, step, current);
             steps.Add(new LanguageArtifactBuildStep(step.ContributionId, step.SourceContract, step.TargetContract));
         }
 
