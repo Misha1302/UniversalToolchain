@@ -27,35 +27,25 @@ public sealed class WistCanonicalConcurrencyTests
                 new[] { "cil" })
         };
         var expected = cases
-            .Select(testCase =>
-            {
-                var plan = Compile(testCase.Source, "canonical-oracle.wistdialect", testCase.Backends);
-                return new CanonicalCaseProjection(
-                    plan.Definition.SelectedFeatures.OrderBy(static x => x.Value, StringComparer.Ordinal).ToArray(),
-                    plan.Definition.Backends.Select(static x => x.Value).OrderBy(static x => x, StringComparer.Ordinal).ToArray());
-            })
+            .Select(testCase => CreateSemanticProjection(
+                Compile(testCase.Source, "canonical-oracle.wistdialect", testCase.Backends)))
             .ToArray();
 
         var results = await Task.WhenAll(Enumerable.Range(0, 48).Select(index => Task.Run(() =>
         {
             var caseIndex = index % cases.Length;
             var testCase = cases[caseIndex];
-            var plan = Compile(testCase.Source, $"parallel-{index}.wistdialect", testCase.Backends);
             return new ParallelPlanProjection(
                 caseIndex,
-                plan.Definition.SelectedFeatures.OrderBy(static x => x.Value, StringComparer.Ordinal).ToArray(),
-                plan.Definition.Backends.Select(static x => x.Value).OrderBy(static x => x, StringComparer.Ordinal).ToArray());
+                CreateSemanticProjection(
+                    Compile(testCase.Source, $"parallel-{index}.wistdialect", testCase.Backends)));
         })));
 
         foreach (var result in results)
         {
             Assert.That(
-                result.Features,
-                Is.EqualTo(expected[result.CaseIndex].Features),
-                cases[result.CaseIndex].Source);
-            Assert.That(
-                result.Backends,
-                Is.EqualTo(expected[result.CaseIndex].Backends),
+                result.Projection,
+                Is.EqualTo(expected[result.CaseIndex]),
                 cases[result.CaseIndex].Source);
         }
     }
@@ -200,16 +190,19 @@ public sealed class WistCanonicalConcurrencyTests
         }
     }
 
+    private static CanonicalCaseProjection CreateSemanticProjection(LanguagePlan plan) => new(
+        string.Join("\n", plan.Definition.SelectedFeatures.Select(static feature => feature.Value).OrderBy(static value => value, StringComparer.Ordinal)),
+        string.Join("\n", plan.Definition.Backends.Select(static backend => backend.Value).OrderBy(static value => value, StringComparer.Ordinal)));
+
     private sealed record DialectCase(
         string Source,
         IReadOnlyList<string> Backends);
 
     private sealed record CanonicalCaseProjection(
-        IReadOnlyList<LanguageFeatureId> Features,
-        IReadOnlyList<string> Backends);
+        string Features,
+        string Backends);
 
     private sealed record ParallelPlanProjection(
         int CaseIndex,
-        IReadOnlyList<LanguageFeatureId> Features,
-        IReadOnlyList<string> Backends);
+        CanonicalCaseProjection Projection);
 }
