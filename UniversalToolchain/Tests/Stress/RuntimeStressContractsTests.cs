@@ -1,5 +1,9 @@
 using Tests.Infrastructure;
-using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.FeatureSdk;
+using UniversalToolchain.Language.Abstractions;
+using UniversalToolchain.LanguageSdk;
+using UniversalToolchain.Runtime;
+using UniversalToolchain.Wist.LanguagePack;
 
 namespace Tests.Stress;
 
@@ -8,42 +12,37 @@ public class RuntimeStressContractsTests
 {
     private const int RepeatCount = 100;
     private const int ParallelCount = 50;
+    private static readonly BackendId Cil = new("cil");
+    private static readonly BackendId Interpreter = new("interpreter");
 
     [Test]
-    public void ComposeAndCreateHost_ShouldSurvive100RepeatedCycles()
+    public void PlanAndRuntime_ShouldSurvive100RepeatedCycles()
     {
-        using var provider = TestContractsInfrastructure.CreateWorkflowProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-
+        const string dialect = "dialect Repeat\nuse Arithmetic,Numbers,Variables\nbackend cil,interpreter\nsecurity restricted";
         var signatures = new List<string>(RepeatCount);
+
         for (var i = 0; i < RepeatCount; i++)
         {
-            var composition = workflow.ComposeText("dialect Repeat\nuse Arithmetic,Numbers,Variables\n\nbackend cil,interpreter", $"repeat-{i}");
-            Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
-            using var host = workflow.CreateHost(composition);
-            signatures.Add(TestContractsInfrastructure.BuildSelectionSignature(composition) + "##" + TestContractsInfrastructure.BuildHostSignature(host));
+            var (package, plan) = Compile(dialect, $"repeat-{i}");
+            using var runtime = LanguageRuntime.Create(plan, new ILanguageRouteComponentSource[] { package });
+            signatures.Add(BuildSemanticPlanSignature(plan));
         }
 
         Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1), FormatSignatureGroups(signatures));
     }
 
     [Test]
-    public async Task ComposeAndCreateHost_ShouldSurvive50ParallelCycles()
+    public async Task PlanAndRuntime_ShouldSurvive50ParallelCycles()
     {
-        using var provider = TestContractsInfrastructure.CreateWorkflowProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        const string dialect = "dialect Parallel\nuse Arithmetic,Numbers\nbackend cil,interpreter\nsecurity restricted";
 
         var signatures = await Task.WhenAll(Enumerable.Range(0, ParallelCount).Select(i => Task.Run(() =>
         {
-            var composition = workflow.ComposeText("dialect Parallel\nuse Arithmetic,Numbers\nbackend cil,interpreter", $"parallel-{i}");
-            if (!composition.IsSuccess)
-                return "compose-failed:" + FormatComposition(composition);
-
-            using var host = workflow.CreateHost(composition);
-            return TestContractsInfrastructure.BuildSelectionSignature(composition) + "##" + TestContractsInfrastructure.BuildHostSignature(host);
+            var (package, plan) = Compile(dialect, $"parallel-{i}");
+            using var runtime = LanguageRuntime.Create(plan, new ILanguageRouteComponentSource[] { package });
+            return BuildSemanticPlanSignature(plan);
         })));
 
-        Assert.That(signatures.All(static x => !x.StartsWith("compose-failed:", StringComparison.Ordinal)), Is.True, string.Join(Environment.NewLine, signatures));
         Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1), FormatSignatureGroups(signatures));
     }
 
@@ -68,68 +67,112 @@ public class RuntimeStressContractsTests
     }
 
     [Test]
-    public void RuntimeTypeLoading_ShouldRemainStable_After100Repeats()
-    {
-        using var provider = TestContractsInfrastructure.CreateWorkflowProvider();
-        var loader = provider.GetRequiredService<IRuntimeComponentTypeLoader>();
-        var catalog = provider.GetRequiredService<IRuntimeComponentCatalog>();
-
-        var entries = catalog.GetModulesInDeterministicOrder().Take(3)
-            .Concat(catalog.GetBackendsInDeterministicOrder())
-            .ToArray();
-
-        var signatures = new List<string>(RepeatCount);
-        for (var i = 0; i < RepeatCount; i++)
-            signatures.Add(string.Join("|", entries.Select(loader.LoadType).Select(static x => x.FullName)));
-
-        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1), FormatSignatureGroups(signatures));
-    }
-
-    [Test]
     public void KnownBackendResolution_ShouldRemainStable_After100Repeats()
     {
-        using var provider = TestContractsInfrastructure.CreateWorkflowProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeText("dialect Backends\nuse Arithmetic\nbackend cil,interpreter", "backends");
-        Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
-
+        const string dialect = "dialect Backends\nuse Arithmetic,Numbers\nbackend cil,interpreter\nsecurity restricted";
         var signatures = new List<string>(RepeatCount);
+
         for (var i = 0; i < RepeatCount; i++)
         {
-            using var host = workflow.CreateHost(composition);
-            signatures.Add(string.Join("|", host.Configuration.EnabledBackends.Select(static x => x.CanonicalId)));
+            var (_, plan) = Compile(dialect, $"backends-{i}");
+            signatures.Add(string.Join(
+                "|",
+                plan.Definition.Backends.Select(static backend => backend.Value).OrderBy(static value => value, StringComparer.Ordinal)));
         }
 
         Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1), FormatSignatureGroups(signatures));
+        Assert.That(signatures[0], Is.EqualTo("cil|interpreter"));
     }
 
     [Test]
     public async Task CanonicalWistRuntimeFlow_ShouldRemainStable_UnderMixedLoad()
     {
-        using var provider = TestContractsInfrastructure.CreateWorkflowProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-
         var tasks = Enumerable.Range(0, ParallelCount).Select(i => Task.Run(() =>
         {
             var dialectText = i % 2 == 0
-                ? "dialect M1\nuse Arithmetic,Numbers\nbackend cil,interpreter"
-                : "dialect M2\nuse Arithmetic,Identifier,Numbers,Scopes,Variables\n\nbackend cil,interpreter";
-
-            var composition = workflow.ComposeText(dialectText, $"mixed-{i}");
-            if (!composition.IsSuccess)
-                return "compose-failed:" + FormatComposition(composition);
-
-            using var host = workflow.CreateHost(composition);
-            var runResult = host.Run("1+2", i % 2 == 0 ? "interpreter" : "cil");
-            return TestContractsInfrastructure.BuildSelectionSignature(composition) + "##" + TestContractsInfrastructure.BuildHostSignature(host) + "##" + (runResult?.ToString() ?? "<null>");
+                ? "dialect M1\nuse Arithmetic,Numbers\nbackend cil,interpreter\nsecurity restricted"
+                : "dialect M2\nuse Arithmetic,Identifier,Numbers,Scopes,Variables\nbackend cil,interpreter\nsecurity restricted";
+            var (package, plan) = Compile(dialectText, $"mixed-{i}");
+            using var runtime = LanguageRuntime.Create(plan, new ILanguageRouteComponentSource[] { package });
+            var backend = i % 2 == 0 ? Interpreter : Cil;
+            var value = runtime.Run(new LanguageExecutionRequest("1+2", backend)).Value;
+            var normalized = WistRuntimeValueAdapterActivation.Normalize(plan, value);
+            return BuildSemanticPlanSignature(plan) + "##" + (normalized?.ToString() ?? "<null>");
         }));
 
         var signatures = await Task.WhenAll(tasks);
-        Assert.That(signatures.All(static x => !x.StartsWith("compose-failed:", StringComparison.Ordinal)), Is.True, string.Join(Environment.NewLine, signatures));
         Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(2), FormatSignatureGroups(signatures));
+        Assert.That(signatures.All(static signature => signature.EndsWith("##3", StringComparison.Ordinal) || signature.EndsWith("##3.0", StringComparison.Ordinal)), Is.True);
     }
 
-    private static string FormatComposition(DialectFrameworkCompositionResult composition) => DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
+    private static (WistLanguageFeaturePackage Package, LanguagePlan Plan) Compile(string source, string sourceName)
+    {
+        var package = new WistLanguageFeaturePackage();
+        var interpreterDefinition = WistFacadeLanguageDefinitionFactory.FromDialectText(
+            source,
+            sourceName,
+            Interpreter.Value,
+            WistFacadeSsaPolicy.Disabled);
+        var cilDefinition = WistFacadeLanguageDefinitionFactory.FromDialectText(
+            source,
+            sourceName,
+            Cil.Value,
+            WistFacadeSsaPolicy.Disabled);
+
+        EnsureBackendIndependentSemantics(interpreterDefinition, cilDefinition);
+
+        var definition = new LanguageDefinition(
+            interpreterDefinition.Id,
+            interpreterDefinition.Version,
+            interpreterDefinition.ToolchainApiVersion,
+            interpreterDefinition.SelectedFeatures,
+            [Cil, Interpreter],
+            interpreterDefinition.RuntimeProvider,
+            interpreterDefinition.RuntimePolicy,
+            interpreterDefinition.Metadata,
+            interpreterDefinition.SlotOverrides,
+            interpreterDefinition.CapabilityProviders,
+            interpreterDefinition.ExcludedContributions,
+            interpreterDefinition.EntryArtifact,
+            interpreterDefinition.ContributionOrderConstraints,
+            interpreterDefinition.IntrinsicPolicy);
+        var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package))
+            .Compile(definition)
+            .GetRequiredPlan();
+        return (package, plan);
+    }
+
+    private static void EnsureBackendIndependentSemantics(
+        LanguageDefinition interpreterDefinition,
+        LanguageDefinition cilDefinition)
+    {
+        if (cilDefinition.Id != interpreterDefinition.Id ||
+            cilDefinition.Version != interpreterDefinition.Version ||
+            !cilDefinition.SelectedFeatures.SequenceEqual(interpreterDefinition.SelectedFeatures) ||
+            cilDefinition.RuntimeProvider != interpreterDefinition.RuntimeProvider ||
+            cilDefinition.RuntimePolicy != interpreterDefinition.RuntimePolicy ||
+            !cilDefinition.ContributionOrderConstraints.SequenceEqual(interpreterDefinition.ContributionOrderConstraints) ||
+            !cilDefinition.IntrinsicPolicy.SequenceEqual(interpreterDefinition.IntrinsicPolicy))
+        {
+            throw new InvalidOperationException(
+                "Wist stress fixture produced backend-dependent semantics before canonical planning.");
+        }
+    }
+
+    private static string BuildSemanticPlanSignature(LanguagePlan plan)
+    {
+        var contributions = string.Join(
+            "|",
+            plan.Contributions.Select(static contribution => contribution.Contribution.Id.Value));
+        var backends = string.Join(
+            "|",
+            plan.Definition.Backends.Select(static backend => backend.Value).OrderBy(static value => value, StringComparer.Ordinal));
+        var routes = string.Join(
+            "|",
+            plan.Routes.OrderBy(static route => route.Key.Value, StringComparer.Ordinal)
+                .Select(static route => $"{route.Key.Value}:{route.Value.TargetContract}"));
+        return $"{contributions}::{backends}::{routes}";
+    }
 
     private static string FormatSignatureGroups(IEnumerable<string> signatures)
     {

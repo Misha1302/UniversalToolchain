@@ -18,7 +18,6 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2"/>
     </ItemGroup>
 
-
     <ItemGroup>
         <ProjectReference Include="..\ArithmeticModule\ArithmeticModule.csproj"/>
         <ProjectReference Include="..\AssemblyFinder\AssemblyFinder.csproj"/>
@@ -48,6 +47,10 @@
         <ProjectReference Include="..\VariablesRuntime\VariablesRuntime.csproj"/>
         <ProjectReference Include="..\WhitespacesModule\WhitespacesModule.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.FeatureSdk\UniversalToolchain.FeatureSdk.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Language.Abstractions\UniversalToolchain.Language.Abstractions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.LanguageSdk\UniversalToolchain.LanguageSdk.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Runtime\UniversalToolchain.Runtime.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.ModuleContracts\UniversalToolchain.ModuleContracts.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Wist.Contracts\UniversalToolchain.Wist.Contracts.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Wist.LanguagePack\UniversalToolchain.Wist.LanguagePack.csproj"/>
@@ -61,7 +64,6 @@
         <ProjectReference Include="..\UniversalToolchain.Ssa.Lowering\UniversalToolchain.Ssa.Lowering.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Ssa.Optimization\UniversalToolchain.Ssa.Optimization.csproj"/>
         <ProjectReference Include="..\CommentsModule\CommentsModule.csproj"/>
-        <ProjectReference Include="..\Example\Example.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Testing.Infrastructure\UniversalToolchain.Testing.Infrastructure.csproj"/>
         <ProjectReference Include="..\Wistc\Wistc.csproj"
                           ReferenceOutputAssembly="false"

@@ -1,11 +1,9 @@
-using UniversalToolchain.Dialects.Wist;
-
 namespace Tests.Infrastructure;
 
 internal static class ParityBackendExecutionAdapter
 {
     public static BackendArtifactSnapshot CompileSnapshot(
-        WistDialectExecutionHost host,
+        CanonicalWistTestHost host,
         string backendName,
         string code,
         OrderedDictionary<string, Type> declared)
@@ -17,7 +15,7 @@ internal static class ParityBackendExecutionAdapter
     }
 
     public static object RunCompiled(
-        WistDialectExecutionHost host,
+        CanonicalWistTestHost host,
         string backendName,
         string code,
         OrderedDictionary<string, Type> declared,
@@ -32,14 +30,14 @@ internal static class ParityBackendExecutionAdapter
                ?? Thrower.InvalidOpEx<object>($"Backend '{backendName}' returned null result.");
     }
 
-    private static ICompiledArtifact CompileArtifact(
-        WistDialectExecutionHost host,
+    private static CanonicalWistBuiltProgram CompileArtifact(
+        CanonicalWistTestHost host,
         string backendName,
         string code,
         OrderedDictionary<string, Type> declared)
     {
         if (backendName is not ("cil" or "interpreter"))
-            return Thrower.InvalidOpEx<ICompiledArtifact>($"Unsupported backend '{backendName}'.");
+            return Thrower.InvalidOpEx<CanonicalWistBuiltProgram>($"Unsupported backend '{backendName}'.");
 
         return host.Compile(code, declared, backendName);
     }

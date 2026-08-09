@@ -86,7 +86,9 @@ public sealed class LanguageArchitectureRegressionTests
         var exception = Assert.Throws<InvalidOperationException>(() =>
             LanguageRuntime.Create(plan, new WistLanguageRuntimeProvider()));
 
-        Assert.That(exception!.Message, Does.Contain("cannot execute custom artifact route"));
+        Assert.That(
+            exception!.Message,
+            Does.Contain("custom.wist.parse").And.Contain("canonical Wist package"));
     }
 
     [Test]

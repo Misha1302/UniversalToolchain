@@ -11,6 +11,7 @@ using BasicTypesExtensions;
 using DynamicMethodWrapper;
 using IntermediateRepresentationAbstractions;
 using NumbersModule.Core;
+using UniversalToolchain.Wist;
 using VariablesModule;
 
 namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
@@ -48,7 +49,7 @@ public class VariablesModulePipelineTests
     }
 
     [TestCase("let value: System.DateTime = 1\nvalue", "Unknown declared type 'System.DateTime'")]
-        public void Variables_UnapprovedDeclaredType_FailsClosed(string source, string expectedMessage)
+    public void Variables_UnapprovedDeclaredType_FailsClosed(string source, string expectedMessage)
     {
         using var h = new ModulePipelineTestHelper();
 
@@ -82,39 +83,50 @@ public class VariablesModulePipelineTests
     public void Variables_IndependentRuns_DoNotLeakStateBetweenCalls()
     {
         using var h = new ModulePipelineTestHelper();
-        using var host = h.CreateHost(_modules, backends: ["interpreter"]);
-        var core = host.GetCore("interpreter");
+        var dialect = h.BuildDialectText("VariableIsolation", _modules, backends: ["interpreter"]);
+        var options = WistEngineOptions.FromDialectText(dialect, "variable-isolation-test");
+        options.BackendId = "interpreter";
+        options.AllowedAssemblies = [typeof(int).Assembly, typeof(VariablesModulePipelineTests).Assembly];
+        using var engine = WistEngine.Create(options);
 
-        var first = core.Run("let x = 7\nx");
-        var secondRunException = Assert.Catch<Exception>(() => core.Run("x"));
+        var first = engine.Evaluate<object?>("let x = 7\nx");
+        var secondRunException = Assert.Catch<Exception>(() => engine.Evaluate<object?>("x"));
 
         Assert.That(ModulePipelineTestHelper.AsNumber(first), Is.EqualTo(7));
         Assert.That(secondRunException, Is.Not.Null);
     }
 
     [Test]
-    public void Variables_BoundExternalVariableAndConstant_WorkViaDeclaredBindingsAndSession()
+    public void Variables_ExternalVariableExecutesAndBindingContextKeepsConstantIdentityDistinct()
     {
         using var h = new ModulePipelineTestHelper();
-        using var host = h.CreateHost(_modules, backends: ["interpreter"]);
-        var interpreterCompiler = host.GetBackendSpecificArtifactCompiler<IAbstractIR>("interpreter");
+        var dialect = h.BuildDialectText("ExternalVariables", _modules, backends: ["interpreter"]);
+        var options = WistEngineOptions.FromDialectText(dialect, "external-variable-test");
+        options.BackendId = "interpreter";
+        options.AllowedAssemblies = [typeof(int).Assembly, typeof(VariablesModulePipelineTests).Assembly];
+        using var engine = WistEngine.Create(options);
 
-        var artifact = interpreterCompiler.Compile(new CompilationInput
+        var result = engine.Evaluate<object?>("external + immutable", new Dictionary<string, object?>
         {
-            SourceText = "external + immutable",
-            ExternalBindings =
-            [
-                new ExternalBinding { Name = "external", Type = typeof(RealNumberImpl), Kind = ExternalBindingKind.Variable },
-                new ExternalBinding { Name = "immutable", Type = typeof(RealNumberImpl), Value = RealNumberImpl.Create(5), Kind = ExternalBindingKind.Constant }
-            ]
+            ["external"] = 10.0,
+            ["immutable"] = 5.0
         });
 
-        var session = artifact.CreateSession();
-        session.SetArgument("external", RealNumberImpl.Create(10));
-        var result = session.Run();
+        var bindings = new ExternalBinding[]
+        {
+            new() { Name = "external", Type = typeof(RealNumberImpl), Kind = ExternalBindingKind.Variable },
+            new() { Name = "immutable", Type = typeof(RealNumberImpl), Value = RealNumberImpl.Create(5), Kind = ExternalBindingKind.Constant }
+        };
+        var bindingContext = new BindingContext(bindings);
 
-        Assert.That(ModulePipelineTestHelper.AsNumber(result), Is.EqualTo(15));
-        Assert.Throws<InvalidOperationException>(() => session.SetArgument("immutable", RealNumberImpl.Create(99)));
+        Assert.Multiple(() =>
+        {
+            Assert.That(ModulePipelineTestHelper.AsNumber(result), Is.EqualTo(15));
+            Assert.That(bindingContext.TryGetExternal("external", out var variable), Is.True);
+            Assert.That(variable, Is.TypeOf<ExternalVariableSymbol>());
+            Assert.That(bindingContext.TryGetExternal("immutable", out var constant), Is.True);
+            Assert.That(constant, Is.TypeOf<ExternalConstantSymbol>());
+        });
     }
 
     [Test]
@@ -129,7 +141,6 @@ public class VariablesModulePipelineTests
 
         var referenceOp = GetSingleOp(bytecode, 0);
         Assert.That(referenceOp.Name, Is.EqualTo("InferWriteTypeOfLocalVar_x"));
-
     }
 
     [Test]

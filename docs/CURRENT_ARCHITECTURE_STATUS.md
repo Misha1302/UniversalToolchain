@@ -5,29 +5,31 @@ description: Current implemented surfaces, research layers and tied verification
 
 # Current architecture status
 
-This page describes the supplied language-authoring hardening baseline, integrated PlanFuzz tooling and the non-packable production-boundary contract study. Historical cycle notes under `internal-docs/` are evidence, not current architecture authority.
+This page is the current architecture authority for the repository. Historical cycle notes and dated reviews under `internal-docs/` are evidence snapshots, not current implementation truth.
 
 ## Current public/product surface
 
-`UniversalToolchain.Wist` `0.1.0-alpha.4` provides:
+`UniversalToolchain.Wist` source candidate `0.1.0-alpha.6` provides:
 
 - `WistEngine`;
 - restricted arithmetic and broader native presets;
 - `Validate`, `Evaluate`, `Compile<TDelegate>` and `TryCompile<TDelegate>`;
 - structured diagnostics and preflight limits;
 - typed compiled-program metadata;
-- an optional observable Wist `AIR -> SSA -> AIR` optimization route.
+- optional observable Wist `AIR -> SSA -> AIR` optimization routes.
+
+The source candidate is separate from the older package version installed by the published-package smoke. Do not infer publication from the project version alone.
 
 ## Current generic language-authoring surface
 
 The repository implements:
 
 - `UniversalToolchain.Language.Abstractions` for stable IDs, policies and typed artifact contracts;
-- `UniversalToolchain.FeatureSdk` for features and contribution metadata;
-- `UniversalToolchain.LanguageSdk` for registry-backed deterministic planning, `LanguagePlan` and schema-v5 lock serialization;
+- `UniversalToolchain.FeatureSdk` for features, package identity and contribution metadata;
+- `UniversalToolchain.LanguageSdk` for registry-backed deterministic planning, `LanguagePlan` and schema-v6 lock serialization;
 - `UniversalToolchain.LanguageAuthoring` for coupled descriptor/runtime registration builders;
-- `UniversalToolchain.Runtime` for route assembly, exact executor selection, policy validation and lifecycle;
-- `UniversalToolchain.Testing` for backend parity helpers;
+- `UniversalToolchain.Runtime` for exact plan verification, route materialization, executor selection, policy validation and lifecycle;
+- `UniversalToolchain.Testing` for reusable contract/parity support;
 - `UniversalToolchain.Templates` with `ut-language`;
 - `UniversalToolchain.Wist.LanguagePack` `0.3.0-alpha.5` as the typed Wist package boundary;
 - `samples/Acme.PricingLanguage` as a non-Wist sample.
@@ -36,12 +38,13 @@ The repository implements:
 
 - typed entry artifacts and route endpoints;
 - independently owned features and contributions;
-- dependencies, conflicts, capabilities and explicit slot replacement;
+- feature dependencies, conflicts, capabilities and explicit slot replacement;
+- explicit contribution exclusions;
 - package-level contributions;
-- minimum-cost conversion routes;
+- deterministic minimum-cost artifact routes;
 - deterministic same-artifact pass ordering;
 - planning-only definitions;
-- exact package-manifest binding;
+- exact package-manifest and implementation-instance binding;
 - exact `(contribution, backend, input contract)` executor resolution;
 - `PerSession` and explicit `SingletonStateless` component lifetimes;
 - synchronous/asynchronous disposal coordinated with in-flight operations;
@@ -49,21 +52,58 @@ The repository implements:
 
 ## Wist compiler/runtime architecture
 
-The reference language retains the explicit pipeline:
+The canonical Wist ownership chain is:
 
 ```text
-Source/Text -> Lexer/Parser -> AST -> Binding -> Bytecode -> AIR -> Optimization -> Backend -> Execution
+.wistdialect / preset
+  -> LanguageDefinition
+  -> LanguageCompiler
+  -> one immutable LanguagePlan
+  -> LanguageRuntime
+  -> exact planned components
 ```
 
-Bytecode and AIR remain separate semantic boundaries. Wist runtime selection goes through dialect build plans, manifests and capabilities. Interpreter/CIL parity remains required for shared supported behavior.
+The planned execution route then follows the concrete language pipeline:
 
-The current Wist composition path installs `ModuleContractPipelineProfiles.StrictEnforced`. Selected modules without descriptors fail selection. `ModuleContractPipelineObserver` reads observed Bytecode metadata and invokes `BytecodeVerifier` after Bytecode, then verifies AIR before and after optimization. Facts/effects use the actual selected pipeline order, and unresolved invalidations for another verifier rule fail closed.
+```text
+Source/Text -> Lexer/Parser -> AST -> Bytecode -> AIR -> optimizers/optional SSA -> backend artifact -> execution
+```
 
-This closes the earlier claim that Bytecode declared/observed verification existed only as a detached reporter. The remaining boundary is narrower: verification can only reason about the typed metadata and contracts represented by the selected components; it is not a proof that every future instruction implementation carries a complete semantic specification.
+`WistFacadeLanguageDefinitionFactory` is a configuration translator, not a second planner. It maps Wist-facing aliases and policy to typed generic contracts. `LanguageCompiler` alone owns feature dependency closure, contribution/capability-provider resolution, explicit exclusions, contribution ordering, runtime-provider selection and backend artifact routes.
+
+`LanguageRuntime` materializes the graph already selected by `LanguagePlan`. Runtime materialization validates exact package/source provenance for executable components and must not add features, reorder contributions or choose a second backend plan. Tooling-only planned contributions do not become runtime-source requirements merely because they are present in the semantic plan.
+
+For public embedding, `WistEngine.Create` constructs this plan/runtime once. `Evaluate`, `Validate` and `Compile<TDelegate>` reuse the same canonical ownership chain rather than invoking another Wist composition workflow.
+
+Bytecode and AIR remain separate semantic boundaries. Interpreter/CIL parity is required for shared supported behavior and is tested from one canonical multi-route plan where parity itself is the contract.
+
+## Wist configuration semantics
+
+- `use` requests Wist features/modules; typed feature dependencies are closed by `LanguageCompiler` rather than duplicated manually in every dialect file.
+- Wist group aliases are data-only alias lists expanded before `LanguageDefinition` construction; they are not dependency resolvers or runtime components.
+- `exclude` aliases are translated to `LanguageDefinition.ExcludedContributions`; if dependency closure requires an excluded contribution, planning fails closed.
+- backend, security and intrinsic policy are translated to typed generic contracts before planning.
+- source identity remains provenance-bearing; semantic equivalence across different source names must not be inferred from `PlanHash` equality.
+
+## Compatibility/generic dialect infrastructure boundary
+
+The repository still contains generic dialect-integration infrastructure such as runtime-manifest serialization/emission, `RuntimeProfileDefinition` and `ToolchainRuntimeHost` for compatibility, tooling or generic integration contracts.
+
+These types are **not** the current Wist semantic planner or public execution host. Runtime manifests must not get a second chance to change a Wist `LanguagePlan`.
+
+`UniversalToolchain.Dialects.Wist` remains a non-packable compatibility-only project. Canonical Wist production projects are architecture-guarded from depending on it as a runtime/planning owner.
+
+The S11-retired Wist ownership path includes `DialectBuildPlan`, `SelectedRuntimePlan`, `SelectedRuntimePlanResolver`, `ToolchainCompositionWorkflow`, `WistDialectExecutionWorkflow`, `WistDialectExecutionHost` and `WistDialectPlanFactory`. Current architecture tests reject reintroduction of that production surface. `BasicCoreImpl` is a separate remaining owner intentionally deferred to migration stage S12.
+
+## Module/IR verification boundary
+
+The runtime/compiler pipeline retains explicit module-contract, Bytecode, AIR, ownership, capability and reverification checks. Verification operates on represented typed metadata and contracts; it is not a proof that every future instruction implementation carries a complete formal semantic specification.
+
+Do not use compatibility/observation policy as a hidden route around canonical feature/contribution selection. Module authoring and verification contracts must remain explicit and test-protected.
 
 ## Experimental PlanFuzz research tooling
 
-The repository includes non-packable PlanFuzz Phase 0–3a tooling for configuration-aware relational testing:
+The repository includes non-packable PlanFuzz tooling for configuration-aware relational testing:
 
 - a language-neutral deterministic testcase, observation and oracle core;
 - independent Acme and Wist adapters with adapter-owned structured generators;
@@ -81,9 +121,9 @@ PlanFuzz is not part of the public Wist package and does not establish superiori
 
 ## Production-boundary contract study
 
-`UniversalToolchain.ContractExperiments` is a separate non-packable executable that invokes the production contract-table, Bytecode, AIR, ownership, capability, facts/effects and reverification components.
+`UniversalToolchain.ContractExperiments` is a separate non-packable executable that invokes production contract-table, Bytecode, AIR, ownership, capability, facts/effects and reverification components.
 
-It compares a structural baseline, typed contracts without fail-closed unresolved reverification, and the full fail-closed protocol. The canonical workflow independently restores/builds the project, runs a frozen primary catalog, a post-freeze author-designed challenge catalog, stratified valid controls and process-level timing replicates, then archives raw evidence and a recursive manifest.
+It compares a structural baseline, typed contracts without fail-closed unresolved reverification, and the full fail-closed protocol. The canonical workflow independently restores/builds the project, runs its frozen/holdout corpora and controls, and archives evidence with integrity metadata.
 
 The study is bounded evidence for the exact UniversalToolchain boundaries and author-designed fault operators. It is not a replacement for PlanFuzz, externally authored unseen faults or end-to-end source-to-execution evaluation.
 
@@ -91,13 +131,19 @@ The study is bounded evidence for the exact UniversalToolchain boundaries and au
 
 - low-level generic SDK compatibility is alpha;
 - high-level grammar, binder, type-system and operation authoring are not provided;
-- Wist SSA is opt-in and verifier-gated, not the default route;
+- Wist SSA is opt-in and verifier-gated, not the universal default route;
 - generic third-party package version negotiation is narrower than a mature ecosystem resolver;
 - runtime component traits are package attestations, not hostile-extension proof;
 - typed metadata coverage is an engineering contract, not a formal proof of semantic completeness;
 - no hardened in-process sandbox is claimed;
+- generic runtime-profile/manifest/host compatibility infrastructure has not all been removed simply because Wist no longer uses it as its semantic owner;
+- `BasicCoreImpl` retirement remains an S12 task;
 - release-package compatibility requires reviewed external baseline artifacts and is separate from ordinary CI.
 
 ## Verification identity
 
-`VERIFICATION.md` is the detailed checked-in authority. GitHub Actions enforces the ordinary build/test gate, documentation checks and deployment, rollout and published-package smokes, benchmark smoke, the contract experiment and a master-only aggregate status. Package release evidence remains separate and baseline-bearing.
+`VERIFICATION.md` is the detailed checked-in verification authority. The active exact test manifest is `eng/test-counts.json`.
+
+GitHub Actions enforces the ordinary build/test gate, documentation checks, rollout and published-package smokes, benchmark smoke and the contract experiment. Final migration-stage acceptance requires exact-head evidence; superseded workflow runs are diagnostic only.
+
+Package release evidence remains separate and baseline-bearing. NuGet publication and merge to `master` are separate actions and are not implied by a green migration-stage PR.

@@ -1,5 +1,4 @@
 using UniversalToolchain.Dialects.Frontend;
-using UniversalToolchain.Dialects.Wist.Groups;
 using UniversalToolchain.Language.Abstractions;
 
 namespace UniversalToolchain.Wist.LanguagePack;
@@ -58,11 +57,16 @@ internal static class WistFacadeLanguageDefinitionFactory
                 "Wist facade LanguageDefinition translation does not inherit base dialects; base-dialect ownership must be translated before planning.");
         }
 
-        var groups = new WistDialectGroupProvider().GetGroups()
-            .ToDictionary(static group => group.Alias, StringComparer.Ordinal);
+        var groups = WistDialectGroupCatalog.Groups;
         var selectedFeatures = new List<LanguageFeatureId>();
         var selectedAliases = new HashSet<string>(StringComparer.Ordinal);
         var excludedAliases = ExpandModuleAliases(slice.ExcludeModules, groups).ToHashSet(StringComparer.Ordinal);
+        var excludedContributions = excludedAliases
+            .Select(alias => WistRuntimeComponentCatalog
+                .GetRequiredAlias(alias, WistRuntimeComponentKind.Module)
+                .ContributionId)
+            .Distinct()
+            .ToArray();
 
         foreach (var alias in ExpandModuleAliases(slice.UseModules, groups))
         {
@@ -73,8 +77,6 @@ internal static class WistFacadeLanguageDefinitionFactory
             if (selectedAliases.Add(alias))
                 selectedFeatures.Add(component.FeatureId);
         }
-        foreach (var alias in excludedAliases)
-            _ = WistRuntimeComponentCatalog.GetRequiredAlias(alias, WistRuntimeComponentKind.Module);
 
         foreach (var optimizer in slice.OptimizerDirectives)
         {
@@ -173,7 +175,7 @@ internal static class WistFacadeLanguageDefinitionFactory
             },
             null,
             null,
-            null,
+            excludedContributions,
             StandardLanguageArtifactKinds.SourceText.Contract,
             orderConstraints,
             intrinsicPolicy);
@@ -181,13 +183,13 @@ internal static class WistFacadeLanguageDefinitionFactory
 
     private static IEnumerable<string> ExpandModuleAliases(
         IEnumerable<string> aliases,
-        IReadOnlyDictionary<string, UniversalToolchain.Dialects.Abstractions.DialectGroupDescriptor> groups)
+        IReadOnlyDictionary<string, IReadOnlyList<string>> groups)
     {
         foreach (var alias in aliases)
         {
-            if (groups.TryGetValue(alias, out var group))
+            if (groups.TryGetValue(alias, out var includedModules))
             {
-                foreach (var included in group.IncludedModules)
+                foreach (var included in includedModules)
                     yield return included;
                 continue;
             }
@@ -198,7 +200,7 @@ internal static class WistFacadeLanguageDefinitionFactory
 
     private static LanguageContributionId ResolveOrderedModuleContribution(
         string alias,
-        IReadOnlyDictionary<string, UniversalToolchain.Dialects.Abstractions.DialectGroupDescriptor> groups,
+        IReadOnlyDictionary<string, IReadOnlyList<string>> groups,
         DialectSourceLocation? sourceLocation)
     {
         if (groups.ContainsKey(alias))

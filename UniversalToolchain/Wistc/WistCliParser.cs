@@ -103,6 +103,8 @@ public static class WistCliParser
 
         if (positionals.Count > 1)
             return Failure("Only one code argument may be provided.");
+        if (!IsKnownBackend(options.Backend))
+            return Failure($"Unknown backend '{options.Backend}'.");
 
         options.Code = positionals.SingleOrDefault();
         return WistCliParseResult.Success(options);
@@ -158,7 +160,9 @@ public static class WistCliParser
             }
         }
 
-        return WistCliParseResult.Success(options);
+        return IsKnownBackend(options.Backend)
+            ? WistCliParseResult.Success(options)
+            : Failure($"Unknown backend '{options.Backend}'.");
     }
 
     private static WistCliParseResult ParseDialectInspect(IReadOnlyList<string> args)
@@ -313,6 +317,7 @@ public static class WistCliParser
         return true;
     }
 
+    private static bool IsKnownBackend(string value) => value is "cil" or "interpreter";
     private static bool ContainsHelp(IEnumerable<string> args) => args.Any(IsHelp);
     private static bool IsHelp(string value) => value is "--help" or "-h";
     private static WistCliParseResult Help(string message) => WistCliParseResult.Failure(new WistCliParseError(message));

@@ -11,13 +11,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj" />
-    <ProjectReference Include="..\..\..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" />
     <ProjectReference Include="..\..\..\UniversalToolchain.Functions.Abstractions\UniversalToolchain.Functions.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\SafeMathFunctionsModule\SafeMathFunctionsModule.csproj" />
+    <ProjectReference Include="..\..\..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj" />
     <ProjectReference Include="..\CanonicalRuntimeFixture\CanonicalRuntimeFixture.csproj"
                       ReferenceOutputAssembly="false"
                       Private="false" />

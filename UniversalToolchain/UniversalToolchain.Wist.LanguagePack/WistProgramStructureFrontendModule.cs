@@ -3,15 +3,18 @@ using BasicCore.ParserWrapper;
 using BasicCore.Registration;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
-using UniversalToolchain.Dialects.Abstractions;
 
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Wist.LanguagePack;
 
-[DialectRuntimeExport("FrontendModule", "ProgramStructure")]
-public sealed class ProgramStructureFrontendModule : IFrontendCoreModule
+/// <summary>
+/// Direct-runtime infrastructure module for the Wist program root. It owns no feature selection or
+/// ordering decisions and is always prepended after LanguagePlan has selected the semantic modules.
+/// </summary>
+internal sealed class WistProgramStructureFrontendModule : IFrontendCoreModule
 {
     public void InitAstTranslator(IAstToBytecodeTranslator translator)
     {
+        ArgumentNullException.ThrowIfNull(translator);
         translator.AddVisitors(new ProgramAstVisitor());
     }
 
@@ -19,6 +22,7 @@ public sealed class ProgramStructureFrontendModule : IFrontendCoreModule
     {
         public void TryVisit(BytecodeVisitorData data)
         {
+            ArgumentNullException.ThrowIfNull(data);
             if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.Get("Program"))
                 return;
 

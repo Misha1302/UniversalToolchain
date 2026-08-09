@@ -8,10 +8,17 @@
     "UniversalToolchain/LocalVariablesOptimizerModule",
     "UniversalToolchain/ParserConfigurationModule/Module/BytecodeTranslatorConfigurationModuleImpl.cs",
     "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/WistLegacyDialectAdapter.cs",
+    "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/WistDialectPlanFactory.cs",
     "UniversalToolchain/UniversalToolchain.Wist/WistBackend.cs",
     "UniversalToolchain/UniversalToolchain.Wist/WistBackendAliases.cs",
     "UniversalToolchain/UniversalToolchain.Wist/WistPreset.cs",
     "UniversalToolchain/UniversalToolchain.Wist/WistPresetMapper.cs",
+    "UniversalToolchain/UniversalToolchain.Dialects.Abstractions/DialectBuildPlan.cs",
+    "UniversalToolchain/UniversalToolchain.Dialects.Integration/SelectedRuntimePlan.cs",
+    "UniversalToolchain/UniversalToolchain.Dialects.Integration/SelectedRuntimePlanResolver.cs",
+    "UniversalToolchain/UniversalToolchain.Dialects.Integration/ToolchainCompositionWorkflow.cs",
+    "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistDialectExecutionWorkflow.cs",
+    "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistDialectExecutionHost.cs",
     "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistCilBackendServiceCollectionExtensions.cs",
     "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistInterpreterBackendServiceCollectionExtensions.cs",
     "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistDialectExecutionConfiguration.cs",
@@ -62,6 +69,34 @@
     {
       "name": "retired optimizer",
       "pattern": "\\bLocalVariablesOptimizer(?:Module)?\\b"
+    },
+    {
+      "name": "second planner build plan",
+      "pattern": "\\bDialectBuildPlan\\b"
+    },
+    {
+      "name": "second planner runtime plan",
+      "pattern": "\\bSelectedRuntimePlan\\b"
+    },
+    {
+      "name": "second planner resolver",
+      "pattern": "\\bSelectedRuntimePlanResolver\\b"
+    },
+    {
+      "name": "second planner workflow",
+      "pattern": "\\bToolchainCompositionWorkflow\\b"
+    },
+    {
+      "name": "retired Wist execution workflow",
+      "pattern": "\\bWistDialectExecutionWorkflow\\b"
+    },
+    {
+      "name": "retired Wist execution host",
+      "pattern": "\\bWistDialectExecutionHost\\b"
+    },
+    {
+      "name": "retired Wist dialect plan factory",
+      "pattern": "\\bWistDialectPlanFactory\\b"
     },
     {
       "name": "retired Wist configuration view",

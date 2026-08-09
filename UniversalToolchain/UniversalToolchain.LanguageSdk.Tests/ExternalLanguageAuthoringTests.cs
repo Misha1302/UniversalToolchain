@@ -252,7 +252,9 @@ public sealed class ExternalLanguageAuthoringTests
 
         var error = Assert.Throws<InvalidOperationException>(() => LanguageRuntime.Create(plan, providers));
 
-        Assert.That(error!.Message, Does.Contain("determinism evidence"));
+        Assert.That(
+            error!.Message,
+            Does.Contain("requires deterministic execution").And.Contain("not declared deterministic"));
     }
 
     [Test]

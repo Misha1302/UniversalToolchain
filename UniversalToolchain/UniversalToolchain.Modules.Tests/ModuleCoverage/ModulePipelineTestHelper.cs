@@ -1,7 +1,6 @@
 using System.Text;
-using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Testing.Infrastructure;
+using UniversalToolchain.Wist;
 
 namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 
@@ -14,22 +13,15 @@ internal sealed class ModulePipelineTestHelper : IDisposable
         "InternalPreprocessorLexemes", "CSharpInterop"
     ];
 
-    private readonly ServiceProvider _provider;
-    private readonly WistDialectExecutionWorkflow _workflow;
-
-    public ModulePipelineTestHelper()
+    public void Dispose()
     {
-        var services = new ServiceCollection();
-        services.AddWistDialectServices();
-        services.AddWistCilBackend();
-        services.AddWistInterpreterBackend();
-        _provider = services.BuildServiceProvider();
-        _workflow = _provider.GetRequiredService<WistDialectExecutionWorkflow>();
     }
 
-    public void Dispose() => _provider.Dispose();
-
-    public string BuildDialectText(string name, IEnumerable<string> modules, IEnumerable<string>? optimizers = null, IEnumerable<string>? backends = null)
+    public string BuildDialectText(
+        string name,
+        IEnumerable<string> modules,
+        IEnumerable<string>? optimizers = null,
+        IEnumerable<string>? backends = null)
     {
         var moduleList = Materialize(modules);
         var optimizerList = optimizers == null ? null : Materialize(optimizers);
@@ -38,37 +30,33 @@ internal sealed class ModulePipelineTestHelper : IDisposable
         var modulesLine = string.Join(',', moduleList);
         var optimizerLine = optimizerList == null ? string.Empty : $"\nenable {string.Join(',', optimizerList)}";
         var backendLine = $"\nbackend {string.Join(',', backendList)}";
-        return $"dialect {name}\nuse {modulesLine}{optimizerLine}{backendLine}";
+        var securityLines = moduleList.Contains("CSharpInterop", StringComparer.Ordinal)
+            ? "\nsecurity trusted\ncapability unsafe-interop"
+            : "\nsecurity restricted";
+        return $"dialect {name}\nuse {modulesLine}{optimizerLine}{backendLine}{securityLines}";
     }
 
-    public WistDialectExecutionHost CreateHost(IEnumerable<string> modules, IEnumerable<string>? optimizers = null, IEnumerable<string>? backends = null)
+    public object? Execute(
+        string code,
+        string mode,
+        IEnumerable<string> modules,
+        IEnumerable<string>? optimizers = null)
     {
-        var composition = _workflow.ComposeText(BuildDialectText("Inline", modules, optimizers, backends), "inline");
-        if (!composition.IsSuccess)
-            throw new InvalidOperationException(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
+        var moduleList = Materialize(modules);
+        var dialectText = BuildDialectText("Inline", moduleList, optimizers, [mode]);
+        var options = WistEngineOptions.FromDialectText(dialectText, "module-pipeline-inline");
+        options.BackendId = mode;
+        if (moduleList.Contains("CSharpInterop", StringComparer.Ordinal))
+        {
+            options.AllowedAssemblies =
+            [
+                typeof(int).Assembly,
+                typeof(ModulePipelineTestHelper).Assembly
+            ];
+        }
 
-        return _workflow.CreateHost(
-            composition,
-            new WistRuntimeServiceOptions
-            {
-                // The module-contract suite intentionally exercises CLR interop against
-                // NumbersModule. Declare that host capability explicitly instead of relying
-                // on AppDomain/output-directory discovery.
-                AllowedAssemblies =
-                [
-                    typeof(int).Assembly,
-                    typeof(ModulePipelineTestHelper).Assembly
-                ]
-            });
-    }
-
-    public DialectFrameworkCompositionResult Compose(IEnumerable<string> modules, IEnumerable<string>? optimizers = null, IEnumerable<string>? backends = null)
-        => _workflow.ComposeText(BuildDialectText("Inline", modules, optimizers, backends), "inline");
-
-    public object? Execute(string code, string mode, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
-    {
-        using var host = CreateHost(modules, optimizers, [mode]);
-        return host.Run(code, mode);
+        using var engine = WistEngine.Create(options);
+        return engine.Evaluate<object?>(code);
     }
 
     public object? ExecuteCompiler(string code, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
@@ -77,11 +65,15 @@ internal sealed class ModulePipelineTestHelper : IDisposable
     public object? ExecuteInterpreter(string code, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
         => Execute(code, "interpreter", modules, optimizers);
 
-    public (object? Compiler, object? Interpreter) ExecuteBoth(string code, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
+    public (object? Compiler, object? Interpreter) ExecuteBoth(
+        string code,
+        IEnumerable<string> modules,
+        IEnumerable<string>? optimizers = null)
     {
-        using var host = CreateHost(modules, optimizers, ["cil", "interpreter"]);
-        var interpreter = host.Run(code, "interpreter");
-        var compiler = host.Run(code, "cil");
+        var moduleList = Materialize(modules);
+        var optimizerList = optimizers == null ? null : Materialize(optimizers);
+        var interpreter = Execute(code, "interpreter", moduleList, optimizerList);
+        var compiler = Execute(code, "cil", moduleList, optimizerList);
         return (compiler, interpreter);
     }
 
@@ -128,7 +120,11 @@ internal sealed class ModulePipelineTestHelper : IDisposable
         Assert.That(Math.Abs(AsNumber(left) - AsNumber(right)), Is.GreaterThan(1e-9));
     }
 
-    public void ExecuteEquivalent(string a, string b, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
+    public void ExecuteEquivalent(
+        string a,
+        string b,
+        IEnumerable<string> modules,
+        IEnumerable<string>? optimizers = null)
     {
         var moduleList = Materialize(modules);
         var optimizerList = optimizers == null ? null : Materialize(optimizers);
@@ -140,7 +136,11 @@ internal sealed class ModulePipelineTestHelper : IDisposable
         AssertSemanticEqual(resultA.Interpreter, resultB.Interpreter);
     }
 
-    public void ExecuteDifferent(string a, string b, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
+    public void ExecuteDifferent(
+        string a,
+        string b,
+        IEnumerable<string> modules,
+        IEnumerable<string>? optimizers = null)
     {
         var moduleList = Materialize(modules);
         var optimizerList = optimizers == null ? null : Materialize(optimizers);
@@ -156,7 +156,7 @@ internal sealed class ModulePipelineTestHelper : IDisposable
     {
         var moduleList = Materialize(modules);
         var dialectText = BuildDialectText("Inline", moduleList, null, ["cil", "interpreter"]);
-        var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(dialectText, code);
+        var (compilerResult, interpreterResult) = RunBoth(dialectText, code, moduleList);
 
         Assert.That(compilerResult.IsSuccess, Is.False);
         Assert.That(interpreterResult.IsSuccess, Is.False);
@@ -177,7 +177,7 @@ internal sealed class ModulePipelineTestHelper : IDisposable
     {
         var moduleList = Materialize(modules);
         var dialectText = BuildDialectText("Inline", moduleList, null, ["cil", "interpreter"]);
-        var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(dialectText, code);
+        var (compilerResult, interpreterResult) = RunBoth(dialectText, code, moduleList);
 
         Assert.That(compilerResult.IsSuccess, Is.False);
         Assert.That(interpreterResult.IsSuccess, Is.False);
@@ -187,7 +187,7 @@ internal sealed class ModulePipelineTestHelper : IDisposable
     {
         var moduleList = Materialize(modules);
         var dialectText = BuildDialectText("Inline", moduleList, null, ["cil", "interpreter"]);
-        var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(dialectText, code);
+        var (compilerResult, interpreterResult) = RunBoth(dialectText, code, moduleList);
 
         Assert.That(compilerResult.IsSuccess, Is.False);
         Assert.That(interpreterResult.IsSuccess, Is.False);
@@ -195,7 +195,9 @@ internal sealed class ModulePipelineTestHelper : IDisposable
         var comparableCompilerException = GetComparableException(compilerResult.Exception!);
         var comparableInterpreterException = GetComparableException(interpreterResult.Exception!);
         Assert.That(comparableCompilerException.GetType(), Is.EqualTo(comparableInterpreterException.GetType()));
-        Assert.That(GetInvariantMessageFragment(comparableCompilerException.Message), Is.EqualTo(GetInvariantMessageFragment(comparableInterpreterException.Message)));
+        Assert.That(
+            GetInvariantMessageFragment(comparableCompilerException.Message),
+            Is.EqualTo(GetInvariantMessageFragment(comparableInterpreterException.Message)));
     }
 
     public void AssertParityAndValue(string code, IEnumerable<string> modules, double expected)
@@ -204,6 +206,22 @@ internal sealed class ModulePipelineTestHelper : IDisposable
         AssertParity(compiler, interpreter);
         Assert.That(AsNumber(compiler), Is.EqualTo(expected).Within(1e-9));
     }
+
+    private (BackendExecutionResult CompilerResult, BackendExecutionResult InterpreterResult) RunBoth(
+        string dialectText,
+        string code,
+        IReadOnlyList<string> modules)
+    {
+        if (!modules.Contains("CSharpInterop", StringComparer.Ordinal))
+            return BackendParityInfrastructure.RunBoth(dialectText, code);
+
+        return (
+            RunSafely(() => Execute(code, "cil", modules)),
+            RunSafely(() => Execute(code, "interpreter", modules)));
+    }
+
+    private static BackendExecutionResult RunSafely(Func<object?> action) =>
+        BackendParityInfrastructure.ExecuteSafely(action);
 
     private static IReadOnlyList<string> Materialize(IEnumerable<string> values)
         => values as IReadOnlyList<string> ?? values.ToArray();

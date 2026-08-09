@@ -1,4 +1,5 @@
-using Example.Scenarios;
+using Tests.Infrastructure;
+using UniversalToolchain.Testing.Infrastructure;
 
 namespace Tests.Core;
 
@@ -6,15 +7,26 @@ namespace Tests.Core;
 public class DslPricingCalculatorParityTests
 {
     [Test]
-    public void DslPricingCalculator_FastInvoker_MatchesCompilerAndInterpreter()
+    public void CanonicalRuntime_ParameterExecution_MatchesCilAndInterpreter()
     {
-        using var calculator = new DslPricingCalculator();
+        using var host = new CanonicalWistTestHost();
+        const string formula = "price * 0.9 + fee";
+        var arguments = new Dictionary<string, object?>
+        {
+            ["price"] = 100.0,
+            ["fee"] = 5.0
+        };
 
-        var compiler = calculator.CalculateWithCompiler("price * 0.9 + fee", 100.0, 5.0);
-        var interpreter = calculator.CalculateWithInterpreter("price * 0.9 + fee", 100.0, 5.0);
-        var fastInvoker = calculator.CalculateWithFastInvoker("price * 0.9 + fee", 100.0, 5.0);
+        var compiler = host.Run(formula, "cil", arguments);
+        var interpreter = host.Run(formula, "interpreter", arguments);
 
-        Assert.That(fastInvoker, Is.EqualTo(compiler));
-        Assert.That(fastInvoker, Is.EqualTo(interpreter));
+        Assert.Multiple(() =>
+        {
+            Assert.That(BackendParityInfrastructure.AsNumber(compiler), Is.EqualTo(95.0).Within(1e-9));
+            Assert.That(BackendParityInfrastructure.AsNumber(interpreter), Is.EqualTo(95.0).Within(1e-9));
+            Assert.That(
+                BackendParityInfrastructure.AsNumber(compiler),
+                Is.EqualTo(BackendParityInfrastructure.AsNumber(interpreter)).Within(1e-9));
+        });
     }
 }

@@ -1,102 +1,90 @@
 ---
 title: Runtime Manifests
-description: Explain how frontend modules become visible to dialect runtime composition.
+description: Explain retained runtime-manifest metadata and its boundary with canonical Wist authoring.
 ---
 
 # Runtime Manifests
 
-Runtime manifests are how dialect composition discovers selectable runtime components such as frontend modules, optimizers and backends.
+Runtime manifests are retained deterministic metadata artifacts. They are **not** how current public Wist execution chooses modules, optimizers or backends.
 
-For normal module authoring, do not create these JSON files by hand. They are generated during build from attributes on compiled types.
+For Wist S11, the authoritative chain is:
 
-## Why manifests exist
+```text
+Wist feature/contribution descriptors
+  → LanguageDefinition
+  → LanguageCompiler
+  → LanguagePlan
+  → LanguageRuntime
+```
 
-A dialect file names modules by alias:
+## What manifests are still for
+
+The repository keeps a generic runtime-manifest emitter/serializer and tests for compatibility, tooling and generic integration scenarios. If a project participates in that subsystem, its generated metadata must remain deterministic and exact.
+
+A generated manifest does not automatically make a component part of a Wist `LanguagePlan`.
+
+## Built-in Wist module authoring
+
+A built-in Wist module needs typed canonical registration. For a new module such as `MyFeature`, the relevant owners are:
+
+1. the module implementation (`IFrontendCoreModule`);
+2. `WistFeatureIds` and `WistContributionIds`;
+3. `WistRuntimeComponentCatalog.Modules`, which binds the canonical contribution to its implementation factory and alias;
+4. `WistLanguageFeaturePackage.CreateFeatures()`, which exposes the feature/contribution descriptor;
+5. `GetRequiredFeatures(...)` when the feature has typed dependencies;
+6. tests proving the resulting `LanguagePlan` and runtime behavior.
+
+Attributes such as `DialectModuleAlias`, `DialectRuntimeExport` or generated runtime-manifest metadata may still exist for compatibility/metadata consumers. They are not a substitute for the typed Wist LanguagePack registration path.
+
+## Why this boundary matters
+
+A dialect can say:
 
 ```text
 dialect Demo
-use Whitespaces,Numbers,Scopes,Arithmetic
+use MyFeature
 backend interpreter
 ```
 
-Runtime composition then needs to resolve aliases such as `Arithmetic` to concrete assemblies and activation types.
+The Wist configuration frontend resolves `MyFeature` through the canonical Wist component catalog and translates it to a typed feature id. `LanguageCompiler` then closes feature dependencies and resolves the contribution graph. `LanguageRuntime` materializes exactly that plan.
 
-That lookup should not depend on hardcoded module lists in the dialect compiler. The manifest is the build-time metadata bridge between declarative dialect files and concrete runtime components.
+No runtime-manifest catalog gets a second chance to add, remove or reorder Wist features.
 
-## The current authoring rule
+## If you maintain the generic manifest emitter
 
-For a frontend module, provide metadata in code:
+Some projects/tests intentionally exercise the retained manifest format. In that context:
 
-```csharp
-[DialectModuleAlias("MyFeature")]
-[DialectRuntimeExport("FrontendModule", "MyFeature")]
-[AutoRegisterService]
-public class MyFeatureModuleImpl : IFrontendCoreModule
-{
-    // lexer, parser and translator registrations
-}
-```
+- generate metadata; do not maintain duplicate hand-written JSON unless the contract explicitly requires a fixture;
+- keep assembly/type identities structured and deterministic;
+- test build-target output paths on supported platforms;
+- reject malformed, duplicate or ambiguous entries;
+- do not introduce type-name/reflection fallbacks that silently guess activation;
+- do not route public Wist execution back through manifest-selected runtime composition.
 
-Then make sure the containing project emits runtime manifests:
+See [Runtime Manifest Format](/runtime-manifest-format) and [Runtime Manifest Activation Model](/runtime-manifest-activation-model) for the compatibility boundary.
 
-```xml
-<PropertyGroup>
-    <EmitDialectRuntimeManifest>true</EmitDialectRuntimeManifest>
-</PropertyGroup>
-```
+## What to test for a Wist module
 
-During build, the manifest emitter writes a generated file named after the assembly:
+For a built-in Wist feature, tests should prove:
 
-```text
-MyFeatureModule.dialect.runtime.json
-```
-
-The file is produced in the build output directory. It is a generated artifact, not a normal source file.
-
-## Existing project vs new project
-
-If you add a module to an existing module project that already has `EmitDialectRuntimeManifest` enabled, no project-file change is needed.
-
-For example, adding `TextualAddition` inside `ArithmeticModule` does not require a new JSON file because `ArithmeticModule` already emits a runtime manifest.
-
-If you create a new standalone module project, add `EmitDialectRuntimeManifest` to that project. Without it, the assembly may compile, but manifest-backed runtime composition will not discover the new alias.
-
-## What not to do
-
-Do not:
-
-- commit a hand-written `.dialect.runtime.json` for a normal module;
-- maintain duplicate alias lists in JSON and C# attributes;
-- patch dialect composition with a hardcoded special case for the new module;
-- rely on a module being referenced by the solution alone as proof that dialect runtime selection can see it.
-
-The source of truth should be the module/export attributes plus generated manifest output.
-
-## What to test
-
-A module is visible only if composition can resolve it by alias. Add tests that prove both sides:
-
-- a dialect selecting the module can execute its syntax;
-- a dialect omitting the module rejects the same syntax;
-- compiler and interpreter agree when both backends are selected.
-
-For the first-module tutorial, this is covered by `TextualAdditionModuleTests`.
+- the feature/contribution appears in the canonical package descriptor;
+- a dialect alias translates to the expected typed feature;
+- required feature dependencies are closed by `LanguageCompiler`;
+- `exclude` prevents an excluded required contribution from being silently reintroduced;
+- selected syntax works when the module is planned;
+- omitted syntax fails when the module is not planned;
+- both backends agree when the feature supports both routes;
+- a minimal plan does not require unrelated module assemblies merely because they exist in the catalog.
 
 ## Troubleshooting
 
-If a dialect says a module alias cannot be resolved, check these in order:
+If a Wist dialect says an alias is unknown, check canonical registration first:
 
-1. The module type has `[DialectModuleAlias("...")]`.
-2. The module type has `[DialectRuntimeExport("FrontendModule", "...")]`.
-3. The project containing the module has `<EmitDialectRuntimeManifest>true</EmitDialectRuntimeManifest>`.
-4. The project is built before the host tries to compose the dialect.
-5. The generated `.dialect.runtime.json` file appears in the output directory.
-6. Referenced manifests are copied into the consuming output directory.
+1. `WistRuntimeComponentCatalog` contains the alias with the right kind.
+2. The descriptor points at the intended `WistFeatureIds`/`WistContributionIds` pair.
+3. `WistLanguageFeaturePackage.CreateFeatures()` exposes that feature.
+4. Typed dependencies in `GetRequiredFeatures(...)` are correct.
+5. The selected backend is supported by the feature/contribution.
+6. The resulting `LanguagePlan` contains the expected contribution and route.
 
-If the manifest exists but activation fails, inspect the activation type name and service registration rather than editing the generated JSON.
-
-## Relation to the tutorial
-
-[Create Your First Module](/write-modules/create-your-first-module) adds `TextualAddition` inside `ArithmeticModule`, so no hand-written runtime JSON is needed. The existing module project already participates in manifest generation.
-
-A future tutorial for a separate module assembly should include the `.csproj` manifest flag explicitly as part of the setup.
+Only inspect generated runtime-manifest artifacts when you are specifically debugging the retained generic manifest subsystem; they are not the source of truth for Wist semantic selection.

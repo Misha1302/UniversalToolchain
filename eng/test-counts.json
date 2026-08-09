@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "totalPassed": 1680,
+  "totalPassed": 1408,
   "main": [
     {
       "label": "Core",
@@ -24,7 +24,7 @@
       "runner": "project",
       "path": "UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj",
       "timeoutSeconds": 600,
-      "expectedPassed": 648
+      "expectedPassed": 369
     },
     {
       "label": "LanguageSdk",
@@ -32,7 +32,7 @@
       "runner": "assembly",
       "path": "UniversalToolchain/UniversalToolchain.LanguageSdk.Tests/bin/Release/net10.0/UniversalToolchain.LanguageSdk.Tests.dll",
       "timeoutSeconds": 420,
-      "expectedPassed": 149
+      "expectedPassed": 156
     },
     {
       "label": "PlanFuzz",

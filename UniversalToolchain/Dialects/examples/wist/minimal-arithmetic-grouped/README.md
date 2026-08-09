@@ -2,17 +2,19 @@
 
 ## What this example demonstrates
 
-This example shows the smallest useful arithmetic-oriented dialect composition using a dialect group.
+This example shows a small arithmetic dialect using a Wist group as source-level shorthand.
 
-`ArithmeticCore` is a compile-time group that expands into the concrete arithmetic module aliases before runtime selection.
+`ArithmeticCore` expands to concrete module aliases **before** Wist creates `LanguageDefinition`. `LanguageCompiler` then performs typed dependency closure and produces the only semantic `LanguagePlan`.
 
 ## Enabled modules/backends/features
 
-- Groups: `ArithmeticCore`
-- Additional modules: `Scopes`
-- Expanded modules: `Arithmetic`, `Numbers`, `Whitespaces`, `Scopes`
+- Group: `ArithmeticCore`
+- Additional requested module: `Scopes`
+- Group expansion: `Arithmetic`, `Numbers`, `Whitespaces`
 - Backend: `interpreter`
 - Enabled optimizer flags: none
+
+The final plan may include typed dependencies required by those requested features; group expansion itself is not the planner.
 
 ## Exact CLI commands to run it
 
@@ -29,5 +31,4 @@ dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file
 
 ## Why this example exists
 
-It verifies that groups improve dialect ergonomics without becoming runtime components.
-Runtime activation remains manifest-backed and selected from the normalized build plan.
+It verifies that groups improve dialect ergonomics without becoming runtime components or a hidden composition owner. Runtime execution follows the canonical `LanguageDefinition -> LanguageCompiler -> LanguagePlan -> LanguageRuntime` path.

@@ -24,7 +24,6 @@
     <ProjectReference Include="..\UniversalToolchain.Capabilities.Core\UniversalToolchain.Capabilities.Core.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\UniversalToolchain.Diagnostics.Abstractions\UniversalToolchain.Diagnostics.Abstractions.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj" PrivateAssets="all" />
-    <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\AssemblyFinder\AssemblyFinder.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\BasicCore\BasicCore.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\BasicLexer\BasicLexer.csproj" PrivateAssets="all" />
@@ -35,9 +34,24 @@
     <ProjectReference Include="..\BasicCilCompiler\BasicCilCompiler.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\BytecodeDynamicMethodsCompiler\BytecodeDynamicMethodsCompiler.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\BasicStdLib\BasicStdLib.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\ArithmeticModule\ArithmeticModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\CommentsModule\CommentsModule.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\ConditionsModule\ConditionsModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\EqualityModule\EqualityModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\FunctionCallsModule\FunctionCallsModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\IdentifierModule\IdentifierModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\InternalPreprocessorLexemesModule\InternalPreprocessorLexemesModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\LabelsModule\LabelsModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\LoopsModule\LoopsModule.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\NativeMathModule\NativeMathModule.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\NumbersModule\NumbersModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\ParametersSetterModule\ParametersSetterModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\SafeMathFunctionsModule\SafeMathFunctionsModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\ScopesModule\ScopesModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\VariablesModule\VariablesModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\WhitespacesModule\WhitespacesModule.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\UniversalToolchain.Ssa.Optimization\UniversalToolchain.Ssa.Optimization.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\IntermediateRepresentationAbstractions\IntermediateRepresentationAbstractions.csproj" PrivateAssets="all" />
     <ProjectReference Include="$(FeatureManifestEmitterProjectPath)"

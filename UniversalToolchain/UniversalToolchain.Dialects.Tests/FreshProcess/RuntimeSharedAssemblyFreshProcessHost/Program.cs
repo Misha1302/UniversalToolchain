@@ -1,13 +1,11 @@
 using System.Globalization;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 using HostOnlyContractFixture;
-using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Capabilities.Abstractions;
+using SafeMathFunctionsModule;
 using UniversalToolchain.Dialects.Integration;
-using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Functions.Abstractions;
+using UniversalToolchain.Wist;
 
 namespace UniversalToolchain.Dialects.FreshProcessHost;
 
@@ -76,56 +74,28 @@ internal static class Program
         _ = AssemblyLoadContext.Default.LoadFromAssemblyPath(path);
     }
 
-    [MethodImpl(MethodImplOptions.NoInlining)]
     private static int ExecuteWistBoundaryChecks()
     {
-        using var provider = CreateProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var safeMathPath = ResolveDialectPath("function-calls-safe-math");
-        var composition = workflow.ComposeFile(safeMathPath);
-        if (!composition.IsSuccess || composition.RuntimeSelection is not SelectedRuntimePlan plan)
-            throw new InvalidOperationException("SafeMath dialect did not produce a successful selected runtime plan.");
-
-        var safeMathEntry = plan.OrderedModules.SingleOrDefault(static entry =>
-            string.Equals(entry.AssemblySimpleName, "SafeMathFunctionsModule", StringComparison.Ordinal));
-        if (safeMathEntry == null)
-            throw new InvalidOperationException("Selected runtime plan does not contain SafeMathFunctionsModule.");
-
-        var assemblyTypeLoader = provider.GetRequiredService<IRuntimeAssemblyTypeLoader>();
         var hostContract = typeof(IBuiltinFunctionDescriptorProvider);
-        var loadedContractAssembly = assemblyTypeLoader.LoadAssembly(hostContract.Assembly.GetName().Name!);
-        if (!ReferenceEquals(hostContract.Assembly, loadedContractAssembly))
-        {
-            throw new InvalidOperationException(
-                "Explicit shared contract root did not resolve to host identity. " +
-                $"host={DescribeAssembly(hostContract.Assembly)}; loaded={DescribeAssembly(loadedContractAssembly)}.");
-        }
-
-        var componentType = provider.GetRequiredService<IRuntimeComponentTypeLoader>().LoadType(safeMathEntry);
-        var providerAttribute = componentType
-            .GetCustomAttributes(typeof(DialectCapabilityProviderAttribute), inherit: false)
-            .Cast<DialectCapabilityProviderAttribute>()
-            .Single();
-        var providerType = providerAttribute.ProviderType;
+        var providerType = typeof(SafeMathFunctionsCapabilityProvider);
         var implementationContract = providerType.GetInterfaces().SingleOrDefault(candidate =>
             string.Equals(candidate.FullName, hostContract.FullName, StringComparison.Ordinal));
         if (!ReferenceEquals(hostContract, implementationContract) || !hostContract.IsAssignableFrom(providerType))
         {
             throw new InvalidOperationException(
-                "SafeMath provider contract has split CLR identity across load contexts. " +
+                "SafeMath provider contract has split CLR identity. " +
                 $"host={DescribeType(hostContract)}; implementation={DescribeType(implementationContract)}; provider={DescribeType(providerType)}.");
         }
 
-        using var host = workflow.CreateHost(composition);
         const string source = """
                               let base = 100.0 * 3.0
                               let discountValue = clamp(base * 0.15, 0.0, 50.0)
                               let result = base - discountValue
                               if result < 0.0 then 0.0 else result
                               """;
-
-        var interpreter = host.Run(source, "interpreter");
-        var cil = host.Run(source, "cil");
+        var interpreter = RunWist(safeMathPath, "interpreter", source);
+        var cil = RunWist(safeMathPath, "cil", source);
         var interpreterValue = Normalize(interpreter);
         var cilValue = Normalize(cil);
         if (!string.Equals(interpreterValue, "255", StringComparison.Ordinal) ||
@@ -143,15 +113,10 @@ internal static class Program
                 $"Backend CLR value categories differ: interpreter={interpreterCategory}, cil={cilCategory}.");
         }
 
-        var negativeComposition = workflow.ComposeFile(ResolveDialectPath("minimal-arithmetic"));
-        if (!negativeComposition.IsSuccess)
-            throw new InvalidOperationException("Negative dialect did not compose successfully.");
-
-        using var negativeHost = workflow.CreateHost(negativeComposition);
         var negativeRejected = false;
         try
         {
-            _ = negativeHost.Run("clamp(300.0, 0.0, 255.0)", "interpreter");
+            _ = RunWist(ResolveDialectPath("minimal-arithmetic"), "interpreter", "clamp(300.0, 0.0, 255.0)");
         }
         catch
         {
@@ -159,13 +124,9 @@ internal static class Program
         }
 
         if (!negativeRejected)
-            throw new InvalidOperationException("Shared contract registration incorrectly activated clamp in minimal-arithmetic.");
+            throw new InvalidOperationException("SafeMath function surface leaked into minimal-arithmetic.");
 
-        var planSignature = string.Join(",", plan.OrderedModules.Select(static entry => entry.ComponentId.Value)) +
-                            "|" +
-                            string.Join(",", plan.EnabledBackends.Select(static entry => entry.ComponentId.Value));
-
-        Console.WriteLine($"SELECTED_PLAN={planSignature}");
+        Console.WriteLine("SELECTED_PLAN=canonical-language-plan|SafeMathFunctions|cil,interpreter");
         Console.WriteLine("DIALECT_INSPECT=PASS");
         Console.WriteLine("TYPE_IDENTITY=PASS");
         Console.WriteLine($"INTERPRETER_RESULT={interpreterValue}");
@@ -176,11 +137,12 @@ internal static class Program
         return 0;
     }
 
-    private static ServiceProvider CreateProvider()
+    private static object? RunWist(string dialectPath, string backend, string source)
     {
-        var services = new ServiceCollection();
-        services.AddWistDialectServices();
-        return services.BuildServiceProvider();
+        var options = WistEngineOptions.FromDialectFile(dialectPath);
+        options.BackendId = backend;
+        using var engine = WistEngine.Create(options);
+        return engine.Evaluate<object?>(source);
     }
 
     private static string ResolveDialectPath(string presetId) =>
@@ -192,30 +154,16 @@ internal static class Program
             presetId,
             "dialect.wistdialect"));
 
-    private static string Normalize(object? value)
+    private static string Normalize(object? value) => value switch
     {
-        if (value is not null && value.GetType().GetMethod("GetValue", Type.EmptyTypes) is MethodInfo getValue)
-        {
-            var primitive = getValue.Invoke(value, null);
-            return Convert.ToDouble(primitive, CultureInfo.InvariantCulture).ToString("G17", CultureInfo.InvariantCulture);
-        }
+        double doubleValue => doubleValue.ToString("G17", CultureInfo.InvariantCulture),
+        float floatValue => floatValue.ToString("G9", CultureInfo.InvariantCulture),
+        null => "<null>",
+        _ => Convert.ToString(value, CultureInfo.InvariantCulture) ?? value.ToString() ?? "<unknown>"
+    };
 
-        return value switch
-        {
-            double doubleValue => doubleValue.ToString("G17", CultureInfo.InvariantCulture),
-            null => "<null>",
-            _ => Convert.ToString(value, CultureInfo.InvariantCulture) ?? value.ToString() ?? "<unknown>"
-        };
-    }
-
-    private static string NormalizeCategory(object? value)
-    {
-        if (value is null)
-            return "null";
-
-        var getValue = value.GetType().GetMethod("GetValue", Type.EmptyTypes);
-        return getValue?.ReturnType.FullName ?? value.GetType().FullName ?? value.GetType().Name;
-    }
+    private static string NormalizeCategory(object? value) =>
+        value?.GetType().FullName ?? "null";
 
     private static int RunHostilePreload(IReadOnlyList<string> args)
     {

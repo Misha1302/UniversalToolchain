@@ -122,6 +122,17 @@ public static class WistLanguageDefinitions
         return true;
     }
 
+    internal static string GetDefaultBackendId(string presetId)
+    {
+        if (string.IsNullOrWhiteSpace(presetId))
+            throw new ArgumentOutOfRangeException(nameof(presetId), presetId, "Unknown shipped Wist preset.");
+        var canonicalPresetId = Presets.Keys.FirstOrDefault(
+            candidate => string.Equals(candidate, presetId, StringComparison.OrdinalIgnoreCase));
+        if (canonicalPresetId == null)
+            throw new ArgumentOutOfRangeException(nameof(presetId), presetId, "Unknown shipped Wist preset.");
+        return Presets[canonicalPresetId].Backends[0];
+    }
+
     private sealed record PresetDefinition(
         IReadOnlyList<LanguageFeatureId> Features,
         IReadOnlyList<string> Backends,

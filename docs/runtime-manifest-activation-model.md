@@ -1,34 +1,51 @@
 # Runtime Manifest Activation Model
 
-This document defines the canonical runtime activation path used by dialect execution today.
+> **Status: compatibility / historical infrastructure, not the canonical Wist execution model.**
+>
+> The current Wist production path is documented in [Current Canonical Runtime Pipeline](./current-canonical-runtime-pipeline.md): `LanguageDefinition -> LanguageCompiler -> LanguagePlan -> LanguageRuntime`.
 
-## Canonical execution story
+## What remains
 
-Canonical dialect execution is selection-driven and manifest-backed:
+The repository still contains generic dialect runtime-manifest serializer/emitter infrastructure and tests for its deterministic artifact contracts. Those artifacts can describe component metadata for compatibility, tooling or non-canonical integration scenarios.
 
-1. Compile dialect text/file into a `DialectBuildPlan`.
-2. Resolve a `SelectedRuntimePlan` from runtime manifests (catalog-known components -> selected components).
-3. Build Wist execution configuration from the selected plan.
-4. Create host and activate only the selected runtime surface.
-5. Execute code.
+Keeping that format alive does **not** make it a semantic owner for current Wist execution.
 
-`ComposeText`/`ComposeFile` perform steps 1-2 and do not create the host. `CreateHost(...)` performs activation from the already selected runtime plan.
+## What S11 retired for Wist
 
-## Runtime model boundaries
+Current Wist execution no longer performs this sequence:
 
-- **Catalog-known components**: all runtime components exposed by loaded manifests.
-- **Selected runtime plan**: deterministic subset required by the dialect build plan.
-- **Exact activation**: selected entries are activated from explicit type references in manifest activation metadata.
-- **Backend registrar activation**: selected backend entries resolve exact registrar types and activate only those registrars.
+```text
+DialectBuildPlan
+  -> SelectedRuntimePlan
+  -> manifest-backed Wist runtime selection
+  -> WistDialectExecutionHost
+```
 
-Known backends in execution configuration are derived from the selected backends, not from the full catalog.
+The old Wist planner/runtime-selection owners were physically removed in S11 and permanent architecture guards reject their return.
 
-## Reflection in the canonical path
+## Current Wist activation story
 
-Reflection is still part of the runtime infrastructure, but its role is constrained:
+For Wist, activation is plan-backed rather than manifest-selected:
 
-- centralized in integration/runtime infrastructure,
-- scoped to selected manifest entries,
-- used for exact type activation and backend registrar resolution.
+1. Wist configuration is translated to `LanguageDefinition`.
+2. `LanguageCompiler` closes dependencies and produces the only semantic `LanguagePlan`.
+3. The plan records exact package identity, contribution identity and backend artifact routes.
+4. `LanguageRuntime` binds only the materialized runtime graph to exact package/component sources.
+5. Wist implementation factories instantiate the components already selected by the plan.
 
-Broad eager assembly/type discovery is not part of runtime manifest execution. Manual dependency-injection wiring may register known components directly, but manifest-based activation requires exact assembly, component and type identities and never scans an assembly to infer them.
+Runtime materialization validates exact package id/version/manifest/implementation provenance. It does not scan a manifest catalog to choose a different set of Wist modules or backends.
+
+## Runtime-manifest artifact boundary
+
+When working on the retained generic runtime-manifest infrastructure:
+
+- keep serialization/emission deterministic;
+- preserve explicit assembly/type identities;
+- validate malformed/duplicate entries fail closed;
+- do not make reflection enumeration order semantic;
+- do not route Wist public execution back through manifest-selected component planning;
+- keep runtime-manifest tests separate from canonical Wist `LanguagePlan` tests.
+
+## Contributor rule
+
+A runtime manifest may describe an implementation artifact. It must not become a second source of Wist semantic truth alongside `LanguagePlan`.

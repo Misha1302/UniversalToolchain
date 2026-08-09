@@ -1,9 +1,6 @@
-using UniversalToolchain.Testing.Infrastructure;
 using System.Globalization;
-using ExceptionsManager;
-using Microsoft.Extensions.DependencyInjection;
-using NumbersModule.Core;
-using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.Wist;
+using UniversalToolchain.Wist.LanguagePack;
 
 namespace UniversalToolchain.Dialects.Tests.Capabilities;
 
@@ -20,18 +17,8 @@ public sealed class FunctionCallsSourceExecutionTests
         string source,
         string expectedValueText)
     {
-        using var provider = CreateProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeFile(ResolveFunctionCallsSafeMathDialectFile());
-        Assert.That(
-            composition.IsSuccess,
-            Is.True,
-            DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
-
-        using var host = workflow.CreateHost(composition);
-
-        var interpreter = Normalize(host.Run(source, "interpreter"));
-        var compiler = Normalize(host.Run(source, "cil"));
+        var interpreter = Evaluate(source, "interpreter");
+        var compiler = Evaluate(source, "cil");
 
         Assert.Multiple(() =>
         {
@@ -45,54 +32,25 @@ public sealed class FunctionCallsSourceExecutionTests
     public void FinalPriceExpression_FromWistSource_ShouldHaveInterpreterAndCompilerParity()
     {
         const string source = """
-                              let base = 100.0 * 3.0
-                              let discountValue = clamp(base * 0.15, 0.0, 50.0)
-                              let result = base - discountValue
-                              if result < 0.0 then 0.0 else result
-                              """;
-
-        using var provider = CreateProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeFile(ResolveFunctionCallsSafeMathDialectFile());
-        Assert.That(
-            composition.IsSuccess,
-            Is.True,
-            DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
-
-        using var host = workflow.CreateHost(composition);
-        var interpreter = Normalize(host.Run(source, "interpreter"));
-        var compiler = Normalize(host.Run(source, "cil"));
+            let base = 100.0 * 3.0
+            let discountValue = clamp(base * 0.15, 0.0, 50.0)
+            let result = base - discountValue
+            if result < 0.0 then 0.0 else result
+            """;
 
         Assert.Multiple(() =>
         {
-            Assert.That(interpreter, Is.EqualTo("255"));
-            Assert.That(compiler, Is.EqualTo("255"));
+            Assert.That(Evaluate(source, "interpreter"), Is.EqualTo("255"));
+            Assert.That(Evaluate(source, "cil"), Is.EqualTo("255"));
         });
     }
 
-    private static string ResolveFunctionCallsSafeMathDialectFile() =>
-        UniversalToolchain.Dialects.Tests.TestSourcePaths.WistExampleDialectPath("function-calls-safe-math");
-
-    private static ServiceProvider CreateProvider()
+    private static string Evaluate(string source, string backend)
     {
-        var services = new ServiceCollection();
-        services.AddWistDialectServices();
-        services.AddWistCilBackend();
-        services.AddWistInterpreterBackend();
-        return services.BuildServiceProvider();
-    }
-
-    private static string Normalize(object? value)
-    {
-        if (value is not null && value.GetType().GetMethod("GetValue", Type.EmptyTypes) is not null)
-            return BackendResultAssertions.AsNumber(value).ToString("G17", CultureInfo.InvariantCulture);
-
-        return value switch
-        {
-            RealNumberImpl number => number.GetValue().ToString(CultureInfo.InvariantCulture),
-            double doubleValue => doubleValue.ToString("G17", CultureInfo.InvariantCulture),
-            null => "<null>",
-            _ => Convert.ToString(value, CultureInfo.InvariantCulture) ?? value.ToString() ?? "<unknown>"
-        };
+        var options = WistEngineOptions.FromPresetId(WistLanguageDefinitions.FunctionCallsSafeMathId);
+        options.BackendId = backend;
+        using var engine = WistEngine.Create(options);
+        var value = engine.Evaluate<double>(source);
+        return value.ToString("G17", CultureInfo.InvariantCulture);
     }
 }

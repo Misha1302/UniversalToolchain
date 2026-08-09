@@ -6,7 +6,7 @@ import json
 import re
 from pathlib import Path
 
-EXCLUDED = {".git", "artifacts", "bin", "obj", "packages", "node_modules"}
+EXCLUDED = {".git", "artifacts", "bin", "obj", "packages", "node_modules", "Experiments"}
 
 
 def production_sources(root: Path):

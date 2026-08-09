@@ -1,3 +1,5 @@
+using UniversalToolchain.Wist;
+
 namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 
 [TestFixture]
@@ -35,10 +37,20 @@ public class SettableGettableModulePipelineTests
     }
 
     [Test]
-    public void SettableGettable_ModuleDisabled_SameProgramFailsDeterministically()
+    public void SettableGettable_LegacyAlias_IsRejectedByCanonicalDsl()
     {
         using var h = new ModulePipelineTestHelper();
-        var composition = h.Compose(ModulePipelineTestHelper.FullUniversalModules.Concat(["SettableGettable"]));
-        Assert.That(composition.IsSuccess, Is.False);
+        var dialect = h.BuildDialectText(
+            "LegacySettableGettable",
+            ModulePipelineTestHelper.FullUniversalModules.Concat(["SettableGettable"]),
+            backends: ["interpreter"]);
+        var options = WistEngineOptions.FromDialectText(dialect, "legacy-settable-gettable-test");
+        options.BackendId = "interpreter";
+        options.AllowedAssemblies = [typeof(int).Assembly, typeof(SettableGettableModulePipelineTests).Assembly];
+
+        var exception = Assert.Catch(() => WistEngine.Create(options));
+
+        Assert.That(exception, Is.Not.Null);
+        Assert.That(exception!.ToString(), Does.Contain("SettableGettable"));
     }
 }
