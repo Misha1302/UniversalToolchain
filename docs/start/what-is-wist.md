@@ -5,26 +5,27 @@ description: Explain Wist as the reference language built on top of UniversalToo
 
 # What is Wist?
 
-Wist is **not** the product. It is the reference language that demonstrates how UniversalToolchain modules can be assembled into a usable DSL.
+Wist is **not** the product. It is the reference language that demonstrates how UniversalToolchain's typed language, planning, artifact-route and runtime contracts can produce a usable DSL.
 
 ## Problem
 
-A DSL framework needs a concrete language to validate the architecture. UniversalToolchain needs a proving ground that exercises module composition, dialect files, bytecode/AIR, optimizers, compiler execution and interpreter execution. Wist fulfils that role.
+A language framework needs a concrete proving ground. Wist exercises real syntax, modular frontend behavior, bytecode/AIR lowering, optimizers, compiler/interpreter backends, runtime policy and public embedding APIs.
 
-Wist is not meant to replace C#, scripting engines or full language workbenches. It exists so the framework can be tested against real syntax, real modules and real backend paths.
+Wist is not intended to replace C#, scripting engines or full language workbenches. It validates the framework against a real language surface.
 
 ## Concept
 
-**Wist** is the reference language in this repository. It demonstrates:
+Wist demonstrates:
 
-- shipped dialect profiles;
-- manifest-backed dialect composition;
+- shipped `.wistdialect` profiles and presets;
+- typed feature/contribution composition;
+- one canonical `LanguageCompiler -> LanguagePlan -> LanguageRuntime` execution path;
 - compiler and interpreter backends;
 - CLI execution through `UniversalToolchain/Wistc/Wistc.csproj`;
-- programmatic usage through the Wist runtime facade;
-- constrained runtime surfaces such as `pricing-restricted`.
+- programmatic usage through `UniversalToolchain.Wist`;
+- constrained surfaces such as `pricing-restricted`.
 
-Wist is built from modules. A dialect selects which modules and backends are available. For example, `minimal-arithmetic` exposes a small arithmetic surface, while `full-default` exposes a broader language surface.
+A dialect requests Wist features/modules and backends. The Wist configuration frontend translates that request to `LanguageDefinition`; `LanguageCompiler` closes feature dependencies, applies exclusions and resolves the exact contribution/backend routes. `LanguageRuntime` then materializes only the components in that immutable plan.
 
 Rules are currently removed from the public runtime surface. Do not treat rule schemas, `rule-run`, raw-source RuleSet MVP parsing or `RuleDeclarationsModule` as available Wist runtime features.
 
@@ -42,31 +43,43 @@ Expected output:
 12
 ```
 
-You can also run the same expression in interpreter mode:
+Run the same expression in interpreter mode:
 
 ```bash
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend interpreter
 ```
 
-If a selected dialect does not expose the requested backend, Wistc reports an execution-mode error.
+If the selected dialect does not expose the requested backend, Wistc reports an execution-mode error.
 
 ## How it fits into the pipeline
 
-Wist uses UniversalToolchain’s pipeline:
+The semantic/runtime ownership chain is:
 
 ```text
-source → lexer/parser → AST → bytecode/AIR → optimizer → backend → result
+Wist configuration
+  -> LanguageDefinition
+  -> LanguageCompiler
+  -> LanguagePlan
+  -> LanguageRuntime
 ```
 
-Wist-specific code orchestrates one concrete language. UniversalToolchain remains the framework layer: dialect definitions, build plans, manifests, module selection and backend activation. Treat Wist as an example and validation target for the framework, not as the only possible language.
+The planned artifact route then executes the language pipeline:
+
+```text
+source -> syntax/AST -> bytecode -> AIR -> optimizers/optional SSA -> backend artifact -> result
+```
+
+Wist-specific code translates Wist-facing aliases and supplies Wist implementations. UniversalToolchain owns the generic feature/package/planning/runtime contracts. Wist does not maintain a second build plan or manifest-selected runtime beside `LanguagePlan`.
 
 ## Rules and constraints
 
-- Wist programs run under a selected dialect.
-- Syntax is only available when the dialect includes the owning module.
-- `cil` is the user-facing mode for the CIL backend.
-- `interpreter` runs through the interpreter backend when the dialect enables it.
-- Restricted dialects are composition constraints, not hardened sandboxes.
+- Wist programs run under one canonical language plan.
+- Syntax is available only when the owning contribution is selected by that plan.
+- Feature dependencies are closed by `LanguageCompiler`; callers do not need to mirror the complete transitive graph manually.
+- Explicit exclusions fail closed if dependency closure requires an excluded contribution.
+- `cil` selects the CIL backend when the language plan exposes it.
+- `interpreter` selects the interpreter backend when the language plan exposes it.
+- Restricted dialects constrain composition and host interop; they are not hardened process sandboxes.
 - Rules are not currently a public runtime capability.
 
 ## Next
