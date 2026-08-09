@@ -3,6 +3,7 @@ using BasicCore.ParserWrapper;
 using BasicCore.Registration;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
+using UniversalToolchain.ModuleContracts;
 
 namespace UniversalToolchain.Wist.LanguagePack;
 
@@ -10,8 +11,14 @@ namespace UniversalToolchain.Wist.LanguagePack;
 /// Direct-runtime infrastructure module for the Wist program root. It owns no feature selection or
 /// ordering decisions and is always prepended after LanguagePlan has selected the semantic modules.
 /// </summary>
-internal sealed class WistProgramStructureFrontendModule : IFrontendCoreModule
+internal sealed class WistProgramStructureFrontendModule : IFrontendCoreModule, IModuleContractDescriptorProvider
 {
+
+    public IReadOnlyList<IModuleContractFacet> GetFacets() =>
+    [
+        new VerifierContractFacet(new ModuleId("wist.program-structure"), [])
+    ];
+
     public void InitAstTranslator(IAstToBytecodeTranslator translator)
     {
         ArgumentNullException.ThrowIfNull(translator);

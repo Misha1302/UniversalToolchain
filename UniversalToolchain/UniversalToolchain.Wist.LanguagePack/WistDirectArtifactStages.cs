@@ -73,19 +73,30 @@ internal sealed class WistSyntaxArtifact(
         ?? throw new ArgumentNullException(nameof(modules));
 }
 
-internal sealed class WistBytecodeArtifact(CompilationInput input, Bytecode bytecode)
+internal sealed class WistBytecodeArtifact(
+    CompilationInput input,
+    Bytecode bytecode,
+    IReadOnlyList<IFrontendCoreModule> frontendModules)
 {
     public CompilationInput Input { get; } = input ?? throw new ArgumentNullException(nameof(input));
     public Bytecode Bytecode { get; } = bytecode ?? throw new ArgumentNullException(nameof(bytecode));
+    public IReadOnlyList<IFrontendCoreModule> FrontendModules { get; } = frontendModules?.ToArray()
+        ?? throw new ArgumentNullException(nameof(frontendModules));
 }
 
 internal sealed class WistAirArtifact(
     CompilationInput input,
     IAbstractIR air,
+    IReadOnlyList<IFrontendCoreModule> frontendModules,
+    IReadOnlyList<IAirOptimizer> optimizers,
     SsaRouteReport? ssaReport = null)
 {
     public CompilationInput Input { get; } = input ?? throw new ArgumentNullException(nameof(input));
     public IAbstractIR Air { get; } = air ?? throw new ArgumentNullException(nameof(air));
+    public IReadOnlyList<IFrontendCoreModule> FrontendModules { get; } = frontendModules?.ToArray()
+        ?? throw new ArgumentNullException(nameof(frontendModules));
+    public IReadOnlyList<IAirOptimizer> Optimizers { get; } = optimizers?.ToArray()
+        ?? throw new ArgumentNullException(nameof(optimizers));
     public SsaRouteReport? SsaReport { get; } = ssaReport;
 }
 
@@ -184,7 +195,7 @@ internal sealed class WistDirectBytecodeTransformer(
         ArgumentNullException.ThrowIfNull(context);
 
         var bytecode = CanonicalArtifactStages.LowerToBytecode(source.Root, _translatorFactory(), source.Modules);
-        return new WistBytecodeArtifact(source.Input, bytecode);
+        return new WistBytecodeArtifact(source.Input, bytecode, source.Modules);
     }
 }
 
@@ -206,6 +217,6 @@ internal sealed class WistDirectAirTransformer(
         ArgumentNullException.ThrowIfNull(context);
 
         var air = CanonicalArtifactStages.LowerToAir(source.Bytecode, _translatorFactory());
-        return new WistAirArtifact(source.Input, air);
+        return new WistAirArtifact(source.Input, air, source.FrontendModules, []);
     }
 }

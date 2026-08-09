@@ -327,7 +327,12 @@ internal static class WistDirectRuntimeComponents
                     ?? throw new InvalidOperationException($"Wist optimizer '{ContributionId.Value}' returned null AIR.");
                 if (capture?.Report is { } published)
                     report = published;
-                return new WistAirArtifact(source.Input, result, report);
+                return new WistAirArtifact(
+                    source.Input,
+                    result,
+                    source.FrontendModules,
+                    source.Optimizers.Append(optimizer).ToArray(),
+                    report);
             }
             finally
             {

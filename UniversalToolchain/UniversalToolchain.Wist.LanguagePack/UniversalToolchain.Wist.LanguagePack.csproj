@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\UniversalToolchain.FeatureSdk\UniversalToolchain.FeatureSdk.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Runtime\UniversalToolchain.Runtime.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.ModuleContracts\UniversalToolchain.ModuleContracts.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\UniversalToolchain.Capabilities.Core\UniversalToolchain.Capabilities.Core.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\UniversalToolchain.Diagnostics.Abstractions\UniversalToolchain.Diagnostics.Abstractions.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj" PrivateAssets="all" />
@@ -89,6 +90,15 @@
         <PackageCopyToOutput>true</PackageCopyToOutput>
         <PackageFlatten>true</PackageFlatten>
       </TfmSpecificPackageFile>
+    </ItemGroup>
+  </Target>
+  <Target Name="GetWistLanguagePackRuntimeClosure"
+          DependsOnTargets="Build;ResolveReferences"
+          Returns="@(_WistLanguagePackRuntimeClosure)">
+    <ItemGroup>
+      <_WistLanguagePackRuntimeClosure Include="$(TargetPath)" />
+      <_WistLanguagePackRuntimeClosure Include="@(ReferenceCopyLocalPaths)"
+                                       Condition="'%(ReferenceCopyLocalPaths.Extension)' == '.dll'" />
     </ItemGroup>
   </Target>
 </Project>

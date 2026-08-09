@@ -1,11 +1,12 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
-using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Dialects.Integration;
-using UniversalToolchain.Dialects.Wist;
-using UniversalToolchain.Dialects.Wist.Presets;
 using UniversalToolchain.ModuleContracts;
+using UniversalToolchain.FeatureSdk;
+using UniversalToolchain.Language.Abstractions;
+using UniversalToolchain.LanguageSdk;
+using UniversalToolchain.Runtime;
+using UniversalToolchain.Wist.LanguagePack;
 
 namespace UniversalToolchain.EndToEndExperiments;
 
@@ -171,31 +172,20 @@ internal static class Program
             Environment.SetEnvironmentVariable(
                 "CGO27_E2E_FAULT",
                 @case.InjectFault ? "replace-result" : null);
-            var services = new ServiceCollection();
-            services.AddWistDialectServices();
-            using var compositionProvider = services.BuildServiceProvider();
-            var workflow = compositionProvider.GetRequiredService<WistDialectExecutionWorkflow>();
-            var preset = WistShippedDialectPresets.GetRequired(@case.PresetId);
-            var sourcePath = new WistShippedDialectFileResolver().Resolve(preset);
-            var dialectSource = File.ReadAllText(sourcePath);
-            var composition = @case.InjectFault
-                ? workflow.ComposeText(
-                    dialectSource,
-                    Path.GetFileName(sourcePath),
-                    RuntimeProfileDefinitionBuilder
-                        .Create("cgo27-end-to-end-fault")
-                        .Describe("Adds the model-authored CGO27 result-integrity mutation optimizer.")
-                        .EnableOptimizer("Cgo27Fault")
-                        .Build(),
-                    RuntimeProfileOverridePolicy.StrictNoConflicts)
-                : workflow.ComposeText(dialectSource, Path.GetFileName(sourcePath));
-            trace.Add(composition.IsSuccess ? "composition-success" : "composition-failure");
-            if (!composition.IsSuccess)
-            {
-                throw new InvalidOperationException(
-                    "Wist dialect composition failed: " +
-                    string.Join(" | ", composition.Diagnostics.Select(static item => item.Message)));
-            }
+            var wistPackage = new WistLanguageFeaturePackage();
+            var faultPackage = new Cgo27FaultLanguagePackage();
+            var definition = NarrowDefinitionToBackend(
+                WistLanguageDefinitions.Create(@case.PresetId),
+                new BackendId(@case.Backend));
+            if (@case.InjectFault)
+                definition = Cgo27FaultLanguagePackage.AddFaultFeature(definition);
+
+            var registry = new LanguagePackageRegistry()
+                .AddPackage(wistPackage)
+                .AddPackage(faultPackage);
+            var compilation = new LanguageCompiler(registry).Compile(definition);
+            var plan = compilation.GetRequiredPlan();
+            trace.Add("language-plan-created");
 
             var verificationOptions = new ModuleContractVerificationOptions
             {
@@ -206,19 +196,21 @@ internal static class Program
                 },
                 DiagnosticSink = sink
             }.SnapshotValidated();
-            using var host = workflow.CreateHost(
-                composition,
-                new WistRuntimeServiceOptions { ModuleContracts = verificationOptions });
-            trace.Add("runtime-host-created");
+            using var runtime = LanguageRuntime.Create(
+                plan,
+                new ILanguageRouteComponentSource[] { wistPackage, faultPackage },
+                WistModuleContractRouteObserver.CreateRuntimeOptions([], verificationOptions));
+            trace.Add("runtime-created");
             trace.Add("source-execution-start");
             var arguments = @case.Arguments.ToDictionary(
                 static item => item.Key,
                 static item => (object?)item.Value,
                 StringComparer.Ordinal);
-            var result = arguments.Count == 0
-                ? host.Run(@case.Source, @case.Backend)
-                : host.Run(@case.Source, arguments, @case.Backend);
-            var numericResult = Convert.ToDouble(result, CultureInfo.InvariantCulture);
+            var result = runtime.Run(new LanguageExecutionRequest(
+                @case.Source,
+                new BackendId(@case.Backend),
+                arguments));
+            var numericResult = Convert.ToDouble(result.Value, CultureInfo.InvariantCulture);
             stopwatch.Stop();
             trace.Add("source-result-produced");
             AppendDiagnosticTrace(trace, sink);
@@ -271,6 +263,36 @@ internal static class Program
         {
             Environment.SetEnvironmentVariable("CGO27_E2E_FAULT", null);
         }
+    }
+
+    private static LanguageDefinition NarrowDefinitionToBackend(
+        LanguageDefinition definition,
+        BackendId backend)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        if (!definition.Backends.Contains(backend))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(backend),
+                backend.Value,
+                $"Preset '{definition.Id.Value}' does not enable backend '{backend.Value}'.");
+        }
+
+        return new LanguageDefinition(
+            definition.Id,
+            definition.Version,
+            definition.ToolchainApiVersion,
+            definition.SelectedFeatures,
+            [backend],
+            definition.RuntimeProvider,
+            definition.RuntimePolicy,
+            definition.Metadata,
+            definition.SlotOverrides,
+            definition.CapabilityProviders,
+            definition.ExcludedContributions,
+            definition.EntryArtifact,
+            definition.ContributionOrderConstraints,
+            definition.IntrinsicPolicy);
     }
 
     private static EndToEndRecord CreateRecord(

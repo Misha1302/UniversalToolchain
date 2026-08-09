@@ -253,22 +253,22 @@ def main() -> int:
         if not metadata.is_file() or str(package_dir) not in metadata.read_text(encoding="utf-8"):
             raise RuntimeError("consumer was not restored from the requested package directory")
 
-        # Seed an incompatible-checkout mutation. The package facade references runtime
-        # identity generation 2; replacing one runtime DLL with generation 1 must fail
-        # before any formula can execute.
-        fake = root / "fake-integration"
+        # Seed an incompatible-checkout mutation against a canonical runtime owner. Replacing
+        # UniversalToolchain.Runtime with an incompatible assembly must fail before any formula
+        # can execute; legacy Dialects.Wist/SelectedRuntimePlan assemblies are not package owners.
+        fake = root / "fake-runtime"
         fake.mkdir()
         (fake / "Fake.csproj").write_text(
             '''<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <AssemblyName>UniversalToolchain.Dialects.Integration</AssemblyName>
+    <AssemblyName>UniversalToolchain.Runtime</AssemblyName>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
   </PropertyGroup>
 </Project>
 ''', encoding="utf-8")
-        (fake / "Placeholder.cs").write_text("namespace SeededIncompatibleCheckout; public sealed class Placeholder;\n", encoding="utf-8")
+        (fake / "Placeholder.cs").write_text("namespace SeededIncompatibleRuntime; public sealed class Placeholder;\n", encoding="utf-8")
         run([args.dotnet, "restore", str(fake / "Fake.csproj"), "--configfile", str(config), "--disable-parallel", "-p:NuGetAudit=false"], cwd=fake, env=env)
         run([args.dotnet, "build", str(fake / "Fake.csproj"), "-c", "Release", "--no-restore", "-m:1"], cwd=fake, env=env)
         consumer_candidates = [
@@ -281,16 +281,16 @@ def main() -> int:
         output = consumer_candidates[0].parent
         fake_candidates = [
             candidate
-            for candidate in (fake / "bin").rglob("UniversalToolchain.Dialects.Integration.dll")
+            for candidate in (fake / "bin").rglob("UniversalToolchain.Runtime.dll")
             if "ref" not in candidate.parts
         ]
         if len(fake_candidates) != 1:
-            raise RuntimeError(f"expected one fake integration assembly, found: {fake_candidates}")
+            raise RuntimeError(f"expected one fake runtime assembly, found: {fake_candidates}")
         shutil.copy2(fake_candidates[0], output)
         incompatible = run([args.dotnet, str(consumer_candidates[0])], cwd=output, env=env, expect_success=False)
         if incompatible.returncode == 0:
             raise RuntimeError("seeded incompatible runtime checkout executed successfully")
-        if "UniversalToolchain.Dialects.Integration" not in incompatible.stdout:
+        if "UniversalToolchain.Runtime" not in incompatible.stdout:
             raise RuntimeError(f"incompatible checkout failed without deterministic assembly owner evidence:\n{incompatible.stdout}")
 
     print(f"UniversalToolchain.Wist {args.version}: clean consumer, preset matrix, and incompatible-checkout rejection passed")

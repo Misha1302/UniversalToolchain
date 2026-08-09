@@ -272,7 +272,16 @@ if [[ "$skip_pack" == false ]]; then
   wist_package="artifacts/packages/UniversalToolchain.Wist.${wist_version}.nupkg"
   wist_reference_assembly="UniversalToolchain/UniversalToolchain.Wist/bin/$configuration/net10.0/UniversalToolchain.Wist.dll"
   test -f "$wist_reference_assembly"
-  wist_reference_dir="$(dirname "$wist_reference_assembly")"
+  wist_reference_dir="$root/artifacts/wist-runtime-reference"
+  rm -rf "$wist_reference_dir"
+  "$dotnet_command" msbuild UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj \
+    -nologo \
+    -t:MaterializeCanonicalWistRuntimeClosure \
+    -p:Configuration="$configuration" \
+    -p:TargetFramework=net10.0 \
+    -p:CanonicalWistRuntimeReferenceDirectory="$wist_reference_dir" \
+    -p:NuGetAudit=false
+  test -f "$wist_reference_dir/UniversalToolchain.Wist.dll"
   wist_compile_reference="UniversalToolchain/UniversalToolchain.Wist/obj/$configuration/net10.0/ref/UniversalToolchain.Wist.dll"
   test -f "$wist_compile_reference"
   python3 Tools/check-wist-package-surface.py \

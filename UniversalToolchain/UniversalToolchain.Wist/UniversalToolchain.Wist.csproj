@@ -22,7 +22,7 @@
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <DebugType>portable</DebugType>
         <NoWarn>$(NoWarn);NU5131</NoWarn>
-        <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeProjectReferenceAssembliesInPackage</TargetsForTfmSpecificBuildOutput>
+        <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeCanonicalWistRuntimeClosureInPackage</TargetsForTfmSpecificBuildOutput>
         <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeFacadeReferenceAssemblyInPackage;IncludeRuntimeManifestsInPackage</TargetsForTfmSpecificContentInPackage>
     </PropertyGroup>
 
@@ -60,12 +60,30 @@
         </Content>
     </ItemGroup>
 
-    <Target Name="IncludeProjectReferenceAssembliesInPackage" DependsOnTargets="ResolveReferences">
+    <Target Name="IncludeCanonicalWistRuntimeClosureInPackage" DependsOnTargets="Build;ResolveReferences">
+        <MSBuild Projects="..\UniversalToolchain.Wist.LanguagePack\UniversalToolchain.Wist.LanguagePack.csproj"
+                 Targets="GetWistLanguagePackRuntimeClosure"
+                 Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework);BuildProjectReferences=true"
+                 BuildInParallel="false">
+            <Output TaskParameter="TargetOutputs" ItemName="_WistLanguagePackRuntimeClosure" />
+        </MSBuild>
         <ItemGroup>
-            <BuildOutputInPackage
-                Include="@(ReferenceCopyLocalPaths)"
-                Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference' and '%(ReferenceCopyLocalPaths.Extension)' == '.dll'" />
+            <_CanonicalWistRuntimeDependencyClosure Include="@(_WistLanguagePackRuntimeClosure)" />
+            <BuildOutputInPackage Include="@(_CanonicalWistRuntimeDependencyClosure)" />
         </ItemGroup>
+    </Target>
+
+    <Target Name="MaterializeCanonicalWistRuntimeClosure"
+            DependsOnTargets="Build;IncludeCanonicalWistRuntimeClosureInPackage">
+        <Error Condition="'$(CanonicalWistRuntimeReferenceDirectory)' == ''"
+               Text="CanonicalWistRuntimeReferenceDirectory must be provided when materializing the Wist runtime closure." />
+        <MakeDir Directories="$(CanonicalWistRuntimeReferenceDirectory)" />
+        <ItemGroup>
+            <_CanonicalWistRuntimeMaterializedClosure Include="$(TargetPath);@(_CanonicalWistRuntimeDependencyClosure)" />
+        </ItemGroup>
+        <Copy SourceFiles="@(_CanonicalWistRuntimeMaterializedClosure)"
+              DestinationFolder="$(CanonicalWistRuntimeReferenceDirectory)"
+              SkipUnchangedFiles="false" />
     </Target>
 
     <Target Name="IncludeFacadeReferenceAssemblyInPackage" DependsOnTargets="Build">
