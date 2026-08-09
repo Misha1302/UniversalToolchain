@@ -90,7 +90,7 @@
         <PropertyGroup>
             <WistFacadeReferenceAssembly>$(IntermediateOutputPath)ref/$(TargetFileName)</WistFacadeReferenceAssembly>
         </PropertyGroup>
-        <Error Condition="!Exists('$(WistFacadeReferenceAssembly)' )"
+        <Error Condition="!Exists('$(WistFacadeReferenceAssembly)')"
                Text="Wist facade reference assembly was not produced at '$(WistFacadeReferenceAssembly)'." />
         <ItemGroup>
             <TfmSpecificPackageFile Include="$(WistFacadeReferenceAssembly)">
