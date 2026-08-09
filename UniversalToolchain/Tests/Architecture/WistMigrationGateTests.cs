@@ -156,7 +156,9 @@ public sealed class WistMigrationGateTests
             "docs/write-modules/runtime-manifests.md",
             "docs/runtime-manifest-activation-model.md",
             "docs/runtime-manifest-format.md",
-            "UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-grouped/README.md"
+            "UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-grouped/README.md",
+            "internal-docs/policies-and-reports/public-claim-ledger.md",
+            "internal-docs/policies-and-reports/technical-debt.md"
         ];
         string[] staleCurrentClaims =
         [
@@ -181,6 +183,16 @@ public sealed class WistMigrationGateTests
                     violations.Add($"Retired Wist runtime claim remains current in {relativePath}: {staleClaim}");
             }
         }
+
+        var claimLedger = File.ReadAllText(Path.Combine(
+            root,
+            "internal-docs",
+            "policies-and-reports",
+            "public-claim-ledger.md"));
+        if (!claimLedger.Contains("| Wist runtime selection is `LanguagePlan`-backed |", StringComparison.Ordinal))
+            violations.Add("Public claim ledger no longer pins Wist runtime selection to LanguagePlan.");
+        if (claimLedger.Contains("| Runtime selection is manifest-backed |", StringComparison.Ordinal))
+            violations.Add("Public claim ledger restored manifest-backed Wist runtime selection as an active claim.");
 
         Assert.That(violations, Is.Empty, string.Join(Environment.NewLine, violations));
     }
