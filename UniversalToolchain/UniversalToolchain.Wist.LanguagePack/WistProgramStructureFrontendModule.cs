@@ -10,7 +10,7 @@ namespace UniversalToolchain.Wist.LanguagePack;
 /// Direct-runtime infrastructure module for the Wist program root. It owns no feature selection or
 /// ordering decisions and is always prepended after LanguagePlan has selected the semantic modules.
 /// </summary>
-internal sealed class WistProgramStructureFrontendModule : IFrontendCoreModule
+internal sealed class WistProgramStructureFrontendModule : IFrontendCoreModule, IWistCompilationInfrastructureModule
 {
     public void InitAstTranslator(IAstToBytecodeTranslator translator)
     {

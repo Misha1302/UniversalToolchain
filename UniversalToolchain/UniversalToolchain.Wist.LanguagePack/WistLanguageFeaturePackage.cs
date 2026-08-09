@@ -103,8 +103,15 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage, ILan
     public static LanguageRuntimeProviderId RuntimeProviderId { get; } = new(PackageId.Value);
 
     public WistLanguageFeaturePackage()
+        : this(WistCompilationVerificationPolicy.Disabled)
     {
-        _components = WistDirectRuntimeComponents.CreateCatalog(this);
+    }
+
+    internal WistLanguageFeaturePackage(WistCompilationVerificationPolicy verificationPolicy)
+    {
+        _components = WistDirectRuntimeComponents.CreateCatalog(
+            this,
+            new WistCompilationObservationFactory(verificationPolicy));
     }
 
     public LanguagePackageDescriptor Descriptor { get; } = new(

@@ -1,12 +1,10 @@
 using BasicCore.Contracts;
 using BasicCore.Core;
 using IntermediateRepresentationAbstractions;
-using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.ModuleContracts;
 
 namespace UniversalToolchain.EndToEndExperiments;
 
-[DialectRuntimeExport("Optimizer", "Cgo27Fault")]
 public sealed class Cgo27FaultOptimizer : IAirOptimizer, IModuleContractDescriptorProvider
 {
     private static readonly ModuleId Module = new("cgo27.optimizer.fault");

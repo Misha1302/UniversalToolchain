@@ -65,27 +65,47 @@ internal sealed class WistHostBindingAdapter(LanguagePlan plan)
 internal sealed class WistSyntaxArtifact(
     CompilationInput input,
     AstNode root,
-    IReadOnlyList<IFrontendCoreModule> modules)
+    IReadOnlyList<IFrontendCoreModule> modules,
+    IWistCompilationObservation observation)
 {
     public CompilationInput Input { get; } = input ?? throw new ArgumentNullException(nameof(input));
     public AstNode Root { get; } = root ?? throw new ArgumentNullException(nameof(root));
     public IReadOnlyList<IFrontendCoreModule> Modules { get; } = modules?.ToArray()
         ?? throw new ArgumentNullException(nameof(modules));
+    public IWistCompilationObservation Observation { get; } = observation
+        ?? throw new ArgumentNullException(nameof(observation));
 }
 
-internal sealed class WistBytecodeArtifact(CompilationInput input, Bytecode bytecode)
+internal sealed class WistBytecodeArtifact(
+    CompilationInput input,
+    Bytecode bytecode,
+    IReadOnlyList<IFrontendCoreModule> modules,
+    IWistCompilationObservation observation)
 {
     public CompilationInput Input { get; } = input ?? throw new ArgumentNullException(nameof(input));
     public Bytecode Bytecode { get; } = bytecode ?? throw new ArgumentNullException(nameof(bytecode));
+    public IReadOnlyList<IFrontendCoreModule> Modules { get; } = modules?.ToArray()
+        ?? throw new ArgumentNullException(nameof(modules));
+    public IWistCompilationObservation Observation { get; } = observation
+        ?? throw new ArgumentNullException(nameof(observation));
 }
 
 internal sealed class WistAirArtifact(
     CompilationInput input,
     IAbstractIR air,
+    IReadOnlyList<IFrontendCoreModule> modules,
+    IReadOnlyList<IAirOptimizer> optimizers,
+    IWistCompilationObservation observation,
     SsaRouteReport? ssaReport = null)
 {
     public CompilationInput Input { get; } = input ?? throw new ArgumentNullException(nameof(input));
     public IAbstractIR Air { get; } = air ?? throw new ArgumentNullException(nameof(air));
+    public IReadOnlyList<IFrontendCoreModule> Modules { get; } = modules?.ToArray()
+        ?? throw new ArgumentNullException(nameof(modules));
+    public IReadOnlyList<IAirOptimizer> Optimizers { get; } = optimizers?.ToArray()
+        ?? throw new ArgumentNullException(nameof(optimizers));
+    public IWistCompilationObservation Observation { get; } = observation
+        ?? throw new ArgumentNullException(nameof(observation));
     public SsaRouteReport? SsaReport { get; } = ssaReport;
 }
 
@@ -95,7 +115,8 @@ internal sealed class WistDirectArtifactStageFactory(
     Func<IAstToBytecodeTranslator> astTranslatorFactory,
     Func<IAbstractMethodsTranslator> abstractMethodsTranslatorFactory,
     IReadOnlyList<Func<IFrontendCoreModule>> moduleFactories,
-    WistHostBindingAdapter hostBindingAdapter)
+    WistHostBindingAdapter hostBindingAdapter,
+    IWistCompilationObservationFactory observationFactory)
 {
     private readonly Func<ILexer> _lexerFactory = lexerFactory ?? throw new ArgumentNullException(nameof(lexerFactory));
     private readonly Func<IParser> _parserFactory = parserFactory ?? throw new ArgumentNullException(nameof(parserFactory));
@@ -104,12 +125,15 @@ internal sealed class WistDirectArtifactStageFactory(
     private readonly IReadOnlyList<Func<IFrontendCoreModule>> _moduleFactories = moduleFactories?.ToArray()
         ?? throw new ArgumentNullException(nameof(moduleFactories));
     private readonly WistHostBindingAdapter _hostBindingAdapter = hostBindingAdapter ?? throw new ArgumentNullException(nameof(hostBindingAdapter));
+    private readonly IWistCompilationObservationFactory _observationFactory = observationFactory
+        ?? throw new ArgumentNullException(nameof(observationFactory));
 
     public WistDirectFrontendTransformer CreateFrontend() => new(
         _lexerFactory,
         _parserFactory,
         _moduleFactories,
-        _hostBindingAdapter);
+        _hostBindingAdapter,
+        _observationFactory);
 
     public WistDirectBytecodeTransformer CreateBytecodeLowering() => new(_astTranslatorFactory);
 
@@ -120,7 +144,8 @@ internal sealed class WistDirectFrontendTransformer(
     Func<ILexer> lexerFactory,
     Func<IParser> parserFactory,
     IReadOnlyList<Func<IFrontendCoreModule>> moduleFactories,
-    WistHostBindingAdapter hostBindingAdapter) :
+    WistHostBindingAdapter hostBindingAdapter,
+    IWistCompilationObservationFactory observationFactory) :
     ILanguageArtifactTransformer<string, WistSyntaxArtifact>,
     ILanguageArtifactBuildTransformer
 {
@@ -130,6 +155,8 @@ internal sealed class WistDirectFrontendTransformer(
     private readonly IReadOnlyList<Func<IFrontendCoreModule>> _moduleFactories = moduleFactories?.ToArray()
         ?? throw new ArgumentNullException(nameof(moduleFactories));
     private readonly WistHostBindingAdapter _hostBindingAdapter = hostBindingAdapter ?? throw new ArgumentNullException(nameof(hostBindingAdapter));
+    private readonly IWistCompilationObservationFactory _observationFactory = observationFactory
+        ?? throw new ArgumentNullException(nameof(observationFactory));
 
     public LanguageContributionId ContributionId => WistContributionIds.Frontend;
     public LanguageArtifactKind<string> TypedSourceKind => StandardLanguageArtifactKinds.SourceText;
@@ -140,7 +167,9 @@ internal sealed class WistDirectFrontendTransformer(
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(context);
-        return TransformCore(_hostBindingAdapter.CreateRuntimeInput(source, context.Request.Arguments));
+        return TransformCore(
+            _hostBindingAdapter.CreateRuntimeInput(source, context.Request.Arguments),
+            context.Request.Backend);
     }
 
     public LanguageArtifact TransformForBuild(LanguageArtifact source, LanguageArtifactBuildContext context)
@@ -148,11 +177,13 @@ internal sealed class WistDirectFrontendTransformer(
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(context);
         var sourceText = source.GetRequiredValue<string>();
-        var result = TransformCore(_hostBindingAdapter.CreateDeclaredInput(sourceText, context.Request.Bindings));
+        var result = TransformCore(
+            _hostBindingAdapter.CreateDeclaredInput(sourceText, context.Request.Bindings),
+            context.Request.Backend);
         return new LanguageArtifact<WistSyntaxArtifact>(WistDirectArtifactKinds.Syntax, result);
     }
 
-    private WistSyntaxArtifact TransformCore(CompilationInput input)
+    private WistSyntaxArtifact TransformCore(CompilationInput input, BackendId backend)
     {
         var modules = new IFrontendCoreModule[_moduleFactories.Count];
         for (var i = 0; i < _moduleFactories.Count; i++)
@@ -162,7 +193,7 @@ internal sealed class WistDirectFrontendTransformer(
         }
 
         var root = CanonicalArtifactStages.ParseAndBind(input, _lexerFactory(), _parserFactory(), modules);
-        return new WistSyntaxArtifact(input, root, modules);
+        return new WistSyntaxArtifact(input, root, modules, _observationFactory.Create(backend));
     }
 }
 
@@ -184,7 +215,8 @@ internal sealed class WistDirectBytecodeTransformer(
         ArgumentNullException.ThrowIfNull(context);
 
         var bytecode = CanonicalArtifactStages.LowerToBytecode(source.Root, _translatorFactory(), source.Modules);
-        return new WistBytecodeArtifact(source.Input, bytecode);
+        source.Observation.AfterBytecode(source.Input, source.Modules, bytecode);
+        return new WistBytecodeArtifact(source.Input, bytecode, source.Modules, source.Observation);
     }
 }
 
@@ -206,6 +238,7 @@ internal sealed class WistDirectAirTransformer(
         ArgumentNullException.ThrowIfNull(context);
 
         var air = CanonicalArtifactStages.LowerToAir(source.Bytecode, _translatorFactory());
-        return new WistAirArtifact(source.Input, air);
+        source.Observation.AfterAir(source.Input, source.Modules, [], air);
+        return new WistAirArtifact(source.Input, air, source.Modules, [], source.Observation);
     }
 }

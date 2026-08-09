@@ -11,9 +11,11 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" />
+    <ProjectReference Include="..\BasicCore\BasicCore.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Language.Abstractions\UniversalToolchain.Language.Abstractions.csproj" />
     <ProjectReference Include="..\UniversalToolchain.LanguageSdk\UniversalToolchain.LanguageSdk.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Runtime\UniversalToolchain.Runtime.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Ssa.Abstractions\UniversalToolchain.Ssa.Abstractions.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Wist.LanguagePack\UniversalToolchain.Wist.LanguagePack.csproj" />
   </ItemGroup>
   <ItemGroup>

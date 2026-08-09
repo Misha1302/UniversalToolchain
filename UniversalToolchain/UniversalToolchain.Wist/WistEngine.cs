@@ -69,7 +69,7 @@ public sealed class WistEngine : IDisposable
             VerificationPolicy = RequireVerificationPolicy(options.VerificationPolicy)
         };
 
-        var package = new WistLanguageFeaturePackage();
+        var package = WistVerificationRuntimePackageFactory.Create(optionsSnapshot.VerificationPolicy);
         var definition = ResolveLanguageDefinition(optionsSnapshot);
         var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package))
             .Compile(definition)

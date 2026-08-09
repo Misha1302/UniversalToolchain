@@ -63,12 +63,15 @@ internal static class WistDirectRuntimeComponents
         LanguageComponentDeterminism.Unknown,
         LanguageComponentHostInterop.None);
 
-    public static LanguageRouteComponentCatalog CreateCatalog(WistLanguageFeaturePackage package)
+    public static LanguageRouteComponentCatalog CreateCatalog(
+        WistLanguageFeaturePackage package,
+        IWistCompilationObservationFactory observationFactory)
     {
         ArgumentNullException.ThrowIfNull(package);
+        ArgumentNullException.ThrowIfNull(observationFactory);
 
         var registry = new LanguageRouteComponentRegistry();
-        registry.AddTransformer(CreateFrontendRegistration(package));
+        registry.AddTransformer(CreateFrontendRegistration(package, observationFactory));
         registry.AddTransformer(CreateBytecodeRegistration());
         registry.AddTransformer(CreateAirRegistration());
         foreach (var optimizer in WistRuntimeComponentCatalog.Optimizers)
@@ -80,7 +83,9 @@ internal static class WistDirectRuntimeComponents
         return registry.CreateCatalog();
     }
 
-    private static LanguageTransformerRegistration CreateFrontendRegistration(WistLanguageFeaturePackage package) =>
+    private static LanguageTransformerRegistration CreateFrontendRegistration(
+        WistLanguageFeaturePackage package,
+        IWistCompilationObservationFactory observationFactory) =>
         LanguageTransformerRegistration.Create<string, WistSyntaxArtifact>(
             WistContributionIds.Frontend,
             StandardLanguageArtifactKinds.SourceText,
@@ -120,7 +125,8 @@ internal static class WistDirectRuntimeComponents
                     static () => new BasicAstToBytecodeTranslatorImpl(),
                     CreateMethodsTranslator,
                     moduleFactories,
-                    new WistHostBindingAdapter(context.Plan));
+                    new WistHostBindingAdapter(context.Plan),
+                    observationFactory);
                 return new OwnedFrontendTransformer(stageFactory.CreateFrontend(), services, DirectTraits);
             });
 
@@ -167,6 +173,11 @@ internal static class WistDirectRuntimeComponents
                 WistDirectBackendArtifactKinds.Interpreter,
                 (source, _) =>
                 {
+                    source.Observation.AfterOptimizedAir(
+                        source.Input,
+                        source.Modules,
+                        source.Optimizers,
+                        source.Air);
                     WistIntrinsicPlanPolicy.Create(context.Plan, InterpreterBackend).Validate(source.Air);
                     return new WistInterpreterArtifact(source.Input, source.Air, source.SsaReport);
                 },
@@ -202,6 +213,11 @@ internal static class WistDirectRuntimeComponents
                 WistDirectBackendArtifactKinds.Cil,
                 (source, _) =>
                 {
+                    source.Observation.AfterOptimizedAir(
+                        source.Input,
+                        source.Modules,
+                        source.Optimizers,
+                        source.Air);
                     WistIntrinsicPlanPolicy.Create(context.Plan, CilBackend).Validate(source.Air);
                     return new WistCilArtifact(
                         source.Input,
@@ -327,7 +343,13 @@ internal static class WistDirectRuntimeComponents
                     ?? throw new InvalidOperationException($"Wist optimizer '{ContributionId.Value}' returned null AIR.");
                 if (capture?.Report is { } published)
                     report = published;
-                return new WistAirArtifact(source.Input, result, report);
+                return new WistAirArtifact(
+                    source.Input,
+                    result,
+                    source.Modules,
+                    source.Optimizers.Append(optimizer).ToArray(),
+                    source.Observation,
+                    report);
             }
             finally
             {

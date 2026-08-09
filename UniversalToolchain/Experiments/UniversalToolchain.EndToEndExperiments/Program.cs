@@ -1,11 +1,14 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
-using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Dialects.Integration;
-using UniversalToolchain.Dialects.Wist;
-using UniversalToolchain.Dialects.Wist.Presets;
+using UniversalToolchain.FeatureSdk;
+using UniversalToolchain.Language.Abstractions;
+using UniversalToolchain.LanguageSdk;
 using UniversalToolchain.ModuleContracts;
+using UniversalToolchain.Runtime;
+using UniversalToolchain.Testing.Infrastructure;
+using UniversalToolchain.Wist;
+using UniversalToolchain.Wist.LanguagePack;
 
 namespace UniversalToolchain.EndToEndExperiments;
 
@@ -163,7 +166,6 @@ internal static class Program
         string commit)
     {
         var trace = new List<string> { "child-start", "source-selected" };
-        var sink = new InMemoryModuleContractDiagnosticSink();
         var stopwatch = Stopwatch.StartNew();
 
         try
@@ -171,57 +173,44 @@ internal static class Program
             Environment.SetEnvironmentVariable(
                 "CGO27_E2E_FAULT",
                 @case.InjectFault ? "replace-result" : null);
-            var services = new ServiceCollection();
-            services.AddWistDialectServices();
-            using var compositionProvider = services.BuildServiceProvider();
-            var workflow = compositionProvider.GetRequiredService<WistDialectExecutionWorkflow>();
-            var preset = WistShippedDialectPresets.GetRequired(@case.PresetId);
-            var sourcePath = new WistShippedDialectFileResolver().Resolve(preset);
-            var dialectSource = File.ReadAllText(sourcePath);
-            var composition = @case.InjectFault
-                ? workflow.ComposeText(
-                    dialectSource,
-                    Path.GetFileName(sourcePath),
-                    RuntimeProfileDefinitionBuilder
-                        .Create("cgo27-end-to-end-fault")
-                        .Describe("Adds the model-authored CGO27 result-integrity mutation optimizer.")
-                        .EnableOptimizer("Cgo27Fault")
-                        .Build(),
-                    RuntimeProfileOverridePolicy.StrictNoConflicts)
-                : workflow.ComposeText(dialectSource, Path.GetFileName(sourcePath));
-            trace.Add(composition.IsSuccess ? "composition-success" : "composition-failure");
-            if (!composition.IsSuccess)
+
+            var wistPackage = WistVerificationRuntimePackageFactory.Create(ParsePolicy(policyName));
+            WistAirOptimizerTestPackage? faultPackage = null;
+            var registry = new LanguagePackageRegistry().AddPackage(wistPackage);
+            var definition = WistLanguageDefinitions.Create(@case.PresetId);
+            if (@case.InjectFault)
             {
-                throw new InvalidOperationException(
-                    "Wist dialect composition failed: " +
-                    string.Join(" | ", composition.Diagnostics.Select(static item => item.Message)));
+                faultPackage = CreateFaultPackage();
+                registry.AddPackage(faultPackage);
+                definition = AddFeature(definition, faultPackage.FeatureId);
             }
 
-            var verificationOptions = new ModuleContractVerificationOptions
-            {
-                Mode = ModuleContractVerificationMode.Strict,
-                PipelineOptions = ModuleContractPipelineProfiles.StrictEnforced with
-                {
-                    VerificationPolicy = ParsePolicy(policyName)
-                },
-                DiagnosticSink = sink
-            }.SnapshotValidated();
-            using var host = workflow.CreateHost(
-                composition,
-                new WistRuntimeServiceOptions { ModuleContracts = verificationOptions });
-            trace.Add("runtime-host-created");
+            var plan = new LanguageCompiler(registry)
+                .Compile(definition)
+                .GetRequiredPlan();
+            trace.Add("plan-compiled");
+
+            var componentSources = new List<ILanguageRouteComponentSource> { wistPackage };
+            if (faultPackage != null)
+                componentSources.Add(faultPackage);
+            using var runtime = LanguageRuntime.Create(
+                plan,
+                componentSources,
+                new LanguageRuntimeOptions());
+            trace.Add("runtime-created");
             trace.Add("source-execution-start");
+
             var arguments = @case.Arguments.ToDictionary(
                 static item => item.Key,
                 static item => (object?)item.Value,
                 StringComparer.Ordinal);
-            var result = arguments.Count == 0
-                ? host.Run(@case.Source, @case.Backend)
-                : host.Run(@case.Source, arguments, @case.Backend);
-            var numericResult = Convert.ToDouble(result, CultureInfo.InvariantCulture);
+            var result = runtime.Run(new LanguageExecutionRequest(
+                @case.Source,
+                new BackendId(@case.Backend),
+                arguments));
+            var numericResult = Convert.ToDouble(result.Value, CultureInfo.InvariantCulture);
             stopwatch.Stop();
             trace.Add("source-result-produced");
-            AppendDiagnosticTrace(trace, sink);
             return CreateRecord(
                 @case,
                 policyName,
@@ -232,8 +221,8 @@ internal static class Program
                 numericResult,
                 Math.Abs(numericResult - @case.ExpectedResult) <= 1e-9 ? "accepted" : "wrong-result",
                 "result",
-                sink.Batches.SelectMany(static batch => batch.Diagnostics).Select(static diagnostic => diagnostic.Code).Distinct().Order().ToArray(),
-                sink.Batches.Select(static batch => batch.Stage).Distinct().ToArray(),
+                [],
+                [],
                 trace,
                 stopwatch.ElapsedTicks,
                 null);
@@ -250,7 +239,6 @@ internal static class Program
                             .ToArray()
                         ?? [exception.GetType().FullName ?? exception.GetType().Name];
             trace.Add(contractException == null ? "runtime-failure" : "contract-rejection");
-            AppendDiagnosticTrace(trace, sink);
             return CreateRecord(
                 @case,
                 policyName,
@@ -262,7 +250,7 @@ internal static class Program
                 classification,
                 boundary,
                 codes,
-                sink.Batches.Select(static batch => batch.Stage).Append(boundary).Distinct().ToArray(),
+                [boundary],
                 trace,
                 stopwatch.ElapsedTicks,
                 contractException == null ? exception.ToString() : null);
@@ -272,6 +260,30 @@ internal static class Program
             Environment.SetEnvironmentVariable("CGO27_E2E_FAULT", null);
         }
     }
+
+    private static WistAirOptimizerTestPackage CreateFaultPackage() => new(
+        new LanguagePackageId("cgo27.experiment.fault"),
+        new LanguageVersion("1.0.0"),
+        new LanguageFeatureId("cgo27.optimizer.fault"),
+        new LanguageContributionId("cgo27.optimizer.fault"),
+        static () => new Cgo27FaultOptimizer(),
+        traits: LanguageRuntimeComponentTraits.DeterministicNoHostInterop);
+
+    private static LanguageDefinition AddFeature(LanguageDefinition baseline, LanguageFeatureId feature) => new(
+        baseline.Id,
+        baseline.Version,
+        baseline.ToolchainApiVersion,
+        baseline.SelectedFeatures.Append(feature),
+        baseline.Backends,
+        baseline.RuntimeProvider,
+        baseline.RuntimePolicy,
+        baseline.Metadata,
+        baseline.SlotOverrides,
+        baseline.CapabilityProviders,
+        baseline.ExcludedContributions,
+        baseline.EntryArtifact,
+        baseline.ContributionOrderConstraints,
+        baseline.IntrinsicPolicy);
 
     private static EndToEndRecord CreateRecord(
         EndToEndCase @case,
@@ -547,12 +559,12 @@ internal static class Program
     private static IReadOnlyList<string> PolicyNames() =>
         ["P0_STRUCTURAL", "P1_INVALIDATION", "P2_SELECTIVE", "P3_ALWAYS"];
 
-    private static ModuleContractVerificationPolicy ParsePolicy(string value) => value switch
+    private static WistVerificationPolicy ParsePolicy(string value) => value switch
     {
-        "P0_STRUCTURAL" => ModuleContractVerificationPolicy.P0Structural,
-        "P1_INVALIDATION" => ModuleContractVerificationPolicy.P1Invalidation,
-        "P2_SELECTIVE" => ModuleContractVerificationPolicy.P2Selective,
-        "P3_ALWAYS" => ModuleContractVerificationPolicy.P3Always,
+        "P0_STRUCTURAL" => WistVerificationPolicy.P0Structural,
+        "P1_INVALIDATION" => WistVerificationPolicy.P1Invalidation,
+        "P2_SELECTIVE" => WistVerificationPolicy.P2Selective,
+        "P3_ALWAYS" => WistVerificationPolicy.P3Always,
         _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown policy.")
     };
 
@@ -564,12 +576,6 @@ internal static class Program
                 return contractException;
         }
         return null;
-    }
-
-    private static void AppendDiagnosticTrace(ICollection<string> trace, InMemoryModuleContractDiagnosticSink sink)
-    {
-        foreach (var batch in sink.Batches)
-            trace.Add("diagnostic:" + batch.Stage);
     }
 
     private static int StableSeed(string caseId, string policy, int repetition)
