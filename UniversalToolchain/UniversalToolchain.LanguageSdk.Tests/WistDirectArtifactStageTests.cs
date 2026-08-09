@@ -213,7 +213,8 @@ public sealed class WistDirectArtifactStageTests
         static () => new BasicAstToBytecodeTranslatorImpl(),
         CreateMethodsTranslator,
         moduleFactories,
-        new WistHostBindingAdapter(plan));
+        new WistHostBindingAdapter(plan),
+        new WistCompilationObservationFactory(WistCompilationVerificationPolicy.Disabled));
 
     private static IAbstractMethodsTranslator CreateMethodsTranslator()
     {
