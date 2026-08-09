@@ -44,8 +44,12 @@ public sealed class WistCanonicalConcurrencyTests
         foreach (var result in results)
         {
             Assert.That(
-                result.Projection,
-                Is.EqualTo(expected[result.CaseIndex]),
+                result.Projection.Features,
+                Is.EqualTo(expected[result.CaseIndex].Features),
+                cases[result.CaseIndex].Source);
+            Assert.That(
+                result.Projection.Backends,
+                Is.EqualTo(expected[result.CaseIndex].Backends),
                 cases[result.CaseIndex].Source);
         }
     }
@@ -191,16 +195,16 @@ public sealed class WistCanonicalConcurrencyTests
     }
 
     private static CanonicalCaseProjection CreateSemanticProjection(LanguagePlan plan) => new(
-        string.Join("\n", plan.Definition.SelectedFeatures.Select(static feature => feature.Value).OrderBy(static value => value, StringComparer.Ordinal)),
-        string.Join("\n", plan.Definition.Backends.Select(static backend => backend.Value).OrderBy(static value => value, StringComparer.Ordinal)));
+        plan.Definition.SelectedFeatures.OrderBy(static feature => feature.Value, StringComparer.Ordinal).ToArray(),
+        plan.Definition.Backends.Select(static backend => backend.Value).OrderBy(static value => value, StringComparer.Ordinal).ToArray());
 
     private sealed record DialectCase(
         string Source,
         IReadOnlyList<string> Backends);
 
     private sealed record CanonicalCaseProjection(
-        string Features,
-        string Backends);
+        IReadOnlyList<LanguageFeatureId> Features,
+        IReadOnlyList<string> Backends);
 
     private sealed record ParallelPlanProjection(
         int CaseIndex,
