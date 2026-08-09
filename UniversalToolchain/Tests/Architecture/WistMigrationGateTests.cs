@@ -143,7 +143,40 @@ public sealed class WistMigrationGateTests
             }
         }
 
-        Assert.That(violations, Is.Empty);
+        string[] canonicalDocs =
+        [
+            "docs/current-canonical-runtime-pipeline.md",
+            "docs/build-dsls/dialect-files.md",
+            "docs/reference/dialect-reference.md",
+            "docs/internals/dependency-injection.md",
+            "docs/CONTRIBUTING.md",
+            "docs/write-modules/create-your-first-module.md"
+        ];
+        string[] staleCurrentClaims =
+        [
+            "Runtime manifests are how dialect composition discovers selectable runtime components",
+            "The source of truth should be the module/export attributes plus generated manifest output",
+            "is the main orchestration object for dialect execution",
+            "source of truth for public Wist dialect execution is the manifest-backed runtime workflow",
+            "Keep the canonical dialect path deterministic: dialect compilation, build-plan construction, manifest-backed runtime",
+            "selected dialect is compiled into a build plan, resolved against runtime manifests"
+        ];
+
+        foreach (var relativePath in canonicalDocs)
+        {
+            var text = File.ReadAllText(Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar)));
+            if (!text.Contains("LanguageCompiler", StringComparison.Ordinal))
+                violations.Add($"Canonical documentation does not name LanguageCompiler: {relativePath}");
+            if (!text.Contains("LanguagePlan", StringComparison.Ordinal))
+                violations.Add($"Canonical documentation does not name LanguagePlan: {relativePath}");
+            foreach (var staleClaim in staleCurrentClaims)
+            {
+                if (text.Contains(staleClaim, StringComparison.OrdinalIgnoreCase))
+                    violations.Add($"Retired Wist runtime claim remains current in {relativePath}: {staleClaim}");
+            }
+        }
+
+        Assert.That(violations, Is.Empty, string.Join(Environment.NewLine, violations));
     }
 
     private static IEnumerable<string> EnumerateProductionSources(string root) =>
