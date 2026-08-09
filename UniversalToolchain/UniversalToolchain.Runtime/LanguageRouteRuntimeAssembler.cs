@@ -57,7 +57,8 @@ public static class LanguageRouteRuntimeAssembler
                 $"Multiple runtime component sources were supplied for package '{duplicate.Key.Id.Value}' version '{duplicate.Key.Version.Value}'.");
         }
 
-        var selectedPackages = plan.Contributions
+        var materializedContributions = GetMaterializedContributions(plan);
+        var selectedPackages = materializedContributions
             .Select(static contribution => (contribution.PackageId, contribution.PackageVersion))
             .Distinct()
             .ToHashSet();
@@ -65,12 +66,13 @@ public static class LanguageRouteRuntimeAssembler
             .Where(source => selectedPackages.Contains((source.Descriptor.Id, source.Descriptor.Version)))
             .ToDictionary(static source => (source.Descriptor.Id, source.Descriptor.Version));
 
-        ValidateSourceBindings(plan, selectedSources);
+        ValidateSourceBindings(plan, materializedContributions, selectedSources);
         return BindSelectedImplementations(plan, selectedSources);
     }
 
     private static void ValidateSourceBindings(
         LanguagePlan plan,
+        IReadOnlyList<ResolvedLanguageContribution> materializedContributions,
         IReadOnlyDictionary<(LanguagePackageId PackageId, LanguageVersion PackageVersion), ILanguageRouteComponentSource> sources)
     {
         foreach (var source in sources.Values)
@@ -83,9 +85,33 @@ public static class LanguageRouteRuntimeAssembler
             }
         }
 
-        _ = GetRequiredSource(plan.RuntimeProviderContribution!, sources);
-        foreach (var contribution in plan.Contributions)
+        foreach (var contribution in materializedContributions)
             _ = GetRequiredSource(contribution, sources);
+    }
+
+    private static IReadOnlyList<ResolvedLanguageContribution> GetMaterializedContributions(LanguagePlan plan)
+    {
+        var result = new List<ResolvedLanguageContribution>();
+        var seen = new HashSet<LanguageContributionId>();
+
+        void Add(ResolvedLanguageContribution contribution)
+        {
+            if (seen.Add(contribution.Contribution.Id))
+                result.Add(contribution);
+        }
+
+        Add(plan.RuntimeProviderContribution!);
+        foreach (var route in plan.Routes.Values.OrderBy(static route => route.Backend.Value, StringComparer.Ordinal))
+        {
+            foreach (var step in route.Steps)
+                Add(GetRequiredContribution(plan, step.ContributionId));
+
+            var capability = LanguageCapabilities.Backend(route.Backend);
+            Add(plan.Contributions.Single(
+                item => item.Contribution.ProvidesCapabilities.Contains(capability)));
+        }
+
+        return result;
     }
 
     private static LanguageRouteComponentRegistry BindSelectedImplementations(
