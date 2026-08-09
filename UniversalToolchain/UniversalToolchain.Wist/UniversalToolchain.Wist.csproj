@@ -68,8 +68,8 @@
             <Output TaskParameter="TargetOutputs" ItemName="_WistLanguagePackRuntimeClosure" />
         </MSBuild>
         <ItemGroup>
-            <_CanonicalWistRuntimeClosure Include="$(TargetPath);@(_WistLanguagePackRuntimeClosure)" />
-            <BuildOutputInPackage Include="@(_CanonicalWistRuntimeClosure)" />
+            <_CanonicalWistRuntimeDependencyClosure Include="@(_WistLanguagePackRuntimeClosure)" />
+            <BuildOutputInPackage Include="@(_CanonicalWistRuntimeDependencyClosure)" />
         </ItemGroup>
     </Target>
 
@@ -78,7 +78,10 @@
         <Error Condition="'$(CanonicalWistRuntimeReferenceDirectory)' == ''"
                Text="CanonicalWistRuntimeReferenceDirectory must be provided when materializing the Wist runtime closure." />
         <MakeDir Directories="$(CanonicalWistRuntimeReferenceDirectory)" />
-        <Copy SourceFiles="@(_CanonicalWistRuntimeClosure)"
+        <ItemGroup>
+            <_CanonicalWistRuntimeMaterializedClosure Include="$(TargetPath);@(_CanonicalWistRuntimeDependencyClosure)" />
+        </ItemGroup>
+        <Copy SourceFiles="@(_CanonicalWistRuntimeMaterializedClosure)"
               DestinationFolder="$(CanonicalWistRuntimeReferenceDirectory)"
               SkipUnchangedFiles="false" />
     </Target>
@@ -87,7 +90,7 @@
         <PropertyGroup>
             <WistFacadeReferenceAssembly>$(IntermediateOutputPath)ref/$(TargetFileName)</WistFacadeReferenceAssembly>
         </PropertyGroup>
-        <Error Condition="!Exists('$(WistFacadeReferenceAssembly)')"
+        <Error Condition="!Exists('$(WistFacadeReferenceAssembly)' )"
                Text="Wist facade reference assembly was not produced at '$(WistFacadeReferenceAssembly)'." />
         <ItemGroup>
             <TfmSpecificPackageFile Include="$(WistFacadeReferenceAssembly)">
