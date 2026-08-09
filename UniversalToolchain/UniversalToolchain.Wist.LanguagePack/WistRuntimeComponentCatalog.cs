@@ -1,4 +1,6 @@
 using ArithmeticModule.Module;
+using BasicCore.Builtins;
+using BasicCore.Contracts;
 using CommentsModule;
 using ConditionsModule.Enums;
 using ConditionsModule.Module;
@@ -137,6 +139,15 @@ internal static class WistRuntimeComponentCatalog
             static () => typeof(SsaOptimizerModule))
     ];
 
+    private static readonly IReadOnlyDictionary<LanguageContributionId, Func<IIntrinsicDescriptorProvider>>
+        IntrinsicDescriptorProvidersByContribution = new Dictionary<LanguageContributionId, Func<IIntrinsicDescriptorProvider>>
+        {
+            [WistContributionIds.ArithmeticOptimizer] = static () => new ArithmeticIntrinsicDescriptorProvider(),
+            [WistContributionIds.BooleanOptimizer] = static () => new BooleanIntrinsicDescriptorProvider(),
+            [WistContributionIds.ComparisonIntrinsicOptimizer] = static () => new ComparisonIntrinsicDescriptorProvider(),
+            [WistContributionIds.EGraphOptimizer] = static () => new ArithmeticIntrinsicDescriptorProvider()
+        };
+
     private static readonly IReadOnlyDictionary<LanguageContributionId, WistRuntimeComponentDescriptor> ByContributionId =
         Modules.Concat(Optimizers).ToDictionary(static component => component.ContributionId);
     private static readonly IReadOnlyDictionary<string, WistRuntimeComponentDescriptor> ByAlias =
@@ -193,6 +204,32 @@ internal static class WistRuntimeComponentCatalog
             .Select(id => ByContributionId[id].ImplementationType)
             .Distinct()
             .OrderBy(static type => type.FullName, StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    public static IReadOnlyList<IIntrinsicDescriptorProvider> CreateSelectedIntrinsicDescriptorProviders(LanguagePlan plan)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+
+        var providers = new Dictionary<Type, IIntrinsicDescriptorProvider>
+        {
+            [typeof(CoreIntrinsicDescriptorProvider)] =
+                new CoreIntrinsicDescriptorProvider(new MethodCallTypeSemanticsResolver())
+        };
+
+        foreach (var contributionId in plan.Contributions
+                     .Select(static contribution => contribution.Contribution.Id)
+                     .Distinct())
+        {
+            if (!IntrinsicDescriptorProvidersByContribution.TryGetValue(contributionId, out var factory))
+                continue;
+
+            var provider = factory();
+            providers.TryAdd(provider.GetType(), provider);
+        }
+
+        return providers.Values
+            .OrderBy(static provider => provider.GetType().FullName, StringComparer.Ordinal)
             .ToArray();
     }
 

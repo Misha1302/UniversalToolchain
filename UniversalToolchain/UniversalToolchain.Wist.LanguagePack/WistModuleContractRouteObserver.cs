@@ -1,9 +1,11 @@
+using System.Collections.Concurrent;
 using AbstractIrConverters;
 using BasicCilCompiler.Contracts;
 using BasicCore.Contracts;
 using BasicInterpreter.Contracts;
 using BytecodeDynamicMethodsCompiler.Compilers;
 using UniversalToolchain.Language.Abstractions;
+using UniversalToolchain.LanguageSdk;
 using UniversalToolchain.ModuleContracts;
 using UniversalToolchain.Runtime;
 
@@ -16,24 +18,16 @@ namespace UniversalToolchain.Wist.LanguagePack;
 /// </summary>
 internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteObserver
 {
-    private readonly ModuleContractPipelineObserver _observer;
+    private readonly ModuleContractPipelineOptions _options;
+    private readonly IModuleContractDiagnosticSink _sink;
+    private readonly ConcurrentDictionary<string, ModuleContractPipelineObserver> _observers =
+        new(StringComparer.Ordinal);
 
     private WistModuleContractRouteObserver(ModuleContractVerificationOptions verification)
     {
         var snapshot = (verification ?? throw new ArgumentNullException(nameof(verification))).SnapshotValidated();
-        var options = snapshot.PipelineOptions;
-        var sink = snapshot.DiagnosticSink;
-        _observer = new ModuleContractPipelineObserver(
-            options,
-            new SelectedModuleContractTableProvider(options.EnforcementPolicy, new ModuleContractSelectionBuilder()),
-            new BytecodeObservedEmissionReader(),
-            new BytecodeVerifier(),
-            new AirVerifier(),
-            new BackendCapabilitySelectionFactory(options.BackendPolicy),
-            new ModuleContractDiagnosticPolicy(sink),
-            new PipelineEffectVerifier(),
-            CompilerFactVerifierRegistry.Core,
-            new CoreCompilerStageFactSeedProvider());
+        _options = snapshot.PipelineOptions;
+        _sink = snapshot.DiagnosticSink;
     }
 
     public static LanguageRuntimeOptions CreateRuntimeOptions(
@@ -45,16 +39,42 @@ internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteOb
         return options;
     }
 
+    private ModuleContractPipelineObserver GetObserver(LanguagePlan plan) =>
+        _observers.GetOrAdd(plan.PlanHash, _ => CreateObserver(plan));
+
+    private ModuleContractPipelineObserver CreateObserver(LanguagePlan plan) =>
+        new(
+            _options,
+            new SelectedModuleContractTableProvider(_options.EnforcementPolicy, new ModuleContractSelectionBuilder()),
+            new BytecodeObservedEmissionReader(),
+            new BytecodeVerifier(),
+            CreateAirVerifier(plan),
+            new BackendCapabilitySelectionFactory(_options.BackendPolicy),
+            new ModuleContractDiagnosticPolicy(_sink),
+            new PipelineEffectVerifier(),
+            CompilerFactVerifierRegistry.Core,
+            new CoreCompilerStageFactSeedProvider());
+
+    private static AirVerifier CreateAirVerifier(LanguagePlan plan)
+    {
+        var catalog = new IntrinsicCatalogBuilder().Build(
+            WistRuntimeComponentCatalog.CreateSelectedIntrinsicDescriptorProviders(plan));
+        return new AirVerifier(
+            new InstructionIntrinsicReader(),
+            new IntrinsicTypeStackProcessor(catalog, new IntrinsicTypeResolutionContext()));
+    }
+
     public void AfterTransformation(LanguageArtifactRouteObservation observation)
     {
         ArgumentNullException.ThrowIfNull(observation);
+        var observer = GetObserver(observation.Plan);
         var backendComponents = CreateBackendComponents(observation.Backend);
 
         if (observation.Step.ContributionId == WistContributionIds.LoweringToBytecode &&
             observation.Artifact is LanguageArtifact<WistBytecodeArtifact> bytecodeArtifact)
         {
             var bytecode = bytecodeArtifact.Value;
-            _observer.AfterBytecode(new(
+            observer.AfterBytecode(new(
                 bytecode.Input,
                 bytecode.FrontendModules,
                 bytecode.Bytecode,
@@ -69,7 +89,7 @@ internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteOb
         var supportedIntrinsics = GetSupportedIntrinsics(observation.Backend);
         if (observation.Step.ContributionId == WistContributionIds.LoweringToAir)
         {
-            _observer.AfterAir(new(
+            observer.AfterAir(new(
                 air.Input,
                 air.FrontendModules,
                 air.Optimizers,
@@ -80,7 +100,7 @@ internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteOb
 
         if (!HasLaterAirPass(observation))
         {
-            _observer.AfterOptimizedAir(new(
+            observer.AfterOptimizedAir(new(
                 air.Input,
                 air.FrontendModules,
                 air.Optimizers,
