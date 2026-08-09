@@ -145,6 +145,7 @@ public sealed class WistMigrationGateTests
 
         string[] canonicalDocs =
         [
+            "docs/CURRENT_ARCHITECTURE_STATUS.md",
             "docs/current-canonical-runtime-pipeline.md",
             "docs/build-dsls/dialect-files.md",
             "docs/reference/dialect-reference.md",
@@ -167,7 +168,8 @@ public sealed class WistMigrationGateTests
             "is the main orchestration object for dialect execution",
             "source of truth for public Wist dialect execution is the manifest-backed runtime workflow",
             "Keep the canonical dialect path deterministic: dialect compilation, build-plan construction, manifest-backed runtime",
-            "selected dialect is compiled into a build plan, resolved against runtime manifests"
+            "selected dialect is compiled into a build plan, resolved against runtime manifests",
+            "Wist runtime selection goes through dialect build plans, manifests and capabilities"
         ];
 
         foreach (var relativePath in canonicalDocs)
