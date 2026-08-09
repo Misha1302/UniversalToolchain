@@ -90,10 +90,17 @@ public sealed class WistCanonicalConcurrencyTests
     public void FailedDslPlanning_DoesNotPoisonNextSuccessfulPlan()
     {
         const string invalid = "dialect Broken\nuse MissingModule\nbackend interpreter\nsecurity restricted";
+        const string excludedDependency = "dialect ExcludedDependency\nuse FunctionCalls\nexclude Identifier\nbackend interpreter\nsecurity restricted";
         const string valid = "dialect Good\nuse Arithmetic,Numbers,Scopes,Whitespaces\nbackend interpreter\nsecurity restricted";
 
         var error = Assert.Throws<InvalidOperationException>(() => Compile(invalid, "broken.wistdialect"));
         Assert.That(error!.Message, Does.Contain("MissingModule").And.Contain("not a canonical module component"));
+
+        var exclusionError = Assert.Throws<InvalidOperationException>(() =>
+            Compile(excludedDependency, "excluded-dependency.wistdialect"));
+        Assert.That(
+            exclusionError!.Message,
+            Does.Contain(WistContributionIds.IdentifiersModule.Value).And.Contain("explicitly excluded"));
 
         var first = Compile(valid, "good.wistdialect");
         var second = Compile(valid, "good.wistdialect");
