@@ -27,11 +27,11 @@ The documentation guard requires this table to mirror the repository's current e
 |---|---:|---:|---:|
 | `Tests` | 540 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
-| `UniversalToolchain.Dialects.Tests` | 369 | 0 | 0 |
+| `UniversalToolchain.Dialects.Tests` | 373 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 156 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,408** | **0** | **0** |
+| **Total** | **1,412** | **0** | **0** |
 
 The exact manifest belongs to `eng/test-counts.json`. `.NET CI` run `31049607823` completed the canonical entrypoint for the pinned commit. Because the entrypoint enforces the manifest associated with its own revision, a stale or partial test total cannot satisfy that gate.
 
