@@ -148,9 +148,15 @@ public sealed class WistMigrationGateTests
             "docs/current-canonical-runtime-pipeline.md",
             "docs/build-dsls/dialect-files.md",
             "docs/reference/dialect-reference.md",
+            "docs/dialect-groups.md",
+            "docs/start/what-is-wist.md",
             "docs/internals/dependency-injection.md",
             "docs/CONTRIBUTING.md",
-            "docs/write-modules/create-your-first-module.md"
+            "docs/write-modules/create-your-first-module.md",
+            "docs/write-modules/runtime-manifests.md",
+            "docs/runtime-manifest-activation-model.md",
+            "docs/runtime-manifest-format.md",
+            "UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-grouped/README.md"
         ];
         string[] staleCurrentClaims =
         [
