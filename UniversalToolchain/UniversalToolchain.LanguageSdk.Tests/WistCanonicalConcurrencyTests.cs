@@ -203,8 +203,8 @@ public sealed class WistCanonicalConcurrencyTests
         IReadOnlyList<string> Backends);
 
     private sealed record CanonicalCaseProjection(
-        IReadOnlyList<LanguageFeatureId> Features,
-        IReadOnlyList<string> Backends);
+        LanguageFeatureId[] Features,
+        string[] Backends);
 
     private sealed record ParallelPlanProjection(
         int CaseIndex,
