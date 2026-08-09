@@ -1,6 +1,8 @@
 using AbstractIrConverters;
 using BasicCilCompiler.Contracts;
+using BasicCore.Builtins;
 using BasicCore.Compilation;
+using BasicCore.Core;
 using BasicCore.Contracts;
 using BasicCore.TranslatorWrapper;
 using BasicInterpreter.Contracts;
@@ -70,7 +72,7 @@ internal sealed class WistCompilationObservationFactory(WistCompilationVerificat
                 new ModuleContractSelectionBuilder()),
             new BytecodeObservedEmissionReader(),
             new BytecodeVerifier(),
-            new AirVerifier(),
+            CreateAirVerifier(),
             new BackendCapabilitySelectionFactory(pipelineOptions.BackendPolicy),
             new ModuleContractDiagnosticPolicy(sink),
             new PipelineEffectVerifier(),
@@ -111,6 +113,21 @@ internal sealed class WistCompilationObservationFactory(WistCompilationVerificat
 
         throw new InvalidOperationException(
             $"Wist compilation observation does not recognize backend '{backend.Value}'.");
+    }
+
+    private static AirVerifier CreateAirVerifier()
+    {
+        var catalog = new IntrinsicCatalogBuilder().Build(
+        [
+            new CoreIntrinsicDescriptorProvider(new MethodCallTypeSemanticsResolver()),
+            new ArithmeticIntrinsicDescriptorProvider(),
+            new ComparisonIntrinsicDescriptorProvider(),
+            new BooleanIntrinsicDescriptorProvider(),
+            new StorageIntrinsicDescriptorProvider()
+        ]);
+        return new AirVerifier(
+            new InstructionIntrinsicReader(),
+            new IntrinsicTypeStackProcessor(catalog, new IntrinsicTypeResolutionContext()));
     }
 
     private static ModuleContractVerificationPolicy MapPolicy(WistCompilationVerificationPolicy value) => value switch
