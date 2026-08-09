@@ -27,9 +27,9 @@ public sealed class WistCanonicalConcurrencyTests
                 new[] { "cil" })
         };
         var expected = cases
-            .Select((testCase, index) =>
+            .Select(testCase =>
             {
-                var plan = Compile(testCase.Source, $"serial-{index}.wistdialect", testCase.Backends);
+                var plan = Compile(testCase.Source, "canonical-oracle.wistdialect", testCase.Backends);
                 return new CanonicalCaseProjection(
                     plan.Definition.SelectedFeatures.OrderBy(static x => x.Value, StringComparer.Ordinal).ToArray(),
                     plan.Definition.Backends.Select(static x => x.Value).OrderBy(static x => x, StringComparer.Ordinal).ToArray());
