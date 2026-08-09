@@ -18,44 +18,46 @@ public sealed class WistCanonicalConcurrencyTests
         {
             new DialectCase(
                 "dialect ArithmeticOnly\nuse Arithmetic,Numbers,Scopes,Whitespaces\nbackend interpreter\nsecurity restricted",
-                new[] { WistFeatureIds.Arithmetic, WistFeatureIds.Numbers, WistFeatureIds.Scopes, WistFeatureIds.Whitespaces },
                 new[] { "interpreter" }),
             new DialectCase(
                 "dialect Variables\nuse Arithmetic,Numbers,Scopes,Variables,Whitespaces\nbackend interpreter,cil\nsecurity restricted",
-                new[] { WistFeatureIds.Arithmetic, WistFeatureIds.Numbers, WistFeatureIds.Scopes, WistFeatureIds.Variables, WistFeatureIds.Whitespaces },
                 new[] { "cil", "interpreter" }),
             new DialectCase(
                 "dialect Conditions\nuse Arithmetic,Conditions,Numbers,Scopes,Whitespaces\nbackend cil\nsecurity restricted",
-                new[] { WistFeatureIds.Arithmetic, WistFeatureIds.Conditions, WistFeatureIds.Numbers, WistFeatureIds.Scopes, WistFeatureIds.Whitespaces },
                 new[] { "cil" })
         };
+        var expected = cases
+            .Select((testCase, index) =>
+            {
+                var plan = Compile(testCase.Source, $"serial-{index}.wistdialect", testCase.Backends);
+                return new CanonicalCaseProjection(
+                    plan.Definition.SelectedFeatures.OrderBy(static x => x.Value, StringComparer.Ordinal).ToArray(),
+                    plan.Definition.Backends.Select(static x => x.Value).OrderBy(static x => x, StringComparer.Ordinal).ToArray());
+            })
+            .ToArray();
 
         var results = await Task.WhenAll(Enumerable.Range(0, 48).Select(index => Task.Run(() =>
         {
-            var testCase = cases[index % cases.Length];
+            var caseIndex = index % cases.Length;
+            var testCase = cases[caseIndex];
             var plan = Compile(testCase.Source, $"parallel-{index}.wistdialect", testCase.Backends);
-            return new
-            {
-                Case = testCase,
-                Features = plan.Definition.SelectedFeatures.OrderBy(static x => x.Value, StringComparer.Ordinal).ToArray(),
-                Backends = plan.Definition.Backends.Select(static x => x.Value).OrderBy(static x => x, StringComparer.Ordinal).ToArray()
-            };
+            return new ParallelPlanProjection(
+                caseIndex,
+                plan.Definition.SelectedFeatures.OrderBy(static x => x.Value, StringComparer.Ordinal).ToArray(),
+                plan.Definition.Backends.Select(static x => x.Value).OrderBy(static x => x, StringComparer.Ordinal).ToArray());
         })));
 
-        Assert.Multiple(() =>
+        foreach (var result in results)
         {
-            foreach (var result in results)
-            {
-                Assert.That(
-                    result.Features,
-                    Is.EqualTo(result.Case.Features.OrderBy(static x => x.Value, StringComparer.Ordinal)),
-                    result.Case.Source);
-                Assert.That(
-                    result.Backends,
-                    Is.EqualTo(result.Case.Backends.OrderBy(static x => x, StringComparer.Ordinal)),
-                    result.Case.Source);
-            }
-        });
+            Assert.That(
+                result.Features,
+                Is.EqualTo(expected[result.CaseIndex].Features),
+                cases[result.CaseIndex].Source);
+            Assert.That(
+                result.Backends,
+                Is.EqualTo(expected[result.CaseIndex].Backends),
+                cases[result.CaseIndex].Source);
+        }
     }
 
     [Test]
@@ -96,7 +98,9 @@ public sealed class WistCanonicalConcurrencyTests
         const string invalid = "dialect Broken\nuse MissingModule\nbackend interpreter\nsecurity restricted";
         const string valid = "dialect Good\nuse Arithmetic,Numbers,Scopes,Whitespaces\nbackend interpreter\nsecurity restricted";
 
-        Assert.Throws<Exception>(() => Compile(invalid, "broken.wistdialect"));
+        var error = Assert.Throws<InvalidOperationException>(() => Compile(invalid, "broken.wistdialect"));
+        Assert.That(error!.Message, Does.Contain("MissingModule").And.Contain("not a canonical module component"));
+
         var first = Compile(valid, "good.wistdialect");
         var second = Compile(valid, "good.wistdialect");
 
@@ -198,6 +202,14 @@ public sealed class WistCanonicalConcurrencyTests
 
     private sealed record DialectCase(
         string Source,
+        IReadOnlyList<string> Backends);
+
+    private sealed record CanonicalCaseProjection(
+        IReadOnlyList<LanguageFeatureId> Features,
+        IReadOnlyList<string> Backends);
+
+    private sealed record ParallelPlanProjection(
+        int CaseIndex,
         IReadOnlyList<LanguageFeatureId> Features,
         IReadOnlyList<string> Backends);
 }
