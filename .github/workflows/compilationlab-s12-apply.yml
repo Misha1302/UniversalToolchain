@@ -1,11 +1,12 @@
 name: CompilationLab S12 Apply
 
 on:
-  push:
+  pull_request:
     branches:
-      - compilationlab/s12-apply-20260810
+      - migration/languageplan-single-runtime-20260807
     paths:
       - ".github/workflows/compilationlab-s12-apply.yml"
+      - ".compilationlab/s12.patch.part*"
 
 permissions:
   contents: write
@@ -22,12 +23,14 @@ jobs:
       - name: Checkout helper payload
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
       - name: Verify and reconstruct exact patch
         shell: bash
         run: |
           set -euo pipefail
+          test "${{ github.event.pull_request.base.sha }}" = "$EXPECTED_BASE_SHA"
           remote_target="$(git ls-remote origin "refs/heads/${TARGET_BRANCH}" | awk '{print $1}')"
           test "$remote_target" = "$EXPECTED_BASE_SHA"
           cat .compilationlab/s12.patch.part00 \
