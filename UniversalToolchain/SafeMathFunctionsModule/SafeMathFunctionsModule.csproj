@@ -13,7 +13,6 @@
         <ProjectReference Include="..\UniversalToolchain.Capabilities.Abstractions\UniversalToolchain.Capabilities.Abstractions.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Functions.Abstractions\UniversalToolchain.Functions.Abstractions.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj"/>
-    </ItemGroup>
+</ItemGroup>
 
 </Project>

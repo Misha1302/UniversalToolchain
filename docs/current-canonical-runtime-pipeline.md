@@ -33,7 +33,7 @@ For the public Wist facade, `WistEngine.Create` performs steps 1–5 once and ke
 - `UniversalToolchain.Wist.LanguagePack` translates Wist configuration into generic language contracts and supplies Wist implementations for already-planned contributions.
 - `UniversalToolchain.Wist` is the public facade over the canonical plan/runtime path.
 
-`UniversalToolchain.Dialects.Wist` remains only as a non-packable compatibility project for a small set of compatibility data/contracts. It is not a planner, runtime selector or execution host, and canonical Wist production projects are guarded from depending on it.
+S13 removes the former `UniversalToolchain.Dialects.Integration` runtime/profile host and `UniversalToolchain.Dialects.Wist` compatibility project entirely. Runtime-manifest emission may remain as metadata tooling, but it is not a runtime-selection authority.
 
 ## What is intentionally retired
 

@@ -25,7 +25,17 @@
     "docs/architecture/legacy-deprecation-gate.md",
     "docs/migration/WIST_LEGACY_MIGRATION_RU.md",
     "UniversalToolchain/BasicCore/Core/BasicCoreImpl.cs",
-    "UniversalToolchain/BasicCore/Core/PreparedExecutionBuilder.cs"
+    "UniversalToolchain/BasicCore/Core/PreparedExecutionBuilder.cs",
+    "UniversalToolchain/UniversalToolchain.Dialects.Integration",
+    "UniversalToolchain/UniversalToolchain.Dialects.Wist",
+    "UniversalToolchain/BasicCore/Contracts/IRuntimeProviderPolicyComponent.cs",
+    "UniversalToolchain/BasicCore/Contracts/RuntimeProviderPolicyComponent.cs",
+    "UniversalToolchain/UniversalToolchain.Capabilities.Core/KnownCapabilityCatalogBuilder.cs",
+    "UniversalToolchain/UniversalToolchain.Dialects.Tests/FreshProcess/HostOnlyContractFixture",
+    "UniversalToolchain/UniversalToolchain.Dialects.Tests/FreshProcess/HostileRuntimeFixture",
+    "UniversalToolchain/UniversalToolchain.Dialects.Tests/FreshProcess/CanonicalRuntimeFixture",
+    "UniversalToolchain/UniversalToolchain.Dialects.Tests/FreshProcess/UnregisteredDependencyRuntimeFixture",
+    "UniversalToolchain/UniversalToolchain.Dialects.Tests/FreshProcess/RuntimeSharedAssemblyFreshProcessHost"
   ],
   "symbols": [
     {
@@ -119,6 +129,34 @@
     {
       "name": "legacy prepared execution orchestrator",
       "pattern": "\\bPreparedExecutionBuilder\\b"
+    },
+    {
+      "name": "retired generic runtime host",
+      "pattern": "\\bToolchainRuntimeHost\\b"
+    },
+    {
+      "name": "retired runtime component catalog",
+      "pattern": "\\bIRuntimeComponentCatalog\\b"
+    },
+    {
+      "name": "retired runtime profile definition",
+      "pattern": "\\bRuntimeProfileDefinition\\b"
+    },
+    {
+      "name": "retired intrinsic provider annotation",
+      "pattern": "\\bIntrinsicDescriptorProviderAttribute\\b"
+    },
+    {
+      "name": "retired runtime provider policy interface",
+      "pattern": "\\bIRuntimeProviderPolicyComponent\\b"
+    },
+    {
+      "name": "retired runtime provider policy component",
+      "pattern": "\\bRuntimeProviderPolicyComponent\\b"
+    },
+    {
+      "name": "retired capability catalog bridge",
+      "pattern": "\\bKnownCapabilityCatalogBuilder\\b"
     }
   ]
 }

@@ -19,15 +19,15 @@ LanguageDefinition -> LanguageCompiler -> LanguagePlan -> LanguageRuntime
 
 The Wist configuration frontend translates aliases/policy; `LanguageCompiler` owns dependency closure, contribution/provider resolution, exclusions, ordering and backend routes. `LanguageRuntime` materializes the exact selected runtime graph from exact package/component sources.
 
-Generic runtime-manifest and `ToolchainRuntimeHost` infrastructure still exists for compatibility/tooling/integration contracts, but it is not a second Wist planner.
+The former reflection/runtime-profile `ToolchainRuntimeHost` topology is retired in S13. Runtime-manifest emission metadata remains only for explicit tooling/package scenarios and is not a second Wist planner.
 
 ### Current risk
 
-If eager discovery, runtime manifests, generic runtime profiles or compatibility service registration become hidden Wist decision-makers again, unrelated assemblies or test-only exports could affect execution and reintroduce two sources of semantic truth.
+If runtime-manifest metadata or a recreated reflection/profile host becomes a hidden Wist decision-maker, unrelated assemblies or test-only exports could again create two sources of semantic truth.
 
 ### Desired direction
 
-Keep `LanguagePlan` as the sole selected Wist semantic graph. Keep generic compatibility/discovery infrastructure explicitly scoped and unable to alter Wist plan selection.
+Keep `LanguagePlan` as the sole selected Wist semantic graph. Keep remaining manifest emission metadata explicitly scoped and unable to alter Wist plan selection.
 
 ### Exit criteria
 
@@ -75,7 +75,7 @@ Production AIR uses structured `IntrinsicInvocation` payloads. Stable capability
 
 `ModuleContractEnforcementPolicy.AllowUndeclared` is retained only where current module-contract profiles explicitly require observation/compatibility behavior. It must emit diagnostics rather than silently accepting unknown operations, and it must not become a mechanism for restoring retired Wist runtime selection.
 
-Generic dialect integration types such as runtime profiles, runtime manifests and `ToolchainRuntimeHost` may remain for their own compatibility/integration contracts. They are not authoritative Wist semantic owners.
+Runtime profiles and `ToolchainRuntimeHost` are retired. Remaining runtime-manifest emission metadata is not an authoritative Wist semantic owner.
 
 No compatibility adapter may select a second Wist contribution graph after `LanguageCompiler` has produced `LanguagePlan`.
 
@@ -131,7 +131,7 @@ The generic dialect subsystem still spans parsing, core and integration compatib
 
 ### Current risk
 
-Users and contributors can confuse generic dialect compatibility concepts (`RuntimeProfileDefinition`, runtime manifests, `ToolchainRuntimeHost`) with the current Wist public execution architecture.
+Users and contributors can still confuse runtime-manifest metadata with the current Wist public execution architecture or attempt to recreate the retired runtime-profile/host topology.
 
 ### Desired direction
 
@@ -140,7 +140,7 @@ Keep generic dialect parsing/profile/tooling contracts explicit while converging
 ### Exit criteria
 
 - Dialect authoring docs match real APIs and examples.
-- Generic runtime-profile/manifest docs state their compatibility/tooling scope.
+- Runtime-manifest docs state their metadata/tooling scope and retired runtime-profile docs point to typed `LanguageDefinition` policy.
 - Wist public docs consistently show the single-plan runtime path.
 - Module/backend authors have clear typed extension contracts.
 

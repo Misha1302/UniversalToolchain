@@ -1,26 +1,21 @@
+---
+title: Current Explain-Plan Surface
+description: Explain planning diagnostics and immutable LanguagePlan output.
+navigation: hidden
+status: Internal contributor reference; linked from architecture explainability docs.
+---
+
 # Current explain-plan surface
 
-`UniversalToolchain.Dialects.Integration` now exposes a generic explainability pipeline:
+The current explainability source is the same immutable object that owns execution selection: `LanguagePlan`.
 
-1. `DialectFrameworkCompositionResult`
-2. `DialectCompositionExplanationProjector`
-3. `DialectCompositionExplanation`
-4. `DialectCompositionExplanationFormatter`
+`LanguageCompiler.Compile(...)` returns a `LanguageBuildResult` containing planning diagnostics and, on success, the exact `LanguagePlan`. The plan exposes its `Summary`, selected features/contributions, runtime provider, backend routes, runtime policy and `PlanHash`; lock serialization provides a stable machine-readable projection.
 
-## What this layer does
+## Authority boundary
 
-- Projects immutable explanation snapshots from existing composition artifacts.
-- Reuses existing domain types (`DialectBuildPlan`, `IDialectRuntimeSelection`, diagnostics, directives, runtime entries).
-- Formats deterministic engineering text from the explanation snapshot.
-- Preserves canonical producer order for ordered module and diagnostics sequences.
+- `LanguageCompiler` owns planning decisions and diagnostics.
+- `LanguagePlan` owns the selected immutable graph.
+- `LanguageRuntime` verifies/materializes that exact graph and does not re-plan it.
+- Any human-readable report is a projection of these typed values, never a second composition model.
 
-## Runtime selection projection model
-
-- Runtime selections are always projected with `SelectionKind`, `IsResolved`, and diagnostics.
-- Resolved runtime components are projected only when selection implements `IDialectResolvedRuntimeSelection`.
-- Unknown/non-component runtime selections are preserved without invented module/backend/optimizer entries.
-
-## Scope boundary
-
-This surface is the current explainability and deterministic projection state.
-It is not a feature graph, not a language constructor model, and not a replacement source of truth for composition.
+The former `UniversalToolchain.Dialects.Integration` composition-explanation/runtime-selection model was retired in S13 together with its second runtime topology.

@@ -19,22 +19,8 @@ internal sealed class TempDirectory : IDisposable
     }
 }
 
-internal sealed class StaticManifestLocator(IReadOnlyList<string> paths) : IRuntimeManifestFileLocator
-{
-    public IReadOnlyList<string> GetManifestFilePaths() => paths;
-}
-
 internal static class TestContractsInfrastructure
 {
-    public static string WriteManifest(string root, string fileName, string assemblySimpleName, IReadOnlyList<FileDialectRuntimeComponentEntry> components)
-    {
-        var serializer = new RuntimeManifestJsonSerializer();
-        var path = Path.Combine(root, fileName);
-        var document = new FileDialectRuntimeManifestDocument(assemblySimpleName, components);
-        File.WriteAllText(path, serializer.Serialize(document));
-        return path;
-    }
-
     public static CliResult RunProcess(string fileName, string arguments, string workingDirectory, int timeoutMs)
     {
         var startInfo = new ProcessStartInfo(ResolveProcessFileName(fileName), arguments)

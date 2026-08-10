@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Tests.RuntimeCatalog;
@@ -47,20 +48,24 @@ public sealed class RuntimeManifestEmitterContractTests
 
         var first = EmitManifest(assemblyPath);
         var second = EmitManifest(assemblyPath);
-        var arithmetic = first.Document.Components.Single(static component => component.CanonicalAlias == "Arithmetic");
+        using var document = JsonDocument.Parse(first);
+        var root = document.RootElement;
+        var arithmetic = root.GetProperty("components")
+            .EnumerateArray()
+            .Single(component => component.GetProperty("canonicalAlias").GetString() == "Arithmetic");
+        var activationType = arithmetic.GetProperty("activation").GetProperty("activationType");
 
         Assert.Multiple(() =>
         {
-            Assert.That(first.Json, Is.EqualTo(second.Json));
-            Assert.That(first.Json, Does.Not.Contain("dialectFamily"));
-            Assert.That(first.Document.AssemblySimpleName, Is.EqualTo("ArithmeticModule"));
-            Assert.That(arithmetic.Activation, Is.Not.Null);
-            Assert.That(arithmetic.Activation!.ActivationTypeFullName, Is.EqualTo("ArithmeticModule.Module.ArithmeticModuleImpl"));
-            Assert.That(arithmetic.Activation.ActivationAssemblySimpleName, Is.EqualTo("ArithmeticModule"));
+            Assert.That(first, Is.EqualTo(second));
+            Assert.That(first, Does.Not.Contain("dialectFamily"));
+            Assert.That(root.GetProperty("assemblySimpleName").GetString(), Is.EqualTo("ArithmeticModule"));
+            Assert.That(activationType.GetProperty("typeFullName").GetString(), Is.EqualTo("ArithmeticModule.Module.ArithmeticModuleImpl"));
+            Assert.That(activationType.GetProperty("assemblySimpleName").GetString(), Is.EqualTo("ArithmeticModule"));
         });
     }
 
-    private static (string Json, FileDialectRuntimeManifestDocument Document) EmitManifest(string assemblyPath)
+    private static string EmitManifest(string assemblyPath)
     {
         using var temp = new TempDirectory();
         var outputPath = Path.Combine(temp.Path, $"{Path.GetFileNameWithoutExtension(assemblyPath)}.dialect.runtime.json");
@@ -95,9 +100,7 @@ public sealed class RuntimeManifestEmitterContractTests
             Is.EqualTo(0),
             $"Manifest emitter failed.{Environment.NewLine}{standardOutput}{Environment.NewLine}{standardError}");
 
-        var json = File.ReadAllText(outputPath);
-        IRuntimeManifestSerializer serializer = new RuntimeManifestJsonSerializer();
-        return (json, serializer.Deserialize(json));
+        return File.ReadAllText(outputPath);
     }
 
     private static string ResolveDotnetHostPath()

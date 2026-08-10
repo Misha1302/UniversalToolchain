@@ -94,7 +94,7 @@ The local service provider then receives the resulting `ITypeCatalog`. Registeri
 
 ## Compatibility boundary
 
-`UniversalToolchain.Dialects.Wist` is retained only as a non-packable compatibility project for a small set of compatibility data/contracts. It is not the canonical DI bootstrap, runtime planner or execution host. Canonical Wist production projects are guarded from depending on it.
+S13 removes the former compatibility DI/runtime owners `UniversalToolchain.Dialects.Integration` and `UniversalToolchain.Dialects.Wist`. Canonical DI construction now occurs only inside factories for exact `LanguagePlan` contributions; no compatibility service graph remains as a second runtime path.
 
 The retired production architecture must not be restored through DI helpers. In particular, `SelectedRuntimePlanResolver`, `WistDialectExecutionWorkflow`, `WistDialectExecutionHost`, manifest-selected backend registrars and the old Wist runtime service-provider orchestration are not current semantic owners.
 

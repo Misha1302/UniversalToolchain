@@ -15,8 +15,7 @@
         <ProjectReference Include="..\BasicTypesExtensions\BasicTypesExtensions.csproj"/>
         <ProjectReference Include="..\ObjectExtensions\ObjectExtensions.csproj"/>
         <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj"/>
-    </ItemGroup>
+</ItemGroup>
 
     <ItemGroup>
     </ItemGroup>

@@ -1,112 +1,55 @@
 ---
 title: Embedding in .NET
-description: Show how a host application uses a composed Wist runtime instead of shelling out to the CLI.
+description: Use the canonical WistEngine facade from a .NET host.
 ---
 
 # Embedding in .NET
 
-UniversalToolchain is intended to be embedded into .NET applications. The CLI is useful for learning and smoke checks, but production-style DSL usage normally runs through a host API.
+Application code should enter Wist through `UniversalToolchain.Wist`. The facade constructs one typed `LanguageDefinition`, compiles it once with `LanguageCompiler`, creates one immutable `LanguagePlan`, and materializes one `LanguageRuntime` for that plan.
 
-## When to read this page
-
-Read this after [Minimal DSL](/build-dsls/minimal-dsl) when you want to run formulas or restricted scripts from application code.
-
-## Goal
-
-Create a Wist runtime facade, select a shipped dialect preset, pass source text and named inputs, choose a backend and read the result.
-
-## Minimal host shape
-
-A host application should treat the DSL runtime as a composed execution surface:
-
-```text
-select dialect or preset
-  -> create runtime facade
-  -> pass source and declared inputs
-  -> choose requested backend
-  -> receive result or explicit failure
-```
-
-The facade is an entry point into the same dialect/runtime composition model. It is not a second implementation of Wist. This page uses lower-level dialect-runtime APIs; first-contact application code should prefer the `UniversalToolchain.Wist` package facade unless it specifically needs custom dialect composition.
-
-## Example: restricted pricing expression
+## Shipped preset
 
 ```csharp
-using UniversalToolchain.Dialects.Wist.Facade;
+using UniversalToolchain.Wist;
 
-using var runtime = WistRuntimeFacadeBuilder
-    .CreateDefault()
-    .WithShippedDialectPreset("pricing-restricted")
-    .Build();
+using var wist = WistEngine.CreateRestrictedArithmetic();
 
-var result = runtime.Run(
-    "price + fee * 2",
-    new Dictionary<string, object?>
-    {
-        ["price"] = 100,
-        ["fee"] = 5
-    },
-    backend: "cil");
+double result = wist.Evaluate<double>(
+    "price * 0.9 + fee",
+    new { price = 100.0, fee = 5.0 });
 ```
 
-Expected numeric result:
+## Explicit preset or dialect file
 
-```text
-110
+```csharp
+using UniversalToolchain.Wist;
+
+using var preset = WistEngine.Create(WistEngineOptions.FromPresetId("pricing-restricted"));
+
+using var custom = WistEngine.Create(new WistEngineOptions
+{
+    DialectSource = WistDialectSource.FromFile("my-language.wistdialect"),
+    BackendId = "cil"
+});
 ```
 
-The important contract is that the host selects a dialect, supplies inputs explicitly and requests a backend intentionally.
+The dialect source configures the language definition; it does not create another planner or runtime-selection layer.
 
-## Why inputs are explicit
+## Hot paths
 
-Runtime inputs such as `price` and `fee` are host-provided bindings. They are not the same concept as local variables declared by the Wist program.
+Compile once and reuse the typed delegate:
 
-A correct runtime path must keep these concerns separate:
+```csharp
+var formula = wist.Compile<Func<double, double, double>>(
+    "price * factor",
+    "price",
+    "factor");
 
-```text
-external binding: provided by the host
-local variable: declared and mutated by the program
+double value = formula.CompiledDelegate(100.0, 0.9);
 ```
 
-This boundary matters for formula DSLs because a host parameter should not accidentally overwrite an unrelated local variable.
+Use `Evaluate<T>` for one-off execution and `Compile<TDelegate>` for repeated invocation.
 
-## Choosing a dialect for embedding
+## Host boundary
 
-Use the narrowest dialect that supports the business case.
-
-| Scenario | Recommended dialect shape |
-|---|---|
-| Pricing/scoring formula | arithmetic, identifiers, selected variable/input support, no interop |
-| Workflow-like script | variables, conditions and loops only if needed |
-| Demonstrating Wist | broad reference profile |
-| Untrusted user-authored code | narrow dialect plus process/resource isolation outside Wist |
-
-Do not embed `full-default` only because it is convenient. A broad profile exposes more syntax and runtime behavior than a restricted formula surface usually needs.
-
-## Backend selection
-
-`backend: "cil"` requests the CIL-backed compiler path when the selected dialect exposes CIL. `backend: "interpreter"` requests the interpreter path when exposed.
-
-When both backends are available, add parity tests for important formulas. When only one backend is available, test that the unsupported backend request fails explicitly.
-
-## What to test in a host application
-
-A host using Wist should test:
-
-- valid formula execution;
-- missing input behavior;
-- wrong input type behavior;
-- syntax rejected when the owning module is omitted;
-- backend availability failures;
-- compiler/interpreter parity when both modes are exposed;
-- interop rejection for restricted formula dialects.
-
-## Security boundary
-
-A restricted dialect is a composition constraint. It limits which modules, syntax and runtime components are selected. It is not a hardened process sandbox.
-
-For arbitrary untrusted third-party code, combine dialect restriction with external isolation, resource limits and host-level policy.
-
-## Next
-
-Continue with [Backend Selection](/build-dsls/backend-selection), [Testing a DSL](/build-dsls/testing-dsl) and [Backend Contracts](/reference/backend-contracts).
+The host owns inputs, storage, timeouts/process isolation and side effects. Wist validates/executes the formula and returns data. `AllowedAssemblies` is an explicit CLR-interop allowlist; DI and runtime-manifest metadata are not security boundaries.

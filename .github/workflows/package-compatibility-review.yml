@@ -22,7 +22,6 @@ on:
       - "RELEASE_NOTES_RU.md"
       - "docs/evidence/current-verification.md"
       - "docs/evidence/maintainer-guide.md"
-      - "UniversalToolchain/UniversalToolchain.Dialects.Integration/**"
       - "UniversalToolchain/UniversalToolchain.Dialects.Tests/**"
       - "UniversalToolchain/UniversalToolchain.FeatureSdk/**"
       - "UniversalToolchain/UniversalToolchain.Language.Abstractions/**"
@@ -36,7 +35,6 @@ on:
       - "UniversalToolchain/UniversalToolchain.Ssa.Optimization/**"
       - "UniversalToolchain/UniversalToolchain.Runtime/**"
       - "UniversalToolchain/UniversalToolchain.ModuleContracts/**"
-      - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**"
       - "UniversalToolchain/UniversalToolchain.LanguageSdk.Tests/**"
       - "UniversalToolchain/Tests/**"
 
