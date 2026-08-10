@@ -6,7 +6,7 @@ on:
       - migration/languageplan-single-runtime-20260807
     paths:
       - ".github/workflows/compilationlab-s14-apply-v3.yml"
-      - ".compilationlab/s14-v3.patch.part*"
+      - ".compilationlab/s14-v3.patch.gz.b64"
 
 permissions:
   contents: write
@@ -36,11 +36,7 @@ jobs:
           test "${{ github.event.pull_request.base.sha }}" = "$EXPECTED_BASE_SHA"
           remote_target="$(git ls-remote origin "refs/heads/${TARGET_BRANCH}" | awk '{print $1}')"
           test "$remote_target" = "$EXPECTED_BASE_SHA"
-          cat .compilationlab/s14-v3.patch.part00 \
-              .compilationlab/s14-v3.patch.part01 \
-              .compilationlab/s14-v3.patch.part02 \
-              .compilationlab/s14-v3.patch.part03 > "$RUNNER_TEMP/s14.patch.gz.b64"
-          base64 --decode "$RUNNER_TEMP/s14.patch.gz.b64" > "$RUNNER_TEMP/s14.patch.gz"
+          base64 --decode .compilationlab/s14-v3.patch.gz.b64 > "$RUNNER_TEMP/s14.patch.gz"
           echo "$EXPECTED_GZIP_SHA256  $RUNNER_TEMP/s14.patch.gz" | sha256sum -c -
           gzip --decompress --stdout "$RUNNER_TEMP/s14.patch.gz" > "$RUNNER_TEMP/s14.patch"
           echo "$EXPECTED_PATCH_SHA256  $RUNNER_TEMP/s14.patch" | sha256sum -c -
