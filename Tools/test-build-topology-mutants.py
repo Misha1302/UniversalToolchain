@@ -410,7 +410,7 @@ def main() -> int:
                 lambda path: replace_once(
                     path / "build.ps1",
                     "-t:MaterializeCanonicalWistRuntimeClosure",
-                    "-t:DisabledMaterializeCanonicalWistRuntimeClosure",
+                    "-t:DisabledCanonicalWistRuntimeClosure",
                 ),
             ),
             (
