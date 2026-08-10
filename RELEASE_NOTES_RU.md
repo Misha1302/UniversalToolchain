@@ -36,7 +36,7 @@
 
 ## Проверка
 
-Локальный exact test contract: **1,597 passed, 0 failed, 0 skipped**. Обе solution собраны в `Release` с **0 warnings, 0 errors**.
+Exact test manifest текущей ветки: **1,276 тестов**. Canonical build/test gate обязан подтвердить 0 failed и 0 skipped на exact candidate revision; provider-backed run IDs фиксируются в migration PR, а не подменяются более старым локальным результатом.
 
 Fresh-process SafeMath receipts подтверждают `DIALECT_INSPECT=PASS`, Interpreter/CIL result `255`, одинаковую CLR value category, negative dialect rejection, hostile preload rejection и отсутствие незарегистрированного default-context fallback.
 

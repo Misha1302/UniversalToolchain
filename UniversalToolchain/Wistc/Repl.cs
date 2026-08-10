@@ -2,41 +2,34 @@ namespace Wistc;
 
 public class Repl
 {
-    private readonly ICoreRunnable _core;
+    private readonly Func<string, object?> _run;
     private readonly List<string> _history = new();
     private readonly string? _historyFile;
 
-    public Repl(ICoreRunnable core, string? historyFile = null)
+    public Repl(Func<string, object?> run, string? historyFile = null)
     {
-        _core = core;
+        _run = run ?? throw new ArgumentNullException(nameof(run));
         _historyFile = historyFile;
         LoadHistory();
     }
 
     public int Run()
     {
-        string? input;
         while (true)
         {
             Console.Write("> ");
-            input = ReadLine();
-
+            var input = Console.ReadLine()?.Trim();
             if (input == null)
                 break;
-
             if (string.IsNullOrWhiteSpace(input))
                 continue;
-
-            if (input.Equals("exit", StringComparison.OrdinalIgnoreCase) ||
-                input.Equals("quit", StringComparison.OrdinalIgnoreCase))
+            if (input.Equals("exit", StringComparison.OrdinalIgnoreCase) || input.Equals("quit", StringComparison.OrdinalIgnoreCase))
                 break;
-
             if (input.Equals("clear", StringComparison.OrdinalIgnoreCase))
             {
                 Console.Clear();
                 continue;
             }
-
             if (input.Equals("history", StringComparison.OrdinalIgnoreCase))
             {
                 ShowHistory();
@@ -45,10 +38,9 @@ public class Repl
 
             try
             {
-                var result = _core.Run(input);
+                var result = _run(input);
                 if (result != null)
                     Console.WriteLine($"= {result}");
-
                 _history.Add(input);
             }
             catch (Exception ex)
@@ -61,38 +53,22 @@ public class Repl
         return 0;
     }
 
-    private string? ReadLine()
-    {
-        var input = Console.ReadLine();
-        if (!string.IsNullOrEmpty(input))
-            input = input.Trim();
-        return input;
-    }
-
     private void LoadHistory()
     {
         if (_historyFile != null && File.Exists(_historyFile))
-            try
-            {
-                _history.AddRange(File.ReadAllLines(_historyFile));
-            }
-            catch
-            {
-                /* Ignore */
-            }
+        {
+            try { _history.AddRange(File.ReadAllLines(_historyFile)); }
+            catch { }
+        }
     }
 
     private void SaveHistory()
     {
         if (_historyFile != null && _history.Any())
-            try
-            {
-                File.WriteAllLines(_historyFile, _history.TakeLast(100));
-            }
-            catch
-            {
-                /* Ignore */
-            }
+        {
+            try { File.WriteAllLines(_historyFile, _history.TakeLast(100)); }
+            catch { }
+        }
     }
 
     private void ShowHistory()

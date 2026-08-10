@@ -1,5 +1,6 @@
 using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
+using UniversalToolchain.Runtime;
 
 namespace UniversalToolchain.Wist.LanguagePack;
 
@@ -39,10 +40,12 @@ public static class WistFeatureIds
 public static class WistContributionIds
 {
     public static LanguageContributionId Frontend { get; } = new("wist.frontend.parser");
+    public static LanguageContributionId LoweringToBytecode { get; } = new("wist.lowering.bytecode");
     public static LanguageContributionId LoweringToAir { get; } = new("wist.lowering.air");
     public static LanguageContributionId InterpreterBackend { get; } = new("wist.backend.interpreter");
     public static LanguageContributionId CilBackend { get; } = new("wist.backend.cil");
     public static LanguageContributionId RuntimeProvider { get; } = new("wist.runtime.provider");
+    public static LanguageContributionId RealNumberValueAdapter { get; } = new("wist.value-adapter.real-number");
     public static LanguageContributionId WhitespacesModule { get; } = new("wist.module.whitespaces");
     public static LanguageContributionId ScopesModule { get; } = new("wist.module.scopes");
     public static LanguageContributionId NumbersModule { get; } = new("wist.module.numbers");
@@ -76,23 +79,33 @@ public static class WistContributionIds
 public static class WistArtifactKinds
 {
     public static LanguageArtifactKindId SyntaxTree { get; } = new("wist.syntax-tree");
+    public static LanguageArtifactKindId Bytecode { get; } = new("wist.bytecode");
     public static LanguageArtifactKindId InterpreterArtifact { get; } = new("wist.interpreter.artifact");
     public static LanguageArtifactKindId CilArtifact { get; } = new("wist.cil-artifact");
     public static LanguageArtifactContract SyntaxTreeContract { get; } = new(SyntaxTree, "wist.syntax-tree/v1");
+    public static LanguageArtifactContract BytecodeContract { get; } = new(Bytecode, "wist.bytecode/v1");
     public static LanguageArtifactContract AirContract { get; } = new(LanguageArtifacts.Air, "wist.air/v1");
     public static LanguageArtifactContract InterpreterArtifactContract { get; } = new(InterpreterArtifact, "wist.interpreter-artifact/v1");
     public static LanguageArtifactContract CilArtifactContract { get; } = new(CilArtifact, "wist.cil-artifact/v1");
 }
 
-public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
+public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage, ILanguageRouteComponentSource
 {
     private static readonly BackendId Cil = new("cil");
     private static readonly BackendId Interpreter = new("interpreter");
     private static readonly BackendId[] BothBackends = [Cil, Interpreter];
+    private static readonly LanguageSlotId SyntaxToBytecodeSlot = new("wist.lowering.syntax-to-bytecode");
+    private static readonly LanguageSlotId BytecodeToAirSlot = new("wist.lowering.bytecode-to-air");
+    private readonly LanguageRouteComponentCatalog _components;
 
     public static LanguagePackageId PackageId { get; } = new("UniversalToolchain.Wist.LanguagePack");
     public static LanguageVersion PackageVersion { get; } = new(WistLanguagePackIdentity.Version);
     public static LanguageRuntimeProviderId RuntimeProviderId { get; } = new(PackageId.Value);
+
+    public WistLanguageFeaturePackage()
+    {
+        _components = WistDirectRuntimeComponents.CreateCatalog(this);
+    }
 
     public LanguagePackageDescriptor Descriptor { get; } = new(
         PackageId,
@@ -103,15 +116,17 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
         {
             ["language"] = "Wist",
             ["status"] = "typed-authoring-runtime-provider",
-            ["positioning"] = "Typed Wist authoring package over the canonical Wist dialect runtime with shipped-preset parity"
+            ["positioning"] = "Typed Wist authoring package over the canonical Wist runtime with shipped-preset parity"
         },
         CreateContributions());
+
+    LanguageRouteComponentCatalog ILanguageRouteComponentSource.Components => _components;
 
     private static IReadOnlyList<LanguageFeatureDescriptor> CreateFeatures() =>
     [
         Feature(WistFeatureIds.Whitespaces, WistContributionIds.WhitespacesModule),
         Feature(WistFeatureIds.Scopes, WistContributionIds.ScopesModule),
-        Feature(WistFeatureIds.Numbers, WistContributionIds.NumbersModule),
+        Feature(WistFeatureIds.Numbers, [WistContributionIds.NumbersModule, WistContributionIds.RealNumberValueAdapter]),
         Feature(WistFeatureIds.Arithmetic, WistContributionIds.ArithmeticModule),
         Feature(WistFeatureIds.Identifiers, WistContributionIds.IdentifiersModule),
         Feature(WistFeatureIds.Variables, WistContributionIds.VariablesModule),
@@ -138,94 +153,96 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
         Feature(WistFeatureIds.EGraphOptimization, WistContributionIds.EGraphOptimizer),
         Feature(WistFeatureIds.NativeCilOptimization, WistContributionIds.NativeCilOptimizer),
         Feature(WistFeatureIds.NativeTypesOptimization, WistContributionIds.NativeTypesOptimizer),
-        Feature(WistFeatureIds.SsaOptimization, WistContributionIds.SsaOptimizer)
+        Feature(WistFeatureIds.SsaOptimization, WistContributionIds.SsaOptimizer),
+        PolicyFeature(WistInternalFeatureIds.TrustedSecurity, WistInternalFeatureIds.RestrictedSecurity),
+        PolicyFeature(WistInternalFeatureIds.RestrictedSecurity, WistInternalFeatureIds.TrustedSecurity),
+        PolicyFeature(WistInternalFeatureIds.CompositionRestricted),
+        SsaPolicyFeature(WistSsaPolicyFeatureIds.Disabled),
+        SsaPolicyFeature(WistSsaPolicyFeatureIds.Prefer),
+        SsaPolicyFeature(WistSsaPolicyFeatureIds.Require),
+        SsaPolicyFeature(WistSsaPolicyFeatureIds.Debug)
     ];
 
-    private static IReadOnlyList<LanguageContributionDescriptor> CreateContributions() =>
-    [
-        new(
-            WistContributionIds.Frontend,
-            LanguageSlots.FrontendParser,
-            LanguageSlotMultiplicity.Single,
-            ContributionMergePolicy.RejectDuplicate,
-            providesCapabilities: [new LanguageCapabilityId("frontend:wist")],
-            transformation: new ArtifactTransformationDescriptor(
-                StandardLanguageArtifactKinds.SourceText.Contract,
-                WistArtifactKinds.SyntaxTreeContract,
-                10)),
-        new(
-            WistContributionIds.LoweringToAir,
-            LanguageSlots.Lowering,
-            LanguageSlotMultiplicity.Single,
-            ContributionMergePolicy.RejectDuplicate,
-            requiresCapabilities: [new LanguageCapabilityId("frontend:wist")],
-            providesCapabilities: [new LanguageCapabilityId("lowering:air")],
-            transformation: new ArtifactTransformationDescriptor(
-                WistArtifactKinds.SyntaxTreeContract,
-                WistArtifactKinds.AirContract,
-                10)),
-        new(
-            WistContributionIds.InterpreterBackend,
-            LanguageSlots.Backends,
-            providesCapabilities: [LanguageCapabilities.Backend(Interpreter)],
-            supportedBackends: [Interpreter],
-            transformation: new ArtifactTransformationDescriptor(
-                WistArtifactKinds.AirContract,
-                WistArtifactKinds.InterpreterArtifactContract,
-                10),
-            backendInputContract: WistArtifactKinds.InterpreterArtifactContract),
-        new(
-            WistContributionIds.CilBackend,
-            LanguageSlots.Backends,
-            providesCapabilities: [LanguageCapabilities.Backend(Cil)],
-            supportedBackends: [Cil],
-            transformation: new ArtifactTransformationDescriptor(
-                WistArtifactKinds.AirContract,
-                WistArtifactKinds.CilArtifactContract,
-                10),
-            backendInputContract: WistArtifactKinds.CilArtifactContract),
-        new(
-            WistContributionIds.RuntimeProvider,
-            LanguageSlots.RuntimeProvider,
-            LanguageSlotMultiplicity.Single,
-            ContributionMergePolicy.RejectDuplicate,
-            providesCapabilities: [LanguageCapabilities.RuntimeProvider],
-            runtimeProviderId: RuntimeProviderId,
-            runtimeProviderVersion: PackageVersion,
-            runtimeInputContracts: new Dictionary<BackendId, LanguageArtifactContract>
-            {
-                [Interpreter] = WistArtifactKinds.InterpreterArtifactContract,
-                [Cil] = WistArtifactKinds.CilArtifactContract
-            }),
-        Module(WistContributionIds.WhitespacesModule, "Whitespaces"),
-        Module(WistContributionIds.ScopesModule, "Scopes"),
-        Module(WistContributionIds.NumbersModule, "Numbers"),
-        Module(WistContributionIds.ArithmeticModule, "Arithmetic"),
-        Module(WistContributionIds.IdentifiersModule, "Identifier"),
-        Module(WistContributionIds.VariablesModule, "Variables"),
-        Module(WistContributionIds.ComparisonsModule, "ComparisonConditions"),
-        Module(WistContributionIds.BooleanLogicModule, "BooleanConditions"),
-        Module(WistContributionIds.ConditionalControlFlowModule, "Conditions"),
-        Module(WistContributionIds.CommentsModule, "Comments"),
-        Module(WistContributionIds.CSharpInteropModule, "CSharpInterop"),
-        Module(WistContributionIds.EqualityModule, "Equality"),
-        Module(WistContributionIds.FunctionCallsModule, "FunctionCalls"),
-        Module(WistContributionIds.InternalPreprocessorLexemesModule, "InternalPreprocessorLexemes"),
-        Module(WistContributionIds.LabelsModule, "Labels"),
-        Module(WistContributionIds.LoopsModule, "Loops"),
-        Module(WistContributionIds.NativeTypesModule, "NativeTypes"),
-        Module(WistContributionIds.ParametersSetterModule, "ParametersSetter"),
-        Module(WistContributionIds.SafeMathFunctionsModule, "SafeMathFunctions"),
-        Module(WistContributionIds.SemicolonAsNewLineModule, "SemicolonAsNewLine"),
-        Module(WistContributionIds.TextualAdditionModule, "TextualAddition"),
-        Optimizer(WistContributionIds.ArithmeticOptimizer, "ArithmeticOptimization"),
-        Optimizer(WistContributionIds.BooleanOptimizer, "BooleanOptimization"),
-        Optimizer(WistContributionIds.ComparisonIntrinsicOptimizer, "ComparisonIntrinsicOptimization"),
-        Optimizer(WistContributionIds.EGraphOptimizer, "EGraphOptimization"),
-        Optimizer(WistContributionIds.NativeCilOptimizer, "NativeCilOptimization"),
-        Optimizer(WistContributionIds.NativeTypesOptimizer, "NativeTypesOptimization"),
-        Optimizer(WistContributionIds.SsaOptimizer, "Ssa")
-    ];
+    private static IReadOnlyList<LanguageContributionDescriptor> CreateContributions()
+    {
+        var contributions = new List<LanguageContributionDescriptor>
+        {
+            new(
+                WistContributionIds.Frontend,
+                LanguageSlots.FrontendParser,
+                LanguageSlotMultiplicity.Single,
+                ContributionMergePolicy.RejectDuplicate,
+                providesCapabilities: [new LanguageCapabilityId("frontend:wist")],
+                transformation: new ArtifactTransformationDescriptor(
+                    StandardLanguageArtifactKinds.SourceText.Contract,
+                    WistArtifactKinds.SyntaxTreeContract,
+                    10)),
+            new(
+                WistContributionIds.LoweringToBytecode,
+                SyntaxToBytecodeSlot,
+                LanguageSlotMultiplicity.Single,
+                ContributionMergePolicy.RejectDuplicate,
+                requiresCapabilities: [new LanguageCapabilityId("frontend:wist")],
+                providesCapabilities: [new LanguageCapabilityId("lowering:bytecode")],
+                transformation: new ArtifactTransformationDescriptor(
+                    WistArtifactKinds.SyntaxTreeContract,
+                    WistArtifactKinds.BytecodeContract,
+                    10)),
+            new(
+                WistContributionIds.LoweringToAir,
+                BytecodeToAirSlot,
+                LanguageSlotMultiplicity.Single,
+                ContributionMergePolicy.RejectDuplicate,
+                requiresCapabilities: [new LanguageCapabilityId("lowering:bytecode")],
+                providesCapabilities: [new LanguageCapabilityId("lowering:air")],
+                transformation: new ArtifactTransformationDescriptor(
+                    WistArtifactKinds.BytecodeContract,
+                    WistArtifactKinds.AirContract,
+                    10)),
+            new(
+                WistContributionIds.InterpreterBackend,
+                LanguageSlots.Backends,
+                providesCapabilities: [LanguageCapabilities.Backend(Interpreter)],
+                supportedBackends: [Interpreter],
+                transformation: new ArtifactTransformationDescriptor(
+                    WistArtifactKinds.AirContract,
+                    WistArtifactKinds.InterpreterArtifactContract,
+                    10),
+                backendInputContract: WistArtifactKinds.InterpreterArtifactContract),
+            new(
+                WistContributionIds.CilBackend,
+                LanguageSlots.Backends,
+                providesCapabilities: [LanguageCapabilities.Backend(Cil)],
+                supportedBackends: [Cil],
+                transformation: new ArtifactTransformationDescriptor(
+                    WistArtifactKinds.AirContract,
+                    WistArtifactKinds.CilArtifactContract,
+                    10),
+                backendInputContract: WistArtifactKinds.CilArtifactContract),
+            new(
+                WistContributionIds.RuntimeProvider,
+                LanguageSlots.RuntimeProvider,
+                LanguageSlotMultiplicity.Single,
+                ContributionMergePolicy.RejectDuplicate,
+                providesCapabilities: [LanguageCapabilities.RuntimeProvider],
+                runtimeProviderId: RuntimeProviderId,
+                runtimeProviderVersion: PackageVersion,
+                runtimeInputContracts: new Dictionary<BackendId, LanguageArtifactContract>
+                {
+                    [Interpreter] = WistArtifactKinds.InterpreterArtifactContract,
+                    [Cil] = WistArtifactKinds.CilArtifactContract
+                }),
+            new(
+                WistContributionIds.RealNumberValueAdapter,
+                WistLanguageSlots.RuntimeValueAdapters,
+                supportedBackends: BothBackends,
+                order: 100)
+        };
+
+        contributions.AddRange(WistRuntimeComponentCatalog.Modules.Select(Module));
+        contributions.AddRange(WistRuntimeComponentCatalog.Optimizers.Select(Optimizer));
+        return contributions;
+    }
 
     private static LanguageFeatureDescriptor Feature(
         LanguageFeatureId id,
@@ -239,6 +256,18 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
         supportedBackends: BothBackends,
         contributions: contributions);
 
+    private static LanguageFeatureDescriptor PolicyFeature(
+        LanguageFeatureId id,
+        params LanguageFeatureId[] conflicts) => new(
+        id,
+        conflicts: conflicts,
+        supportedBackends: BothBackends);
+
+    private static LanguageFeatureDescriptor SsaPolicyFeature(LanguageFeatureId id) => new(
+        id,
+        conflicts: WistSsaPolicyFeatureIds.All.Where(other => other != id),
+        supportedBackends: BothBackends);
+
     private static IReadOnlyList<LanguageFeatureId> GetRequiredFeatures(LanguageFeatureId id)
     {
         if (id == WistFeatureIds.Arithmetic)
@@ -248,7 +277,7 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
         if (id == WistFeatureIds.Variables)
             return [WistFeatureIds.Identifiers, WistFeatureIds.Scopes, WistFeatureIds.Whitespaces];
         if (id == WistFeatureIds.Comparisons)
-            return [WistFeatureIds.Numbers, WistFeatureIds.Scopes, WistFeatureIds.Whitespaces];
+            return [WistFeatureIds.Scopes, WistFeatureIds.Whitespaces];
         if (id == WistFeatureIds.BooleanLogic || id == WistFeatureIds.ConditionalControlFlow)
             return [WistFeatureIds.Scopes, WistFeatureIds.Whitespaces];
         if (id == WistFeatureIds.Conditions)
@@ -257,7 +286,6 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
                 WistFeatureIds.Comparisons,
                 WistFeatureIds.BooleanLogic,
                 WistFeatureIds.ConditionalControlFlow,
-                WistFeatureIds.Numbers,
                 WistFeatureIds.Scopes,
                 WistFeatureIds.Whitespaces
             ];
@@ -276,17 +304,23 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
         return [];
     }
 
-    private static LanguageContributionDescriptor Module(LanguageContributionId id, string alias) => new(
-        id,
+    private static LanguageContributionDescriptor Module(WistRuntimeComponentDescriptor component) => new(
+        component.ContributionId,
         LanguageSlots.FrontendSyntax,
         requiresCapabilities: [new LanguageCapabilityId("frontend:wist"), new LanguageCapabilityId("lowering:air")],
         supportedBackends: BothBackends,
-        metadata: new Dictionary<string, string> { ["wist.moduleAlias"] = alias });
+        order: component.Order,
+        metadata: new Dictionary<string, string> { ["wist.moduleAlias"] = component.Alias });
 
-    private static LanguageContributionDescriptor Optimizer(LanguageContributionId id, string alias) => new(
-        id,
+    private static LanguageContributionDescriptor Optimizer(WistRuntimeComponentDescriptor component) => new(
+        component.ContributionId,
         LanguageSlots.Optimizers,
         requiresCapabilities: [new LanguageCapabilityId("lowering:air")],
         supportedBackends: BothBackends,
-        metadata: new Dictionary<string, string> { ["wist.optimizerAlias"] = alias });
+        transformation: new ArtifactTransformationDescriptor(
+            WistArtifactKinds.AirContract,
+            WistArtifactKinds.AirContract,
+            10),
+        order: component.Order,
+        metadata: new Dictionary<string, string> { ["wist.optimizerAlias"] = component.Alias });
 }

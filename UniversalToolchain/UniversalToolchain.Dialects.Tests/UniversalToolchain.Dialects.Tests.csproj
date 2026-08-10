@@ -24,10 +24,9 @@
         <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Core\UniversalToolchain.Dialects.Core.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Parsing\UniversalToolchain.Dialects.Parsing.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj"/>
+<ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj"/>
+<ProjectReference Include="..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Ssa.Optimization\UniversalToolchain.Ssa.Optimization.csproj"/>
         <ProjectReference Include="..\Wistc\Wistc.csproj"/>
         <ProjectReference Include="..\ArithmeticModule\ArithmeticModule.csproj"/>
         <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj"/>
@@ -46,30 +45,8 @@
         <Using Include="NUnit.Framework"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <Compile Remove="FreshProcess\**\*.cs" />
-        <ProjectReference Include="FreshProcess\RuntimeSharedAssemblyFreshProcessHost\RuntimeSharedAssemblyFreshProcessHost.csproj"
-                          ReferenceOutputAssembly="false"
-                          Private="false" />
-        <RuntimeSharedAssemblyFreshProcessFixtureProject Include="FreshProcess\HostOnlyContractFixture\HostOnlyContractFixture.csproj" />
-        <RuntimeSharedAssemblyFreshProcessFixtureProject Include="FreshProcess\HostileRuntimeFixture\HostileRuntimeFixture.csproj" />
-        <RuntimeSharedAssemblyFreshProcessFixtureProject Include="FreshProcess\CanonicalRuntimeFixture\CanonicalRuntimeFixture.csproj" />
-        <RuntimeSharedAssemblyFreshProcessFixtureProject Include="FreshProcess\UnregisteredDependencyRuntimeFixture\UnregisteredDependencyRuntimeFixture.csproj" />
-    </ItemGroup>
 
-    <Target Name="BuildRuntimeSharedAssemblyFreshProcessHost"
-            BeforeTargets="Build"
-            Condition="'$(DesignTimeBuild)' != 'true'">
-        <MSBuild Projects="@(RuntimeSharedAssemblyFreshProcessFixtureProject)"
-                 Targets="Build"
-                 Properties="Configuration=$(Configuration)"
-                 BuildInParallel="false" />
-        <MSBuild Projects="FreshProcess\RuntimeSharedAssemblyFreshProcessHost\RuntimeSharedAssemblyFreshProcessHost.csproj"
-                 Targets="Build"
-                 Properties="Configuration=$(Configuration)" />
-    </Target>
-
-    <ItemGroup>
+<ItemGroup>
         <Content Include="..\Dialects\examples\wist\full-default-native\dialect.wistdialect">
             <Link>Dialects\examples\wist\full-default-native\dialect.wistdialect</Link>
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>

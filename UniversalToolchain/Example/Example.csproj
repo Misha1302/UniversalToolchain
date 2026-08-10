@@ -1,128 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
-    <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <OutputType>Exe</OutputType>
-        <LangVersion>14</LangVersion>
-    </PropertyGroup>
-
-
-    <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\ArithmeticModule\ArithmeticModule.csproj"/>
-        <ProjectReference Include="..\BasicCilCompiler\BasicCilCompiler.csproj"/>
-        <ProjectReference Include="..\BasicCodeTranslator\BasicCodeTranslator.csproj"/>
-        <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
-        <ProjectReference Include="..\BasicInterpreter\BasicInterpreter.csproj"/>
-        <ProjectReference Include="..\BasicLexer\BasicLexer.csproj"/>
-        <ProjectReference Include="..\BasicParser\BasicParser.csproj"/>
-        <ProjectReference Include="..\BasicStdLib\BasicStdLib.csproj"/>
-        <ProjectReference Include="..\BasicTypesExtensions\BasicTypesExtensions.csproj"/>
-        <ProjectReference Include="..\BytecodeDynamicMethodsCompiler\BytecodeDynamicMethodsCompiler.csproj"/>
-        <ProjectReference Include="..\DynamicMethodCalling\DynamicMethodCalling.csproj"/>
-        <ProjectReference Include="..\AbstractIrConverters\AbstractIrConverters.csproj"/>
-        <ProjectReference Include="..\ConditionsModule\ConditionsModule.csproj"/>
-        <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj"/>
-        <ProjectReference Include="..\IdentifierModule\IdentifierModule.csproj"/>
-        <ProjectReference Include="..\InternalPreprocessorLexemesModule\InternalPreprocessorLexemesModule.csproj"/>
-        <ProjectReference Include="..\LabelsModule\LabelsModule.csproj"/>
-        <ProjectReference Include="..\LoopsModule\LoopsModule.csproj"/>
-        <ProjectReference Include="..\NativeMathModule\NativeMathModule.csproj"/>
-        <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
-        <ProjectReference Include="..\ParserConfigurationModule\ParserConfigurationModule.csproj"/>
-        <ProjectReference Include="..\ScopesModule\ScopesModule.csproj"/>
-        <ProjectReference Include="..\SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj"/>
-        <ProjectReference Include="..\VariablesModule\VariablesModule.csproj"/>
-        <ProjectReference Include="..\WhitespacesModule\WhitespacesModule.csproj"/>
-        <ProjectReference Include="..\CommentsModule\CommentsModule.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Content Include="..\Dialects\examples\wist\full-default\dialect.wistdialect">
-            <Link>Dialects\examples\wist\full-default\dialect.wistdialect</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\Dialects\examples\wist\full-default\program.wist">
-            <Link>Dialects\examples\wist\full-default\program.wist</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\Dialects\examples\wist\full-default\README.md">
-            <Link>Dialects\examples\wist\full-default\README.md</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\Dialects\examples\wist\full-default-native\dialect.wistdialect">
-            <Link>Dialects\examples\wist\full-default-native\dialect.wistdialect</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\Dialects\examples\wist\full-default-native\program.wist">
-            <Link>Dialects\examples\wist\full-default-native\program.wist</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\Dialects\examples\wist\full-default-native\README.md">
-            <Link>Dialects\examples\wist\full-default-native\README.md</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\Dialects\examples\wist\minimal-arithmetic-native\dialect.wistdialect">
-            <Link>Dialects\examples\wist\minimal-arithmetic-native\dialect.wistdialect</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\Dialects\examples\wist\minimal-arithmetic-native\program.wist">
-            <Link>Dialects\examples\wist\minimal-arithmetic-native\program.wist</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\Dialects\examples\wist\minimal-arithmetic-native\README.md">
-            <Link>Dialects\examples\wist\minimal-arithmetic-native\README.md</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\Dialects\examples\wist\minimal-arithmetic\dialect.wistdialect">
-            <Link>Dialects\examples\wist\minimal-arithmetic\dialect.wistdialect</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\Dialects\examples\wist\minimal-arithmetic\program.wist">
-            <Link>Dialects\examples\wist\minimal-arithmetic\program.wist</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\Dialects\examples\wist\minimal-arithmetic\README.md">
-            <Link>Dialects\examples\wist\minimal-arithmetic\README.md</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\Dialects\examples\wist\pricing-restricted\dialect.wistdialect">
-            <Link>Dialects\examples\wist\pricing-restricted\dialect.wistdialect</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\Dialects\examples\wist\pricing-restricted\program.wist">
-            <Link>Dialects\examples\wist\pricing-restricted\program.wist</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\Dialects\examples\wist\pricing-restricted\README.md">
-            <Link>Dialects\examples\wist\pricing-restricted\README.md</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\Dialects\examples\wist\composition-restricted\dialect.wistdialect">
-            <Link>Dialects\examples\wist\composition-restricted\dialect.wistdialect</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\Dialects\examples\wist\composition-restricted\forbidden-program.wist">
-            <Link>Dialects\examples\wist\composition-restricted\forbidden-program.wist</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\Dialects\examples\wist\composition-restricted\program.wist">
-            <Link>Dialects\examples\wist\composition-restricted\program.wist</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\Dialects\examples\wist\composition-restricted\README.md">
-            <Link>Dialects\examples\wist\composition-restricted\README.md</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-    </ItemGroup>
-
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OutputType>Exe</OutputType>
+    <LangVersion>14</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Wist.LanguagePack\UniversalToolchain.Wist.LanguagePack.csproj" />
+  </ItemGroup>
 </Project>

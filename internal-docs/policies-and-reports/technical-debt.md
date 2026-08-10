@@ -1,46 +1,59 @@
 # Technical debt
 
 This document tracks active architectural and repository hygiene debt for UniversalToolchain.
-It replaces the old `internal-docs/policies-and-reports/technical-debt.md` file so debt is documented with the rest of the project docs instead of being hidden inside the source tree.
+It is a current maintenance ledger, not a historical architecture snapshot.
 
-## Runtime discovery and activation
+## Canonical runtime materialization
 
 ### Problem
 
-Broad reflection-heavy discovery must stay out of the canonical runtime path. The canonical path should keep moving toward manifest-backed selected-component activation.
+Broad reflection-heavy discovery, compatibility manifests and service-container registration must stay out of the canonical Wist semantic-selection path.
+
+### Current control
+
+Current Wist execution is planned once through:
+
+```text
+LanguageDefinition -> LanguageCompiler -> LanguagePlan -> LanguageRuntime
+```
+
+The Wist configuration frontend translates aliases/policy; `LanguageCompiler` owns dependency closure, contribution/provider resolution, exclusions, ordering and backend routes. `LanguageRuntime` materializes the exact selected runtime graph from exact package/component sources.
+
+The former reflection/runtime-profile `ToolchainRuntimeHost` topology is retired in S13. Runtime-manifest emission metadata remains only for explicit tooling/package scenarios and is not a second Wist planner.
 
 ### Current risk
 
-If eager discovery becomes a hidden decision-maker, unrelated assemblies or test-only exports can affect runtime composition and make repeated runs non-deterministic.
+If runtime-manifest metadata or a recreated reflection/profile host becomes a hidden Wist decision-maker, unrelated assemblies or test-only exports could again create two sources of semantic truth.
 
 ### Desired direction
 
-Keep exact selected-component activation canonical. Scope eager discovery to compatibility, bootstrapping, or explicitly documented tooling scenarios.
+Keep `LanguagePlan` as the sole selected Wist semantic graph. Keep remaining manifest emission metadata explicitly scoped and unable to alter Wist plan selection.
 
 ### Exit criteria
 
-- Runtime selection is deterministic and manifest-backed.
-- Test-only exports cannot leak into canonical Wist runtime catalogs.
-- Runtime docs clearly distinguish selected activation from compatibility discovery.
+- Wist feature/contribution/backend selection is deterministic and `LanguagePlan`-backed.
+- Runtime materialization validates exact package/source provenance for executable components.
+- Tooling-only planned contributions do not create false runtime-source requirements.
+- Test-only exports cannot leak into canonical Wist component selection.
+- Public/contributor docs distinguish generic manifest/host compatibility infrastructure from the Wist production path.
+- Architecture tests reject reintroduction of the retired Wist planner/runtime owners and stale canonical documentation claims.
 
 ## BasicCore stage boundaries
 
-### Problem
+### Current state
 
-`BasicCoreImpl` still carries abstraction leakage around pipeline stage boundaries and extension contracts.
+S12 physically retires `BasicCoreImpl` and `PreparedExecutionBuilder`. Their orchestration duties are not moved into a replacement coordinator: canonical execution is owned by `LanguageRuntime` and exact plan-owned artifact route components, while BasicCore retains only reusable stage contracts/mechanics.
 
-### Current risk
+### Remaining risk
 
-Framework-level code can accumulate dialect/module assumptions and become harder to reuse for non-Wist DSLs.
-
-### Desired direction
-
-Clarify stage contracts and make extension points explicit rather than convention-only.
+S13 still needs to remove topology-only compatibility contracts and project edges that no longer have a live owner. A future helper could also regress into a second end-to-end coordinator if architecture guards are weakened.
 
 ### Exit criteria
 
-- Frontend, bytecode, AIR, optimization, and backend responsibilities are documented and test-protected.
-- New modules do not need hidden knowledge of internal stage coupling.
+- Frontend, bytecode, AIR, optimization, backend and runtime ownership remain explicit and test-protected.
+- Retired BasicCore orchestrator symbols/paths cannot reappear.
+- No BasicCore production file combines the full lexer/parser/lowering/compiler/executor ownership set.
+- Remaining generic compatibility contracts either have an explicit owner/use case or are deleted during S13.
 
 ## Intrinsic governance
 
@@ -60,15 +73,21 @@ Production AIR uses structured `IntrinsicInvocation` payloads. Stable capability
 
 ## Explicit compatibility boundary
 
-`ModuleContractEnforcementPolicy.AllowUndeclared` is retained only for the Wist observation profile while shipped modules finish declaring complete bytecode and AIR contracts. It emits diagnostics instead of silently accepting unknown operations. The removal gate is full strict-profile coverage for every shipped module and example.
+`ModuleContractEnforcementPolicy.AllowUndeclared` is retained only where current module-contract profiles explicitly require observation/compatibility behavior. It must emit diagnostics rather than silently accepting unknown operations, and it must not become a mechanism for restoring retired Wist runtime selection.
 
-No other production compatibility adapter or legacy payload decoder is supported.
+Runtime profiles and `ToolchainRuntimeHost` are retired. Remaining runtime-manifest emission metadata is not an authoritative Wist semantic owner.
+
+No compatibility adapter may select a second Wist contribution graph after `LanguageCompiler` has produced `LanguagePlan`.
 
 ## Compiler/interpreter parity
 
 ### Problem
 
 Compiler and interpreter behavior parity is central to the project, but supported divergences need to be explicit and tested.
+
+### Current control
+
+S11 parity infrastructure executes both supported Wist backends from one canonical multi-route `LanguagePlan`, rather than constructing two independent semantic plans.
 
 ### Current risk
 
@@ -82,12 +101,13 @@ Keep parity tests around public behavior and add explicit tests for intentional 
 
 - Public language behavior has parity coverage for interpreter and compiled execution.
 - Intentional divergences are documented and tested.
+- Backend parity never depends on two independently planned Wist runtimes when one-plan parity is the contract under test.
 
 ## Global mutable state
 
 ### Problem
 
-Global mutable state remains a risk for repeated runs, long-lived hosts, tests, and dynamically composed dialects.
+Global mutable state remains a risk for repeated runs, long-lived hosts, tests, and dynamically composed languages.
 
 ### Current risk
 
@@ -101,85 +121,88 @@ Keep mutable static state guarded, scoped, or replaced with injected/determinist
 
 - Static mutable state is covered by guardrail tests.
 - Known exceptions have documented rationale and containment boundaries.
+- Independent `LanguageRuntime` instances do not share mutable per-session component state.
 
 ## Dialect subsystem maturity
 
 ### Problem
 
-The dialect subsystem exists across parsing, core, integration, frontend, and Wist projects, but composition ergonomics and policy depth are still evolving.
+The generic dialect subsystem still spans parsing, core and integration compatibility layers while the external typed language-authoring flow continues to mature.
 
 ### Current risk
 
-The framework may expose too many internal concepts before the external authoring flow is stable.
+Users and contributors can still confuse runtime-manifest metadata with the current Wist public execution architecture or attempt to recreate the retired runtime-profile/host topology.
 
 ### Desired direction
 
-Continue improving dialect authoring, runtime profiles, selected runtime plans, and diagnostics without hardcoding Wist-specific assumptions into framework layers.
+Keep generic dialect parsing/profile/tooling contracts explicit while converging public language authoring on typed `LanguageDefinition`, package/contribution descriptors, `LanguageCompiler`, `LanguagePlan` and `LanguageRuntime` contracts. Do not rebuild Wist-specific planning inside generic compatibility helpers.
 
 ### Exit criteria
 
 - Dialect authoring docs match real APIs and examples.
-- Runtime profiles and selected plans are understandable from documentation alone.
-- Module/backend authors have clear extension contracts.
+- Runtime-manifest docs state their metadata/tooling scope and retired runtime-profile docs point to typed `LanguageDefinition` policy.
+- Wist public docs consistently show the single-plan runtime path.
+- Module/backend authors have clear typed extension contracts.
 
 ## Module grouping and dependency ordering
 
 ### Problem
 
-Module grouping and dependency-order concepts are only partially represented.
+Wist group aliases are now data-only source shorthand, while semantic feature dependencies and contribution ordering live in typed planner contracts. The boundary must stay clear.
+
+### Current control
+
+`WistDialectGroupCatalog` expands group names to module aliases before `LanguageDefinition` construction. `LanguageCompiler` owns dependency closure and contribution-order constraints.
 
 ### Current risk
 
-Composition order can become implicit, fragile, or test-only rather than part of the framework contract.
+Group catalogs could accidentally grow into another dependency resolver, or contributors could duplicate transitive dependencies manually in every dialect and let docs drift from planner behavior.
 
 ### Desired direction
 
-Represent module dependencies and ordering as first-class deterministic contracts.
+Keep groups ergonomic/data-only. Represent dependency and ordering semantics through typed feature/contribution contracts.
 
 ### Exit criteria
 
 - Module order is deterministic.
-- Dependency violations are diagnosed clearly.
-- Tests protect representative module combinations.
+- Dependency violations are diagnosed clearly by the canonical planner.
+- `exclude` reaches `LanguageDefinition.ExcludedContributions` and required excluded contributions fail closed.
+- Tests protect representative group/dependency combinations.
 
 ## Repository hygiene
 
 ### Problem
 
-Generated artifacts, one-off repair scripts, and stale examples can accumulate in source control.
+Generated artifacts, one-off repair scripts, stale examples and stale architectural prose can accumulate in source control.
 
 ### Current risk
 
-The repository becomes harder to understand and new contributors cannot distinguish canonical code from temporary tooling.
+The repository becomes harder to understand and new contributors cannot distinguish canonical code from temporary tooling or dated reviews.
 
 ### Desired direction
 
-Keep source control focused on maintained runtime code, tests, docs, examples, and intentionally supported tools.
+Keep source control focused on maintained runtime code, tests, docs, examples and intentionally supported tools. Mark historical review artifacts as dated snapshots instead of rewriting them as current truth.
 
 ### Exit criteria
 
 - Obsolete generated artifacts and one-off scripts are removed.
 - Internal tools are documented as internal tools.
 - Examples remain runnable from repository root.
+- Active policy/docs do not point at physically retired Wist owners as current architecture.
 
 ## Structured debug traces
 
 ### Problem
 
-The previous text-log debugging surface represented only a partial legacy
-pipeline and could mislead users about current AIR, SSA, verifier and backend
-boundaries.
+The previous text-log debugging surface represented only a partial legacy pipeline and could mislead users about current AIR, SSA, verifier and backend boundaries.
 
 ### Current risk
 
-Without a structured trace contract, debugging can collapse multiple compiler
-boundaries into one vague failure point or encourage ad hoc log formats.
+Without a structured trace contract, debugging can collapse multiple compiler boundaries into one vague failure point or encourage ad hoc log formats.
 
 ### Desired direction
 
-Continue the [Debug Trace v2](/architecture/debug-trace-v2) direction. The first
-`wistc run --trace` artifact is implemented, but fine-grained lexer/parser,
-bytecode, AIR, SSA and backend artifact stages are not complete yet.
+Continue the [Debug Trace v2](/architecture/debug-trace-v2) direction. The first `wistc run --trace` artifact is implemented, but fine-grained lexer/parser, bytecode, AIR, SSA and backend artifact stages are not complete yet.
 
 ### Exit criteria
 
@@ -188,6 +211,26 @@ bytecode, AIR, SSA and backend artifact stages are not complete yet.
 - Failed compilation can flush a partial trace with stage-local diagnostics.
 - Default traces omit source text and runtime values unless explicitly enabled.
 - A future viewer consumes real `trace.json`, not legacy sample logs.
+
+## CI execution hygiene
+
+### Problem
+
+Current branch/PR workflows can accumulate superseded runs because `.NET CI` has both broad branch `push` and `pull_request` triggers and no workflow-level concurrency cancellation.
+
+### Current risk
+
+Rapid migration commits create duplicate queued runs, delaying exact-head evidence and making it easier to mistake superseded diagnostics for acceptance receipts.
+
+### Desired direction
+
+After the architecture migration is stable, evaluate a workflow concurrency key that cancels superseded runs without weakening required `master`/release evidence. Do not change CI semantics merely to make one migration stage finish faster.
+
+### Exit criteria
+
+- The required workflow set still runs unconditionally where release/aggregate policy requires it.
+- Superseded PR/branch runs do not consume unnecessary runner capacity.
+- Exact-head acceptance remains explicit and auditable.
 
 ## Long-term research ideas
 

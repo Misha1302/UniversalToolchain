@@ -1,5 +1,4 @@
 using System.Reflection.Emit;
-using UniversalToolchain.Dialects.Wist;
 
 namespace Tests.Infrastructure;
 
@@ -208,37 +207,7 @@ internal static class RuntimeCompiledArtifactTestFactory
             new DynamicMethodExecutor());
     }
 
-    public static WistDialectExecutionHost CreateHost()
-    {
-        var services = new ServiceCollection();
-        services.AddWistDialectServices();
-        services.AddWistCilBackend();
-        services.AddWistInterpreterBackend();
-
-        ServiceProvider? provider = services.BuildServiceProvider();
-        try
-        {
-            var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-            var composition = workflow.ComposeText(
-                """
-                dialect RuntimeContracts
-                use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Scopes,Variables,Labels,InternalPreprocessorLexemes,CSharpInterop
-                backend cil,interpreter
-                """,
-                "runtime-contracts-inline");
-
-            if (!composition.IsSuccess)
-                Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
-
-            var owner = provider;
-            provider = null;
-            return workflow.CreateHost(composition, new WistRuntimeServiceOptions(), owner);
-        }
-        finally
-        {
-            provider?.Dispose();
-        }
-    }
+    public static CanonicalWistTestHost CreateHost() => new();
 
     private static int LoadExternalSlotsThroughProvider(IExecutionEnvironment environment, int unusedFirstArgument, int unusedSecondArgument)
     {

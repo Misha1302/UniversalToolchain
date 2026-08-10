@@ -1,5 +1,6 @@
 using CommonExceptions;
 using Microsoft.Extensions.DependencyInjection;
+using UniversalToolchain.Dialects.Frontend;
 using UniversalToolchain.Dialects.Frontend.Composition;
 
 namespace UniversalToolchain.Dialects.Tests;
@@ -93,6 +94,17 @@ public class DialectDslExtensibilityTests
             Assert.That(registry.DirectiveFeatures.Select(x => x.Keyword), Does.Contain("alias"));
             Assert.That(factory.CreateRegistry().DirectiveFeatures.Select(x => x.Keyword), Does.Contain("alias"));
         });
+    }
+
+    [Test]
+    public void RegistryFactory_ShouldRejectNullProviderEntries()
+    {
+        var nullProviders = new List<IDialectDslFeatureProvider> { null! };
+        var factory = new DialectDslRegistryFactory([], [], nullProviders);
+
+        var exception = Assert.Throws<ArgumentException>(() => factory.CreateRegistry());
+
+        Assert.That(exception!.Message, Does.Contain("Collection must not contain null values"));
     }
 
     [Test]

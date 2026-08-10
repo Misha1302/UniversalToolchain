@@ -88,6 +88,24 @@ public sealed class WistEngineSmokeTests
     }
 
     [Test]
+    public void RestrictedPreset_ExplicitHostAllowlist_RemainsInert()
+    {
+        using var wist = WistEngine.Create(new WistEngineOptions
+        {
+            DialectSource = WistDialectSource.FromShippedPreset("ssa"),
+            AllowedAssemblies = [typeof(Math).Assembly]
+        });
+
+        var result = wist.TryCompile<Func<double>>("System.Math.Sqrt(16.0)");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Diagnostics, Is.Not.Empty);
+        });
+    }
+
+    [Test]
     public void Compile_Delegate_ReturnsExpectedResultAndMetadata()
     {
         using var wist = WistEngine.CreateRestrictedArithmetic();

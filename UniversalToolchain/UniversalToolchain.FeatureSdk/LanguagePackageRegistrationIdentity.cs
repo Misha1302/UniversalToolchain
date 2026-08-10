@@ -8,14 +8,17 @@ namespace UniversalToolchain.FeatureSdk;
 /// </summary>
 public sealed class LanguagePackageRegistrationIdentity
 {
+    private readonly object? _implementation;
+
     internal LanguagePackageRegistrationIdentity(
         LanguagePackageDescriptor descriptor,
-        Type? implementationType)
+        object? implementation)
     {
         PackageId = descriptor.Id;
         PackageVersion = descriptor.Version;
         ManifestSha256 = LanguageFeatureManifestSerializer.ComputeSha256(descriptor);
-        ImplementationType = implementationType;
+        _implementation = implementation;
+        ImplementationType = implementation?.GetType();
     }
 
     public LanguagePackageId PackageId { get; }
@@ -33,5 +36,21 @@ public sealed class LanguagePackageRegistrationIdentity
     {
         ArgumentNullException.ThrowIfNull(expectedType);
         return ImplementationType == expectedType;
+    }
+
+    internal bool IsImplementationInstance(object expectedImplementation)
+    {
+        ArgumentNullException.ThrowIfNull(expectedImplementation);
+        return ReferenceEquals(_implementation, expectedImplementation);
+    }
+
+    internal TImplementation GetRequiredImplementation<TImplementation>()
+        where TImplementation : class
+    {
+        if (_implementation is TImplementation implementation && _implementation.GetType() == typeof(TImplementation))
+            return implementation;
+
+        throw new InvalidOperationException(
+            $"Package '{PackageId.Value}' version '{PackageVersion.Value}' was not registered with exact implementation type '{typeof(TImplementation).FullName}'.");
     }
 }

@@ -2,10 +2,8 @@ using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace CSharpInteropModule.Module;
-
-[DialectModuleAlias("CSharpInterop")]
 [DialectCapabilityProvider(typeof(CSharpInteropCapabilityProvider))]
-[DialectRuntimeExport("FrontendModule", "CSharpInterop")]
+[DialectComponentContract("FrontendModule", "CSharpInterop")]
 [AutoRegisterService]
 public class CSharpInteropModuleImpl : IFrontendCoreModule
 {

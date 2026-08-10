@@ -4,10 +4,8 @@ using LabelsModule.Contracts;
 using UniversalToolchain.ModuleContracts;
 
 namespace LabelsModule.Module;
-
-[DialectModuleAlias("Labels")]
 [DialectCapabilityProvider(typeof(LabelsCapabilityProvider))]
-[DialectRuntimeExport("FrontendModule", "Labels")]
+[DialectComponentContract("FrontendModule", "Labels")]
 [AutoRegisterService]
 public class LabelsModuleImpl : IFrontendCoreModule, IModuleContractDescriptorProvider
 {

@@ -1,12 +1,9 @@
 using UniversalToolchain.Capabilities.Abstractions;
 
 namespace ArithmeticModule.Module;
-
-[DialectModuleAlias("Arithmetic")]
 [DialectCapabilityProvider(typeof(ArithmeticCapabilityProvider))]
-[DialectRuntimeExport("FrontendModule", "Arithmetic")]
+[DialectComponentContract("FrontendModule", "Arithmetic")]
 [AutoRegisterService]
-[ArithmeticModeCompatibility(ArithmeticMode.Universal)]
 public class ArithmeticModuleImpl : IFrontendCoreModule
 {
     public static readonly IReadOnlyList<string> Ops = ["Addition", "Subtraction", "Multiplication", "Division"];

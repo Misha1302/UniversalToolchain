@@ -11,10 +11,12 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj"/>
+        <ProjectReference Include="..\..\UniversalToolchain.LanguageSdk\UniversalToolchain.LanguageSdk.csproj"/>
+        <ProjectReference Include="..\..\UniversalToolchain.Wist.LanguagePack\UniversalToolchain.Wist.LanguagePack.csproj"/>
 
         <!-- Keep source-tree benchmark runs behaviorally equivalent to package-consumer runs.
-             UniversalToolchain.Wist package consumers receive the module assemblies/manifests as package content;
-             project-reference benchmark runs need direct references so the same runtime descriptors are copied to output. -->
+             UniversalToolchain.Wist package consumers receive the planned runtime assembly closure;
+             project-reference benchmark runs keep direct references so isolated BenchmarkDotNet children receive the same DLL closure. -->
         <ProjectReference Include="..\..\ArithmeticModule\ArithmeticModule.csproj"/>
         <ProjectReference Include="..\..\CSharpInteropModule\CSharpInteropModule.csproj"/>
         <ProjectReference Include="..\..\CommentsModule\CommentsModule.csproj"/>
@@ -41,29 +43,17 @@
         <PackageReference Include="NCalcSync" Version="5.12.0"/>
         <PackageReference Include="NCalc.LambdaCompilation" Version="5.12.0"/>
     </ItemGroup>
-
     <PropertyGroup>
-        <BenchmarkDialectRuntimeManifestPlatformSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU'">$(Platform)/</BenchmarkDialectRuntimeManifestPlatformSegment>
+        <BenchmarkRuntimePlatformSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU'">$(Platform)/</BenchmarkRuntimePlatformSegment>
     </PropertyGroup>
-
-    <Target Name="CopyBenchmarkDialectRuntimeManifests" AfterTargets="Build">
-        <ItemGroup>
-            <_BenchmarkDialectRuntimeManifests Include="$(MSBuildProjectDirectory)/../../*/bin/$(BenchmarkDialectRuntimeManifestPlatformSegment)$(Configuration)/$(TargetFramework)/*.dialect.runtime.json"/>
-        </ItemGroup>
-
-        <Copy SourceFiles="@(_BenchmarkDialectRuntimeManifests)"
-              DestinationFolder="$(TargetDir)"
-              SkipUnchangedFiles="true"/>
-    </Target>
 
     <Target Name="CopyBenchmarkRuntimeDllClosure" AfterTargets="Build">
         <ItemGroup>
             <!-- BenchmarkDotNet builds and executes a child project from an isolated output directory.
-                 Runtime modules are discovered from manifests and loaded dynamically, so their transitive
-                 dependencies are not always represented in the child project's deps.json. Copy the source-run
-                 runtime closure into the current TargetDir so dynamically loaded modules resolve the same way
-                 under BDN as they do under a normal source-tree benchmark run. -->
-            <_BenchmarkRuntimeDllClosure Include="$(MSBuildProjectDirectory)/../../*/bin/$(BenchmarkDialectRuntimeManifestPlatformSegment)$(Configuration)/$(TargetFramework)/*.dll"/>
+                 The canonical Wist plan activates exact component implementations, while BenchmarkDotNet builds
+                 a child project in an isolated output directory. Copy the source-run runtime DLL closure into
+                 the child TargetDir so those exact plan-owned component types resolve identically. -->
+            <_BenchmarkRuntimeDllClosure Include="$(MSBuildProjectDirectory)/../../*/bin/$(BenchmarkRuntimePlatformSegment)$(Configuration)/$(TargetFramework)/*.dll"/>
         </ItemGroup>
 
         <Copy SourceFiles="@(_BenchmarkRuntimeDllClosure)"

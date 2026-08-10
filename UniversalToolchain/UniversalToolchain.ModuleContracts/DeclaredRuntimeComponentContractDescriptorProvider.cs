@@ -4,8 +4,8 @@ using UniversalToolchain.Dialects.Abstractions;
 namespace UniversalToolchain.ModuleContracts;
 
 /// <summary>
-/// Supplies a stable, explicit module identity for a runtime-exported component that does not
-/// publish richer contract facets itself. Components without an exact runtime export are rejected.
+/// Supplies a stable, explicit module identity for a selected runtime component that does not
+/// publish richer contract facets itself. Components without an explicit component contract are rejected.
 /// </summary>
 public sealed class DeclaredRuntimeComponentContractDescriptorProvider : IModuleContractDescriptorProvider
 {
@@ -14,9 +14,9 @@ public sealed class DeclaredRuntimeComponentContractDescriptorProvider : IModule
     public DeclaredRuntimeComponentContractDescriptorProvider(Type componentType)
     {
         ArgumentNullException.ThrowIfNull(componentType);
-        var export = componentType.GetCustomAttribute<DialectRuntimeExportAttribute>(inherit: false)
+        var export = componentType.GetCustomAttribute<DialectComponentContractAttribute>(inherit: false)
                      ?? throw new InvalidOperationException(
-                         $"Runtime component '{componentType.FullName ?? componentType.Name}' must declare DialectRuntimeExportAttribute or implement IModuleContractDescriptorProvider.");
+                         $"Runtime component '{componentType.FullName ?? componentType.Name}' must declare DialectComponentContractAttribute or implement IModuleContractDescriptorProvider.");
         ModuleId = CreateModuleId(export.ComponentKind, export.CanonicalAlias);
         _facets = [new VerifierContractFacet(ModuleId, [])];
     }

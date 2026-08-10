@@ -1,6 +1,5 @@
 using BasicCore.Binding;
 using Tests.Infrastructure;
-using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Testing.Infrastructure;
 
 namespace Tests.Backends;
@@ -160,7 +159,6 @@ public class InterpreterBindingsParityTests
         AssertDeterministicParity(shadowingCode, declared, arguments);
         AssertDeterministicParity(nestedScopeCode, declared, arguments);
     }
-
 
     [Test]
     public void LocalVariable_TypeMustStayStableAcrossRepeatedReadWrite()
@@ -330,7 +328,7 @@ public class InterpreterBindingsParityTests
 
     private static BackendExecutionResult TryRunSingleBackend(Func<object> backendRunner) => BackendParityInfrastructure.ExecuteSafely(backendRunner);
 
-    private static WistDialectExecutionHost CreateHost() => RuntimeCompiledArtifactTestFactory.CreateHost();
+    private static CanonicalWistTestHost CreateHost() => RuntimeCompiledArtifactTestFactory.CreateHost();
 
     private sealed record NamedArgument(string Name, object Value);
 }

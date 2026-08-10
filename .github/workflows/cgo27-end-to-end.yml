@@ -10,7 +10,8 @@ on:
       - "Tools/run-cgo27-end-to-end.sh"
       - "UniversalToolchain/Experiments/UniversalToolchain.EndToEndExperiments/**"
       - "UniversalToolchain/UniversalToolchain.ModuleContracts/**"
-      - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**"
+      - "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/**"
+      - "UniversalToolchain/UniversalToolchain.Runtime/**"
 
 permissions:
   contents: read

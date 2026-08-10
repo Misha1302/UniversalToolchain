@@ -238,9 +238,23 @@ if (-not $SkipPack) {
         throw "UniversalToolchain.Wist package version was not found."
     }
     $wistPackage = "artifacts/packages/UniversalToolchain.Wist.$wistVersion.nupkg"
-    $wistReferenceAssemblyPath = Join-Path $root "UniversalToolchain/UniversalToolchain.Wist/bin/$Configuration/net10.0/UniversalToolchain.Wist.dll"
-    if (-not (Test-Path -LiteralPath $wistReferenceAssemblyPath -PathType Leaf)) { throw "Trusted Wist build output was not found." }
-    $wistReferenceDir = Split-Path -Parent $wistReferenceAssemblyPath
+    $wistReferenceDir = Join-Path $root "artifacts/wist-runtime-reference"
+    Remove-Item $wistReferenceDir -Recurse -Force -ErrorAction SilentlyContinue
+    New-Item -ItemType Directory -Force -Path $wistReferenceDir | Out-Null
+    Invoke-CheckedNative $dotnet @(
+        "msbuild",
+        "UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj",
+        "-nologo",
+        "-t:MaterializeCanonicalWistRuntimeClosure",
+        "-p:Configuration=$Configuration",
+        "-p:TargetFramework=net10.0",
+        "-p:CanonicalWistRuntimeReferenceDirectory=$wistReferenceDir",
+        "-p:NuGetAudit=false"
+    )
+    $wistReferenceAssemblyPath = Join-Path $wistReferenceDir "UniversalToolchain.Wist.dll"
+    if (-not (Test-Path -LiteralPath $wistReferenceAssemblyPath -PathType Leaf)) {
+        throw "Canonical Wist runtime reference closure was not materialized."
+    }
     $wistCompileReferencePath = Join-Path $root "UniversalToolchain/UniversalToolchain.Wist/obj/$Configuration/net10.0/ref/UniversalToolchain.Wist.dll"
     if (-not (Test-Path -LiteralPath $wistCompileReferencePath -PathType Leaf)) { throw "Trusted Wist compile reference was not found." }
     Invoke-CheckedNative "python" @(

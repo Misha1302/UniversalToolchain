@@ -7,9 +7,10 @@ public class ExecutionRepeatabilitySmokeTests
 {
     private const string DialectText = """
                                        dialect TestUniversal
-                                       use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Scopes,Variables,Labels,InternalPreprocessorLexemes,CSharpInterop
+                                       use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Scopes,Variables,Labels,InternalPreprocessorLexemes
 
                                        backend cil,interpreter
+                                       security restricted
                                        """;
 
     [Test]

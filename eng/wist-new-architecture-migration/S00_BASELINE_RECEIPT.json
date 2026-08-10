@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "stage": "S00",
+  "status": "IN_PROGRESS",
+  "migrationContract": {
+    "archive": "Wist2-new-architecture-migration-spec-2026-08-07.2.tar.gz",
+    "sha256": "95124cc7f40aa4e6b3934954ea1ac6586386dcd9cd7c01aeb0b68ac041372695",
+    "archiveBaselineRevision": "2e6c5762601fb480c36a57d0028c06dfce2ec680",
+    "validator": "VALIDATION=PASS stages=16 invariants=50 mutants=47 files=44"
+  },
+  "repository": {
+    "baselineRevision": "8b8b91b80f45ff10680b3a8ee826ebf436df1381",
+    "branch": "migration/languageplan-single-runtime-20260807",
+    "draftPullRequest": 332,
+    "baselineDriftFromContract": {
+      "aheadBy": 5,
+      "behindBy": 0,
+      "changedFiles": [
+        ".github/workflows/ci-aggregate.yml",
+        ".github/workflows/dotnet-ci.yml",
+        "Tools/test-build-topology-runtime.py",
+        "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/UniversalToolchain.Wist.LanguagePack.csproj"
+      ]
+    }
+  },
+  "observedArchitecture": {
+    "canonicalGenericPlanner": "UniversalToolchain.LanguageSdk.LanguageCompiler",
+    "canonicalGenericPlan": "UniversalToolchain.LanguageSdk.LanguagePlan",
+    "genericRuntime": "UniversalToolchain.Runtime.LanguageRuntime",
+    "legacyProductionOwners": [
+      {
+        "symbol": "BasicCoreImpl",
+        "path": "UniversalToolchain/BasicCore/Core/BasicCoreImpl.cs",
+        "state": "BUILDABLE_PRODUCTION"
+      },
+      {
+        "symbol": "WistDialectExecutionWorkflow",
+        "path": "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistDialectExecutionWorkflow.cs",
+        "state": "ACTIVE_PRODUCTION"
+      },
+      {
+        "symbol": "WistDialectPlanFactory",
+        "path": "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/WistDialectPlanFactory.cs",
+        "state": "ACTIVE_PRODUCTION"
+      },
+      {
+        "symbol": "SelectedRuntimePlan",
+        "path": "UniversalToolchain/UniversalToolchain.Dialects.Integration/SelectedRuntimePlan.cs",
+        "state": "ACTIVE_PRODUCTION"
+      }
+    ],
+    "confirmedDebts": [
+      {
+        "id": "S01-bytecode-hidden",
+        "evidence": "WistLanguageFeaturePackage declares SourceText -> SyntaxTree -> AIR -> backend artifact; no distinct Bytecode artifact contract."
+      },
+      {
+        "id": "S09-engine-legacy-entry",
+        "evidence": "WistEngine.Create resolves WistDialectExecutionWorkflow and creates WistDialectExecutionHost directly."
+      },
+      {
+        "id": "S08-compile-legacy-bypass",
+        "evidence": "WistEngine.Compile<TDelegate> delegates to WistBackendDelegateCompiler over WistDialectExecutionHost."
+      },
+      {
+        "id": "INV-041-value-boundary",
+        "evidence": "WistRuntimeBoundary identifies NumbersModule and NumbersModule.Core.RealNumberImpl by assembly/type name and reflection."
+      },
+      {
+        "id": "INV-042-metadata-control",
+        "evidence": "WistLanguageRuntimeProvider reads wist.capability.unsafe-interop from LanguageDefinition.Metadata for runtime policy."
+      },
+      {
+        "id": "S11-second-planner",
+        "evidence": "WistLanguageRuntimeProvider.CreateSession creates WistDialectPlanFactory output and calls WistDialectExecutionWorkflow.ComposeDefinition, then compares SelectedRuntimePlan."
+      }
+    ]
+  },
+  "publicApi": {
+    "baselineContract": "eng/wist-api-baseline.json",
+    "snapshot": "eng/wist-public-api-baseline.txt",
+    "surfaceGate": "UniversalToolchain/UniversalToolchain.Dialects.Tests/Wist/PublicFacade/WistPublicApiBaselineTests.cs",
+    "behaviorContract": "eng/wist-new-architecture-migration/WIST_PUBLIC_BEHAVIOR_MATRIX.json",
+    "lifetimeRegressionTests": "UniversalToolchain/UniversalToolchain.Dialects.Tests/Wist/PublicFacade/WistEngineLifetimeBaselineTests.cs"
+  },
+  "baselineCi": {
+    "aggregateRunId": 31133770339,
+    "aggregateStatus": "success",
+    "requiredWorkflowRuns": [
+      { "name": "Contract Experiment", "runId": 31133769467, "status": "success" },
+      { "name": ".NET CI", "runId": 31133768861, "status": "success" },
+      { "name": "Published Wist package smoke", "runId": 31133768751, "status": "success" },
+      { "name": "Docs Check", "runId": 31133768622, "status": "success" },
+      { "name": "Benchmark Smoke", "runId": 31133768753, "status": "success" },
+      { "name": "Wist Rollout Sample Smoke", "runId": 31133768729, "status": "success" },
+      { "name": "UniversalToolchain validation", "runId": 31133768594, "status": "success" }
+    ],
+    "scope": "PRE_MIGRATION_BASELINE_ONLY"
+  },
+  "testBaseline": {
+    "factualCanonicalRunRevision": "76f890be426b52ddc3c2151de0a23dd24d44f7e3",
+    "factualCanonicalRunId": 31184390583,
+    "counts": {
+      "corePassed": 540,
+      "modulesPassed": 292,
+      "dialectsPassed": 642,
+      "languageSdkPassed": 82,
+      "planFuzzPassed": 41,
+      "isolatedPassed": 10,
+      "totalPassed": 1607,
+      "failed": 0,
+      "skipped": 0
+    },
+    "strictCountContract": "eng/test-counts.json",
+    "strictTotalExpected": 1607,
+    "testContractMutants": [
+      "test-contract-total-drift",
+      "trx-deleted-test-count",
+      "trx-skipped-outcome",
+      "per-entry-timeout"
+    ],
+    "testContractMutantsResult": "KILLED",
+    "runConclusion": "FAIL_AFTER_TESTS_ON_STALE_DOCUMENTATION_STATUS",
+    "note": "The canonical run completed the exact 1,607-test contract and its count/timeout mutants successfully. The workflow then failed only because VERIFICATION.md, docs/evidence/current-verification.md and RELEASE_NOTES_RU.md still stated the former 1,597-test snapshot. Those evidence documents are synchronized in the next S00 candidate; no test gate was weakened."
+  },
+  "performanceBaseline": {
+    "originalMasterHotPathRunId": 31133768753,
+    "expandedBoundaryRunId": 31181493371,
+    "expandedBoundaryEvidenceRevision": "dee5e1b6d1f701dfcf9f5e3fcc1bd805759193b1",
+    "environment": {
+      "os": "Ubuntu 24.04.4 LTS",
+      "cpu": "AMD EPYC 9V74",
+      "dotnetSdk": "10.0.302",
+      "runtime": ".NET 10.0.10",
+      "benchmarkDotNet": "0.15.6",
+      "job": "Dry; IterationCount=1; LaunchCount=1"
+    },
+    "architectureBoundaries": [
+      { "method": "WistEngine_CreateAndDispose", "meanMilliseconds": 410.98, "allocatedKilobytesPerOperation": 1997.75 },
+      { "method": "LanguagePlan_Compile", "meanMilliseconds": 82.25, "allocatedKilobytesPerOperation": 127.37 }
+    ],
+    "compilationBoundaries": [
+      { "method": "Wist_CompileOnExistingEngine", "meanMilliseconds": 456.7947, "allocatedBytesPerOperation": 980840 },
+      { "method": "Wist_CreateEngineAndCompile", "meanMilliseconds": 517.1142, "allocatedBytesPerOperation": 3855744 }
+    ],
+    "convenienceEvaluate": [
+      { "method": "Wist_CompilerEvaluateWithDictionary", "meanMilliseconds": 25.866136, "allocatedBytesPerOperation": 952461 },
+      { "method": "Wist_InterpreterEvaluateWithDictionary", "meanMilliseconds": 25.509506, "allocatedBytesPerOperation": 896384 }
+    ],
+    "hotCompiledInvocation": [
+      { "workload": "SimpleArithmetic", "method": "Wist_CompiledDelegate", "meanNanoseconds": 2459.7, "allocatedBytesPerOperation": 1328 },
+      { "workload": "DeepArithmetic", "method": "Wist_CompiledDelegate", "meanNanoseconds": 2394.5, "allocatedBytesPerOperation": 1328 },
+      { "workload": "RepeatedSubexpressions", "method": "Wist_CompiledDelegate", "meanNanoseconds": 2355.8, "allocatedBytesPerOperation": 1328 }
+    ],
+    "gaps": [],
+    "note": "Dry N=1 results are reproducible smoke evidence for detecting large/order-of-magnitude regressions only; they are not a +/-5% CI gate. Final post-migration comparison remains required at S15."
+  },
+  "verification": {
+    "finalEvidenceRevision": null,
+    "requiredExactHeadChecks": [
+      ".NET CI Linux canonical build/test",
+      ".NET CI Windows canonical build/test",
+      "UniversalToolchain validation",
+      "Package Compatibility Review",
+      "Benchmark Smoke"
+    ],
+    "state": "WAITING_FOR_EXACT_HEAD_AFTER_DOCUMENTATION_SYNC"
+  },
+  "evidencePolicy": "Any production or evidence-contract mutation invalidates green evidence for the affected scope; S00 becomes VERIFIED only after required checks pass on the exact final S00 revision."
+}

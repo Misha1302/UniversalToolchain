@@ -11,14 +11,6 @@ from collections.abc import Callable
 from pathlib import Path
 
 
-DIALECT_TEST_PROJECT = Path(
-    "UniversalToolchain/UniversalToolchain.Dialects.Tests/"
-    "UniversalToolchain.Dialects.Tests.csproj"
-)
-FRESH_PROCESS_HOST_PROJECT = Path(
-    "UniversalToolchain/UniversalToolchain.Dialects.Tests/FreshProcess/"
-    "RuntimeSharedAssemblyFreshProcessHost/RuntimeSharedAssemblyFreshProcessHost.csproj"
-)
 LANGUAGE_PACK_PROJECT = Path(
     "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/"
     "UniversalToolchain.Wist.LanguagePack.csproj"
@@ -30,12 +22,18 @@ EMITTER_PROJECT = Path(
 WIST_PROJECT = Path(
     "UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj"
 )
+WIST_ENGINE = Path("UniversalToolchain/UniversalToolchain.Wist/WistEngine.cs")
+LANGUAGE_RUNTIME = Path("UniversalToolchain/UniversalToolchain.Runtime/LanguageRuntime.cs")
 DOTNET_WORKFLOW = Path(".github/workflows/dotnet-ci.yml")
+BENCHMARK_WORKFLOW = Path(".github/workflows/benchmark-smoke.yml")
 SUPPORT_FILES = (
     Path("build.sh"),
     Path("build.ps1"),
     Path("Tools/test-build-topology-runtime.py"),
+    WIST_ENGINE,
+    LANGUAGE_RUNTIME,
     DOTNET_WORKFLOW,
+    BENCHMARK_WORKFLOW,
 )
 
 
@@ -55,6 +53,38 @@ def run_checker(checker: Path, root: Path, expected_fragment: str | None = None)
         raise AssertionError(
             f"mutant was not rejected with {expected_fragment!r}:\n{completed.stdout}"
         )
+
+
+def require_wist_runtime_reference_materialization_parity(root: Path) -> None:
+    target = "MaterializeCanonicalWistRuntimeClosure"
+    reference_dir = "artifacts/wist-runtime-reference"
+    property_name = "CanonicalWistRuntimeReferenceDirectory"
+    texts = {
+        "build.sh": (root / "build.sh").read_text(encoding="utf-8-sig"),
+        "build.ps1": (root / "build.ps1").read_text(encoding="utf-8-sig"),
+    }
+    for name, text in texts.items():
+        if text.count(target) != 1:
+            raise AssertionError(f"{name} must invoke {target} exactly once")
+        if text.count(reference_dir) != 1:
+            raise AssertionError(f"{name} must use the isolated {reference_dir} reference directory exactly once")
+        if property_name not in text:
+            raise AssertionError(f"{name} must pass {property_name} to the canonical Wist runtime-closure target")
+
+    powershell = texts["build.ps1"]
+    if "Split-Path -Parent $wistReferenceAssemblyPath" in powershell:
+        raise AssertionError("build.ps1 must not treat the ordinary Wist bin directory as the trusted package reference closure")
+
+
+def require_no_runtime_replanning(root: Path) -> None:
+    engine = (root / WIST_ENGINE).read_text(encoding="utf-8-sig")
+    runtime = (root / LANGUAGE_RUNTIME).read_text(encoding="utf-8-sig")
+    if engine.count("new LanguageCompiler(") != 1:
+        raise AssertionError("WistEngine must construct the canonical LanguageCompiler exactly once during engine creation")
+    if engine.count("LanguageRuntime.Create(") != 1:
+        raise AssertionError("WistEngine must materialize LanguageRuntime exactly once during engine creation")
+    if "LanguageCompiler" in runtime or "LanguagePackageRegistry" in runtime:
+        raise AssertionError("LanguageRuntime execution/materialization layer must not reintroduce planning or package resolution")
 
 
 def copy_inputs(source: Path, destination: Path) -> None:
@@ -98,6 +128,21 @@ def mutate_project_reference(path: Path, include_fragment: str) -> None:
     if len(matches) != 1 or matches[0].attrib.get("Private", "").lower() != "false":
         raise AssertionError(f"expected one Private=false reference containing {include_fragment!r} in {path}")
     del matches[0].attrib["Private"]
+    tree.write(path, encoding="unicode")
+
+
+def remove_project_reference(path: Path, include_fragment: str) -> None:
+    tree = ET.parse(path)
+    parents = [element for element in tree.getroot().iter()]
+    matches: list[tuple[ET.Element, ET.Element]] = []
+    for parent in parents:
+        for child in list(parent):
+            if child.tag.rsplit("}", 1)[-1] == "ProjectReference" and \
+               include_fragment in child.attrib.get("Include", ""):
+                matches.append((parent, child))
+    if len(matches) != 1:
+        raise AssertionError(f"expected one ProjectReference containing {include_fragment!r} in {path}")
+    matches[0][0].remove(matches[0][1])
     tree.write(path, encoding="unicode")
 
 
@@ -167,6 +212,8 @@ def fixture(root: Path, checker: Path) -> tuple[tempfile.TemporaryDirectory[str]
     path = Path(temporary.name)
     copy_inputs(root, path)
     run_checker(checker, path)
+    require_wist_runtime_reference_materialization_parity(path)
+    require_no_runtime_replanning(path)
     return temporary, path
 
 
@@ -181,21 +228,20 @@ def main() -> int:
         print(f"BUILD_TOPOLOGY_MUTANTS=FAIL: checker does not exist: {checker}", file=sys.stderr)
         return 1
 
+    try:
+        require_wist_runtime_reference_materialization_parity(root)
+        require_no_runtime_replanning(root)
+    except (AssertionError, OSError) as exc:
+        print(f"BUILD_TOPOLOGY_MUTANTS=FAIL: {exc}", file=sys.stderr)
+        return 1
+
     Mutation = tuple[str, Callable[[Path], None], str]
     mutations: tuple[Mutation, ...] = (
         (
-            "dialect-build-order-copy-local",
+            "emitter-build-order-copy-local",
             lambda path: mutate_project_reference(
-                path / DIALECT_TEST_PROJECT,
-                "RuntimeSharedAssemblyFreshProcessHost.csproj",
-            ),
-            "repository build-order ProjectReference",
-        ),
-        (
-            "fixture-build-order-copy-local",
-            lambda path: mutate_project_reference(
-                path / FRESH_PROCESS_HOST_PROJECT,
-                "CanonicalRuntimeFixture.csproj",
+                path / LANGUAGE_PACK_PROJECT,
+                "$(FeatureManifestEmitterProjectPath)",
             ),
             "repository build-order ProjectReference",
         ),
@@ -220,11 +266,11 @@ def main() -> int:
             "unexpected project set",
         ),
         (
-            "wist-provider-target-redirected",
+            "emitter-target-redirected",
             lambda path: set_msbuild_attribute(
                 path / LANGUAGE_PACK_PROJECT,
                 "ResolveLanguagePackBuildProviders",
-                "$(WistProjectPath)",
+                "$(FeatureManifestEmitterProjectPath)",
                 "Targets",
                 "Build",
             ),
@@ -261,14 +307,12 @@ def main() -> int:
             "return the evaluated $(TargetPath)",
         ),
         (
-            "wist-returns-guessed-directory",
-            lambda path: set_target_attribute(
+            "facade-language-pack-reference-removed",
+            lambda path: remove_project_reference(
                 path / WIST_PROJECT,
-                "GetBuiltWistOutputDirectory",
-                "Returns",
-                "$(MSBuildProjectDirectory)\\bin\\Release\\net10.0\\",
+                "UniversalToolchain.Wist.LanguagePack.csproj",
             ),
-            "return the evaluated $(TargetDir)",
+            "facade must declare exactly one LanguagePack ProjectReference",
         ),
         (
             "language-pack-reintroduces-emitter-layout-guess",
@@ -280,6 +324,15 @@ def main() -> int:
             "instead of guessing output layout",
         ),
         (
+            "language-pack-reintroduces-wist-project-path",
+            lambda path: add_top_level_property(
+                path / LANGUAGE_PACK_PROJECT,
+                "WistProjectPath",
+                "$(MSBuildThisFileDirectory)..\\UniversalToolchain.Wist\\UniversalToolchain.Wist.csproj",
+            ),
+            "must not declare legacy WistProjectPath",
+        ),
+        (
             "language-pack-reintroduces-wist-layout-guess",
             lambda path: add_top_level_property(
                 path / LANGUAGE_PACK_PROJECT,
@@ -289,13 +342,22 @@ def main() -> int:
             "instead of guessing output layout",
         ),
         (
-            "runtime-target-path-root-redirected",
+            "wist-engine-reintroduces-provider-registry-binding",
             lambda path: replace_once(
-                path / LANGUAGE_PACK_PROJECT,
-                'RootFolder="$(WistRuntimeOutputDirectory)"',
-                'RootFolder="$(TargetDir)"',
+                path / WIST_ENGINE,
+                "new ILanguageRouteComponentSource[] { package },",
+                "new LanguageRuntimeProviderRegistry().AddProvider(new WistLanguageRuntimeProvider()),",
             ),
-            "preserve file-relative target paths",
+            "WistEngine must not reintroduce provider-registry/manual runtime binding",
+        ),
+        (
+            "benchmark-runtime-trigger-removed",
+            lambda path: replace_once(
+                path / BENCHMARK_WORKFLOW,
+                '      - "UniversalToolchain/UniversalToolchain.Runtime/**/*.cs"\n',
+                "",
+            ),
+            "Benchmark Smoke must trigger for every generic runtime/planning-input owner path",
         ),
         (
             "powershell-package-gate-disabled",
@@ -325,6 +387,42 @@ def main() -> int:
             "build.sh runtime topology invocation",
         ),
         (
+            "bash-retired-surface-check-disabled",
+            lambda path: replace_once(
+                path / "build.sh",
+                "Tools/check-retired-surface.py",
+                "Tools/check-retired-surface.disabled.py",
+            ),
+            "build.sh retired surface checker invocation",
+        ),
+        (
+            "bash-retired-surface-mutants-disabled",
+            lambda path: replace_once(
+                path / "build.sh",
+                "Tools/test-retired-surface-mutants.py",
+                "Tools/test-retired-surface-mutants.disabled.py",
+            ),
+            "build.sh retired surface mutant invocation",
+        ),
+        (
+            "powershell-retired-surface-check-disabled",
+            lambda path: replace_once(
+                path / "build.ps1",
+                "Tools/check-retired-surface.py",
+                "Tools/check-retired-surface.disabled.py",
+            ),
+            "build.ps1 retired surface checker invocation",
+        ),
+        (
+            "powershell-retired-surface-mutants-disabled",
+            lambda path: replace_once(
+                path / "build.ps1",
+                "Tools/test-retired-surface-mutants.py",
+                "Tools/test-retired-surface-mutants.disabled.py",
+            ),
+            "build.ps1 retired surface mutant invocation",
+        ),
+        (
             "windows-powershell-job-disabled",
             lambda path: replace_once(
                 path / DOTNET_WORKFLOW,
@@ -342,6 +440,52 @@ def main() -> int:
                 mutate(path)
                 run_checker(checker, path, expected)
                 print(f"SURVIVOR=0 mutant={name}")
+
+        parity_mutations: tuple[tuple[str, Callable[[Path], None]], ...] = (
+            (
+                "powershell-runtime-reference-target-disabled",
+                lambda path: replace_once(
+                    path / "build.ps1",
+                    "-t:MaterializeCanonicalWistRuntimeClosure",
+                    "-t:DisabledCanonicalWistRuntimeClosure",
+                ),
+            ),
+            (
+                "powershell-runtime-reference-reverts-to-bin",
+                lambda path: replace_once(
+                    path / "build.ps1",
+                    'Join-Path $root "artifacts/wist-runtime-reference"',
+                    'Join-Path $root "UniversalToolchain/UniversalToolchain.Wist/bin/$Configuration/net10.0"',
+                ),
+            ),
+            (
+                "wist-engine-replans-during-hot-run",
+                lambda path: replace_once(
+                    path / WIST_ENGINE,
+                    "var result = Runtime.Run(new LanguageExecutionRequest(code, _backend));",
+                    "_ = new LanguageCompiler(new LanguagePackageRegistry());\n        var result = Runtime.Run(new LanguageExecutionRequest(code, _backend));",
+                ),
+            ),
+            (
+                "language-runtime-reintroduces-planner",
+                lambda path: replace_once(
+                    path / LANGUAGE_RUNTIME,
+                    "public LanguagePlan Plan => _plan;",
+                    "private LanguageCompiler? _replanner;\n\n    public LanguagePlan Plan => _plan;",
+                ),
+            ),
+        )
+        for name, mutate in parity_mutations:
+            temporary, path = fixture(root, checker)
+            with temporary:
+                mutate(path)
+                try:
+                    require_wist_runtime_reference_materialization_parity(path)
+                    require_no_runtime_replanning(path)
+                except AssertionError:
+                    print(f"SURVIVOR=0 mutant={name}")
+                else:
+                    raise AssertionError(f"topology/replanning mutant survived: {name}")
     except (AssertionError, OSError) as exc:
         print(f"BUILD_TOPOLOGY_MUTANTS=FAIL: {exc}", file=sys.stderr)
         return 1

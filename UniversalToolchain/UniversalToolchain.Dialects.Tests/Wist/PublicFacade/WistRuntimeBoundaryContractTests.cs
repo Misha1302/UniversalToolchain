@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 using UniversalToolchain.Wist;
@@ -78,18 +79,11 @@ public sealed class WistRuntimeBoundaryContractTests
     [Test]
     public void Dispose_ReleasesRuntimeContextEvenWhenDisposedEngineRemainsReachable()
     {
-        var (engine, context) = CreateDisposedEngine("full-default");
+        var (engine, runtime) = CreateDisposedEngine("full-default");
         try
         {
-            for (var attempt = 0; attempt < 80 && context.IsAlive; attempt++)
-            {
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-                GC.Collect();
-                Thread.Sleep(10);
-            }
-
-            Assert.That(context.IsAlive, Is.False);
+            CollectUntilDead(runtime);
+            Assert.That(runtime.IsAlive, Is.False);
             GC.KeepAlive(engine);
         }
         finally
@@ -105,17 +99,11 @@ public sealed class WistRuntimeBoundaryContractTests
     [TestCase("composition-restricted")]
     public void Dispose_AfterOneShotEvaluation_ReleasesCollectibleRuntimeContext(string presetId)
     {
-        var context = CreateAndDisposeEngine(presetId);
+        var runtime = CreateAndDisposeEngine(presetId);
 
-        for (var attempt = 0; attempt < 80 && context.IsAlive; attempt++)
-        {
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-            Thread.Sleep(10);
-        }
+        CollectUntilDead(runtime);
 
-        Assert.That(context.IsAlive, Is.False, $"Runtime context for preset '{presetId}' remained rooted after disposal.");
+        Assert.That(runtime.IsAlive, Is.False, $"Canonical runtime for preset '{presetId}' remained rooted after disposal.");
     }
 
     private static IEnumerable<TestCaseData> NumberPresetBackendCases()
@@ -128,23 +116,13 @@ public sealed class WistRuntimeBoundaryContractTests
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static (WistEngine Engine, WeakReference Context) CreateDisposedEngine(string presetId)
+    private static (WistEngine Engine, WeakReference Runtime) CreateDisposedEngine(string presetId)
     {
-        var before = AppDomain.CurrentDomain.GetAssemblies()
-            .Select(AssemblyLoadContext.GetLoadContext)
-            .Where(static context => context?.Name == "UniversalToolchain.Runtime.Isolated")
-            .Distinct(ReferenceEqualityComparer.Instance)
-            .ToHashSet(ReferenceEqualityComparer.Instance);
         var engine = WistEngine.Create(WistEngineOptions.FromPresetId(presetId));
         Assert.That(engine.Evaluate<double>("2 + 3"), Is.EqualTo(5d));
-        var context = AppDomain.CurrentDomain.GetAssemblies()
-            .Select(AssemblyLoadContext.GetLoadContext)
-            .Where(static candidate => candidate?.Name == "UniversalToolchain.Runtime.Isolated")
-            .Distinct(ReferenceEqualityComparer.Instance)
-            .Single(candidate => !before.Contains(candidate));
-        var weak = new WeakReference(context!, trackResurrection: false);
+        var runtime = CaptureOwnedRuntime(engine);
         engine.Dispose();
-        return (engine, weak);
+        return (engine, runtime);
     }
 
     [TestCase("cil")]
@@ -177,7 +155,7 @@ public sealed class WistRuntimeBoundaryContractTests
 
         try
         {
-            for (var attempt = 0; attempt < 80 && entries.Any(static entry => entry.Context.IsAlive); attempt++)
+            for (var attempt = 0; attempt < 80 && entries.Any(static entry => entry.Runtime.IsAlive); attempt++)
             {
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
@@ -185,7 +163,7 @@ public sealed class WistRuntimeBoundaryContractTests
                 Thread.Sleep(10);
             }
 
-            Assert.That(entries.Count(static entry => entry.Context.IsAlive), Is.Zero);
+            Assert.That(entries.Count(static entry => entry.Runtime.IsAlive), Is.Zero);
             GC.KeepAlive(entries);
         }
         finally
@@ -198,21 +176,33 @@ public sealed class WistRuntimeBoundaryContractTests
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static WeakReference CreateAndDisposeEngine(string presetId)
     {
-        var before = AppDomain.CurrentDomain.GetAssemblies()
-            .Select(AssemblyLoadContext.GetLoadContext)
-            .Where(static context => context?.Name == "UniversalToolchain.Runtime.Isolated")
-            .Distinct(ReferenceEqualityComparer.Instance)
-            .ToHashSet(ReferenceEqualityComparer.Instance);
-
+        WeakReference runtime;
         using (var engine = WistEngine.Create(WistEngineOptions.FromPresetId(presetId)))
         {
             Assert.That(engine.Evaluate<double>("2 + 3"), Is.EqualTo(5d));
-            var context = AppDomain.CurrentDomain.GetAssemblies()
-                .Select(AssemblyLoadContext.GetLoadContext)
-                .Where(static candidate => candidate?.Name == "UniversalToolchain.Runtime.Isolated")
-                .Distinct(ReferenceEqualityComparer.Instance)
-                .Single(candidate => !before.Contains(candidate));
-            return new WeakReference(context!, trackResurrection: false);
+            runtime = CaptureOwnedRuntime(engine);
+        }
+        return runtime;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static WeakReference CaptureOwnedRuntime(WistEngine engine)
+    {
+        var runtimeField = typeof(WistEngine).GetField("_runtime", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(runtimeField, Is.Not.Null, "WistEngine must own one canonical runtime field during S09.");
+        var runtime = runtimeField!.GetValue(engine);
+        Assert.That(runtime, Is.Not.Null);
+        return new WeakReference(runtime!, trackResurrection: false);
+    }
+
+    private static void CollectUntilDead(WeakReference reference)
+    {
+        for (var attempt = 0; attempt < 80 && reference.IsAlive; attempt++)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            Thread.Sleep(10);
         }
     }
 

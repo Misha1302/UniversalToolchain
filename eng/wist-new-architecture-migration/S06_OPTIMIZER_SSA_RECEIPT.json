@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "stage": "S06",
+  "status": "VERIFIED",
+  "dependsOn": {
+    "stage": "S05",
+    "verifiedRevision": "f0e524dea25fdf1f6804359c16113863a9d948c5"
+  },
+  "objective": "Make selected Wist optimizers explicit planner-owned AIR passes and compile SSA policy into LanguagePlan instead of a runtime overlay.",
+  "implementation": {
+    "optimizerContract": "wist.air/v1 -> wist.air/v1",
+    "optimizerOrderOwner": "LanguageCompiler pass insertion using contribution Order/Before/After",
+    "ssaPolicyAuthority": "typed Wist policy feature selected in LanguageDefinition and retained in LanguagePlan",
+    "shippedSsaPolicy": "Require",
+    "shippedNonSsaPolicy": "Off",
+    "legacyCustomDefinitionNoSsaPolicy": "canonical Off only when no SSA optimizer contribution is selected",
+    "missingPolicyWithSsaPass": "fail-closed; no implicit Prefer/Require/Debug fallback",
+    "runtimeProjection": "WistLanguageRuntimeProvider derives SsaRuntimeExecutionOptions from LanguagePlan",
+    "opaqueMetadataBehavioralAuthority": false,
+    "runtimeProfileReorderingAuthority": false
+  },
+  "guards": [
+    "all selected optimizer contributions are explicit AIR passes",
+    "Interpreter and CIL routes contain identical planned optimizer order before backend lowering",
+    "all shipped presets select exactly one typed SSA policy",
+    "Disabled/Prefer/Require/Debug project deterministically for both backends",
+    "legacy custom definitions without SSA preserve the unique safe Off meaning",
+    "SSA pass without typed policy fails closed instead of choosing a runtime fallback",
+    "conflicting SSA policies fail during planning",
+    "SSA policy changes plan identity without changing pass selection",
+    "opaque wist.ssa.policy metadata cannot override typed policy",
+    "Require executes the same representative program on Interpreter and CIL"
+  ],
+  "testManifestCandidate": {
+    "total": 1648,
+    "languageSdk": 123
+  },
+  "providerEvidence": {
+    "revision": "5da859de4f703ecb3c75d8febdff463850e60221",
+    "testContract": {
+      "total": 1276,
+      "core": 524,
+      "modules": 292,
+      "dialects": 253,
+      "languageSdk": 156,
+      "planFuzz": 41,
+      "isolated": 10
+    },
+    "runs": [
+      {"workflow":".NET CI","runId":31420273494,"result":"success"},
+      {"workflow":"Package Compatibility Review","runId":31420273119,"result":"success"},
+      {"workflow":"UniversalToolchain validation","runId":31420273920,"result":"success"},
+      {"workflow":"Benchmark Smoke","runId":31420273138,"result":"success"},
+      {"workflow":"Docs Check","runId":31420273036,"result":"success"},
+      {"workflow":"Published Wist package smoke","runId":31420273047,"result":"success"},
+      {"workflow":"Contract Experiment","runId":31420273043,"result":"success"},
+      {"workflow":"Wist Rollout Sample Smoke","runId":31420273054,"result":"success"},
+      {"workflow":"CGO27 End-to-End Experiment","runId":31420273507,"result":"success"},
+      {"workflow":"CGO27 Artifact","runId":31420273044,"result":"success"},
+      {"workflow":"CGO27 TensorRules","runId":31420273813,"result":"success"},
+      {"workflow":"CGO27 Ablations","runId":31420273065,"result":"success"}
+    ]
+  },
+  "note": "S06 stage closure is backed by the exact integrated migration revision above. Any later repository-content change requires fresh final integration verification, but does not rewrite this historical stage-closure identity."
+}

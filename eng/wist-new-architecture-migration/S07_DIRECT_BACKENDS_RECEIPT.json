@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "stage": "S07",
+  "status": "VERIFIED",
+  "dependsOn": {
+    "stage": "S06",
+    "verifiedRevision": "7cf4ea2a6fbe6b8e6395519cb56e436b65b877a3"
+  },
+  "objective": "Execute canonical Wist plans through generic exact route transformers/executors for Interpreter and CIL without the dialect execution host.",
+  "implementation": {
+    "routeRuntime": "LanguageRouteRuntimeAssembler + LanguageRouteRuntimeProvider",
+    "packageSourceBinding": "exact WistLanguageFeaturePackage instance planned by LanguageCompiler",
+    "frontend": "direct canonical lexer/parser/binder stage with explicit planned module factories",
+    "lowering": "direct canonical Syntax->Bytecode->AIR stages",
+    "optimizers": "fresh plan-selected AIR pass components with backend intrinsic capability context",
+    "interpreter": "AIR artifact -> BasicInterpreter executor",
+    "cil": "AIR -> CilCompilationOutput -> DynamicMethodExecutor",
+    "valueBoundary": "explicit plan-selected RealNumberImpl adapter; no reflection/type-name/assembly-name fallback on direct path",
+    "hiddenFrontendServices": "explicit immutable ITypeCatalog over host-allowed assemblies plus shipped BasicStdLib and DeterministicMethodResolver",
+    "dialectExecutionWorkflowOnDirectPath": false,
+    "dialectExecutionHostOnDirectPath": false,
+    "basicCoreImplOnDirectPath": false
+  },
+  "guards": [
+    "Interpreter executes through generic route provider",
+    "Interpreter and CIL expose identical public numeric value categories",
+    "Numbers feature selects exact value-adapter contribution",
+    "missing and duplicate value-adapter registrations fail closed",
+    "implementation-owned numeric value without planned adapter fails closed",
+    "forbidden host interop fails before execution",
+    "equivalent but different package instance is rejected",
+    "SSA planned route executes through both direct backends"
+  ],
+  "testManifestCandidate": {
+    "total": 1658,
+    "languageSdk": 133
+  },
+  "intermediateEvidence": {
+    "revision": "390da52a76dfd56d9b7ee8d7634dbf5d476a8b2a",
+    "packageCompatibilityRun": 31218459004,
+    "artifactId": 9009638327,
+    "artifactDigest": "sha256:7c505297b1c08ed746cc49236d0b23ca8c7658af4e51c064c9626e91a47593c6",
+    "canonicalTests": "1658/1658 passed",
+    "remainingFailure": "documentation manifest still contained the previous 1648 total; corrected in this candidate"
+  },
+  "transitionalLegacy": {
+    "WistLanguageRuntimeProvider": "preserved as a public provider facade, but it reconstructs execution only from exact LanguagePlan package provenance and delegates to the canonical route runtime",
+    "WistRuntimeValueNormalizer": "retired from the final production surface",
+    "externalWistModuleSources": "superseded by the public LanguageAuthoring package/component-source seam used by canonical LanguageRuntime"
+  },
+  "providerEvidence": {
+    "revision": "5da859de4f703ecb3c75d8febdff463850e60221",
+    "testContract": {
+      "total": 1276,
+      "core": 524,
+      "modules": 292,
+      "dialects": 253,
+      "languageSdk": 156,
+      "planFuzz": 41,
+      "isolated": 10
+    },
+    "runs": [
+      {"workflow":".NET CI","runId":31420273494,"result":"success"},
+      {"workflow":"Package Compatibility Review","runId":31420273119,"result":"success"},
+      {"workflow":"UniversalToolchain validation","runId":31420273920,"result":"success"},
+      {"workflow":"Benchmark Smoke","runId":31420273138,"result":"success"},
+      {"workflow":"Docs Check","runId":31420273036,"result":"success"},
+      {"workflow":"Published Wist package smoke","runId":31420273047,"result":"success"},
+      {"workflow":"Contract Experiment","runId":31420273043,"result":"success"},
+      {"workflow":"Wist Rollout Sample Smoke","runId":31420273054,"result":"success"},
+      {"workflow":"CGO27 End-to-End Experiment","runId":31420273507,"result":"success"},
+      {"workflow":"CGO27 Artifact","runId":31420273044,"result":"success"},
+      {"workflow":"CGO27 TensorRules","runId":31420273813,"result":"success"},
+      {"workflow":"CGO27 Ablations","runId":31420273065,"result":"success"}
+    ]
+  },
+  "note": "S07 stage closure is backed by the exact integrated migration revision above. Any later repository-content change requires fresh final integration verification, but does not rewrite this historical stage-closure identity."
+}

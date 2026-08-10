@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "baselineRevision": "8b8b91b80f45ff10680b3a8ee826ebf436df1381",
+  "guards": [
+    {
+      "id": "wist-migration-gate-tests",
+      "owner": "UniversalToolchain/Tests/Architecture/WistMigrationGateTests.cs",
+      "classification": "TRANSITIONAL_ORACLE",
+      "rewriteStage": "S10",
+      "retireLegacyPositioningStage": "S11",
+      "finalGuardStage": "S15",
+      "mustNotOwnTargetArchitecture": true
+    },
+    {
+      "id": "wist-parity-matrix",
+      "owner": "WIST_PARITY_MATRIX.json",
+      "classification": "TRANSITIONAL_ORACLE",
+      "rewriteStage": "S10",
+      "retireLegacyPositioningStage": "S11",
+      "finalGuardStage": "S15",
+      "mustNotOwnTargetArchitecture": true
+    }
+  ],
+  "legacyPositioningMarkers": [
+    "Canonical typed Wist authoring package over the canonical Wist dialect runtime",
+    "Typed Wist authoring package over the canonical Wist dialect runtime with shipped-preset parity"
+  ],
+  "policy": "Before cutover these guards are differential evidence only. At S10 they are rewritten, at S11 legacy positioning is forbidden, and at S15 the replacement guard asserts LanguagePlan -> exact direct planned components -> LanguageRuntime."
+}

@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "stage": "S08",
+  "status": "VERIFIED",
+  "dependsOn": {
+    "stage": "S07",
+    "verifiedRevision": "b6176abaf422a9d4d3db70421f164b2824061884"
+  },
+  "objective": "Provide a Wist-neutral input-to-backend-artifact build operation that never invokes the backend executor during artifact construction.",
+  "ownerChanges": {
+    "buildContracts": "UniversalToolchain.Runtime owns typed build requests, declared bindings, build metadata and originating-runtime artifact lifetime.",
+    "exactBinding": "LanguageRouteRuntimeAssembler reuses the exact planned component registry for execution and build materialization; no discovery or replanning is introduced.",
+    "buildPipeline": "LanguageArtifactBuildPipeline materializes planned transformers, records route metadata and creates executors only when ExecuteBuilt is requested.",
+    "publicEntry": "LanguageRuntime exposes Build/ExecuteBuilt/GetBuiltArtifactValue only when constructed from exact component sources."
+  },
+  "lifecycleContract": {
+    "artifactValidity": "Built artifacts are usable through the originating LanguageRuntime until it is disposed.",
+    "crossRuntimeUse": "rejected even when plan identity is equivalent",
+    "componentOwnership": "per-session build components are owned and reverse-disposed by the build pipeline",
+    "concurrency": "build/execute operations participate in RuntimeLifetimeGate; executor creation is serialized per backend",
+    "failedConstructionCleanup": "already-created build components are disposed if build-pipeline construction fails"
+  },
+  "guards": [
+    "Build does not invoke executor side effects",
+    "independent non-Wist language uses the generic build API",
+    "declared build binding types are separate from runtime values",
+    "plan/backend/artifact/runtime ownership mismatches fail closed",
+    "post-dispose built artifact access fails",
+    "Wist CIL backend artifact builds without execution"
+  ],
+  "mutationCoverage": {
+    "MUT-016": "killed by executor-side-effect counter remaining zero until ExecuteBuilt",
+    "MUT-017": "generic Runtime build contracts contain no Wist-specific types or IDs",
+    "MUT-041": "originating-runtime lifetime and cross-runtime/post-dispose tests"
+  },
+  "testManifestCandidate": {
+    "total": 1666,
+    "languageSdk": 141
+  },
+  "providerEvidence": {
+    "revision": "5da859de4f703ecb3c75d8febdff463850e60221",
+    "testContract": {
+      "total": 1276,
+      "core": 524,
+      "modules": 292,
+      "dialects": 253,
+      "languageSdk": 156,
+      "planFuzz": 41,
+      "isolated": 10
+    },
+    "runs": [
+      {"workflow":".NET CI","runId":31420273494,"result":"success"},
+      {"workflow":"Package Compatibility Review","runId":31420273119,"result":"success"},
+      {"workflow":"UniversalToolchain validation","runId":31420273920,"result":"success"},
+      {"workflow":"Benchmark Smoke","runId":31420273138,"result":"success"},
+      {"workflow":"Docs Check","runId":31420273036,"result":"success"},
+      {"workflow":"Published Wist package smoke","runId":31420273047,"result":"success"},
+      {"workflow":"Contract Experiment","runId":31420273043,"result":"success"},
+      {"workflow":"Wist Rollout Sample Smoke","runId":31420273054,"result":"success"},
+      {"workflow":"CGO27 End-to-End Experiment","runId":31420273507,"result":"success"},
+      {"workflow":"CGO27 Artifact","runId":31420273044,"result":"success"},
+      {"workflow":"CGO27 TensorRules","runId":31420273813,"result":"success"},
+      {"workflow":"CGO27 Ablations","runId":31420273065,"result":"success"}
+    ]
+  },
+  "note": "S08 stage closure is backed by the exact integrated migration revision above. Any later repository-content change requires fresh final integration verification, but does not rewrite this historical stage-closure identity."
+}

@@ -41,7 +41,7 @@ public sealed class IntrinsicSemanticStartupValidatorTests
     }
 
     [Test]
-    public void Validate_ShouldFail_WhenAttributedModuleProviderIsMissing()
+    public void Validate_ShouldFail_WhenRequiredModuleProviderIsMissing()
     {
         var validator = new IntrinsicSemanticStartupValidator();
         var providers = Array.Empty<IIntrinsicDescriptorProvider>();
@@ -96,11 +96,7 @@ public sealed class IntrinsicSemanticStartupValidatorTests
     }
 
     private sealed class ValidProvider(params IntrinsicSemanticDescriptor[] descriptors) : FakeProvider(descriptors);
-
-    [IntrinsicDescriptorProvider(typeof(MissingProvider))]
     private sealed class MissingProviderFrontendModule : IFrontendCoreModule;
-
-    [IntrinsicDescriptorProvider(typeof(ValidProvider))]
     private sealed class ValidFrontendModule : IFrontendCoreModule;
 
     private sealed class NoOpStackRule : IIntrinsicStackRule

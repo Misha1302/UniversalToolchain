@@ -32,6 +32,7 @@ public sealed class ExternalLanguageAuthoringTests
             Assert.That(first.Plan.Routes[new BackendId("interpreter")].Steps.Select(static x => x.ContributionId), Is.EqualTo(new[]
             {
                 WistContributionIds.Frontend,
+                WistContributionIds.LoweringToBytecode,
                 WistContributionIds.LoweringToAir,
                 WistContributionIds.InterpreterBackend
             }));
@@ -251,7 +252,9 @@ public sealed class ExternalLanguageAuthoringTests
 
         var error = Assert.Throws<InvalidOperationException>(() => LanguageRuntime.Create(plan, providers));
 
-        Assert.That(error!.Message, Does.Contain("determinism evidence"));
+        Assert.That(
+            error!.Message,
+            Does.Contain("requires deterministic execution").And.Contain("not declared deterministic"));
     }
 
     [Test]

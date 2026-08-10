@@ -41,7 +41,7 @@ Renaming one of these values is not a cosmetic refactor for external consumers.
 
 ## Do not mutate a stored plan in place
 
-A `LanguagePlan` and schema-v5 lock snapshot describe the exact resolved graph used for runtime assembly. When packages change:
+A `LanguagePlan` and schema-v6 lock snapshot describe the exact resolved graph and definition-level order/intrinsic policy used for runtime assembly. When packages change:
 
 1. load the stored language definition or application-owned configuration;
 2. resolve it against the new package registry;
@@ -51,7 +51,7 @@ A `LanguagePlan` and schema-v5 lock snapshot describe the exact resolved graph u
 6. activate the new plan only after approval;
 7. retain the previous package set and plan for rollback during the observation window.
 
-Do not edit hashes, routes or provider identities inside a previously produced plan to make runtime assembly accept a different package graph.
+Do not edit hashes, routes, provider identities, contribution-order constraints or intrinsic policy inside a previously produced plan to make runtime assembly accept a different package graph.
 
 ## Artifact evolution
 

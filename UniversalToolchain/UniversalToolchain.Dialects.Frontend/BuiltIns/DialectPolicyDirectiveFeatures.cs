@@ -16,7 +16,10 @@ internal abstract class IntrinsicPolicyDialectDirectiveFeatureBase : SingleIdent
     }
 
     public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) =>
-        [new IntrinsicAirAnnotation(GetSingleIdentifierArgument(directive), Allowed)];
+        [new IntrinsicAirAnnotation(
+            GetSingleIdentifierArgument(directive),
+            Allowed,
+            sourceLocation: DialectSourceLocation.From(directive.LexemeValue))];
 }
 
 internal sealed class AllowIntrinsicDialectDirectiveFeature : IntrinsicPolicyDialectDirectiveFeatureBase

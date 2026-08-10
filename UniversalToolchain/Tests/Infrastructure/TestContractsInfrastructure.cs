@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using UniversalToolchain.Dialects.Wist;
 
 namespace Tests.Infrastructure;
 
@@ -20,62 +19,8 @@ internal sealed class TempDirectory : IDisposable
     }
 }
 
-internal sealed class StaticManifestLocator(IReadOnlyList<string> paths) : IRuntimeManifestFileLocator
-{
-    public IReadOnlyList<string> GetManifestFilePaths() => paths;
-}
-
 internal static class TestContractsInfrastructure
 {
-    public static string WriteManifest(string root, string fileName, string assemblySimpleName, IReadOnlyList<FileDialectRuntimeComponentEntry> components)
-    {
-        var serializer = new RuntimeManifestJsonSerializer();
-        var path = Path.Combine(root, fileName);
-        var document = new FileDialectRuntimeManifestDocument(assemblySimpleName, components);
-        File.WriteAllText(path, serializer.Serialize(document));
-        return path;
-    }
-
-    public static ServiceProvider CreateWorkflowProvider(bool addCompiler = true, bool addInterpreter = true, string? searchRoot = null)
-    {
-        var services = new ServiceCollection();
-        if (!string.IsNullOrWhiteSpace(searchRoot))
-            services.AddSingleton(new RuntimeArtifactLocatorOptions { SearchRoots = [searchRoot], IncludeAppContextBaseDirectory = true });
-
-        services.AddWistDialectServices();
-        if (addCompiler)
-            services.AddWistCilBackend();
-
-        if (addInterpreter)
-            services.AddWistInterpreterBackend();
-
-        return services.BuildServiceProvider();
-    }
-
-    public static string BuildSelectionSignature(DialectFrameworkCompositionResult composition)
-    {
-        var selection = composition.RuntimeSelection as SelectedRuntimePlan;
-        if (selection == null)
-            return "<no-selection>";
-
-        return string.Join("|", selection.OrderedModules.Select(static x => x.CanonicalAlias))
-               + "::"
-               + string.Join("|", selection.EnabledOptimizers.Select(static x => x.CanonicalAlias))
-               + "::"
-               + string.Join("|", selection.EnabledBackends.Select(static x => x.CanonicalAlias));
-    }
-
-    public static string BuildHostSignature(WistDialectExecutionHost host)
-    {
-        return string.Join("|", host.Configuration.FrontendModules.Select(static x => x.FullName))
-               + "::"
-               + string.Join("|", host.Configuration.IrModules.Select(static x => x.FullName))
-               + "::"
-               + string.Join("|", host.Configuration.Optimizers.Select(static x => x.FullName))
-               + "::"
-               + string.Join("|", host.Configuration.BackendConfigurations.Select(static x => x.BackendDescriptor.CanonicalId));
-    }
-
     public static CliResult RunProcess(string fileName, string arguments, string workingDirectory, int timeoutMs)
     {
         var startInfo = new ProcessStartInfo(ResolveProcessFileName(fileName), arguments)

@@ -21,9 +21,9 @@ The repository should not be described as only a Wist compiler. It should also n
 UniversalToolchain owns the reusable architecture:
 
 - dialect definition and validation;
-- dialect build-plan projection;
-- runtime manifests and selected runtime plans;
-- deterministic runtime activation infrastructure;
+- typed `LanguageDefinition` projection;
+- single `LanguagePlan` authority with explicit package/component provenance;
+- deterministic exact-route `LanguageRuntime` activation;
 - generic composition rules;
 - backend and intrinsic contracts;
 - architecture guardrails that prevent Wist-specific decisions from becoming framework truth.

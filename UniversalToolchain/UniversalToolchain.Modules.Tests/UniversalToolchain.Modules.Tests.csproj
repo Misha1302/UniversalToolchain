@@ -25,14 +25,10 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Tests\Tests.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj"/>
-        <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
+<ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
         <ProjectReference Include="..\ParserConfigurationModule\ParserConfigurationModule.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
         <ProjectReference Include="..\UniversalToolchain.Testing.Infrastructure\UniversalToolchain.Testing.Infrastructure.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

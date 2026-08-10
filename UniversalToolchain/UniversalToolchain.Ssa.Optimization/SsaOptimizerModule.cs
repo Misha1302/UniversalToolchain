@@ -9,7 +9,7 @@ namespace UniversalToolchain.Ssa.Optimization;
 /// <summary>
 /// Runs the verifier-gated SSA optimization route as an opt-in dialect optimizer.
 /// </summary>
-[DialectRuntimeExport("Optimizer", "Ssa")]
+[DialectComponentContract("Optimizer", "Ssa")]
 public sealed class SsaOptimizerModule : IAirOptimizer
 {
     private readonly SsaRuntimeExecutionOptions _options;

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "stage": "S01",
+  "status": "VERIFIED",
+  "baseRevision": "906b6db83f61f4eae881d182698b987d27c5e991^",
+  "finalImplementationRevision": "906b6db83f61f4eae881d182698b987d27c5e991",
+  "artifactGraph": [
+    "source.text<string>",
+    "wist.syntax-tree/v1",
+    "wist.bytecode/v1",
+    "wist.air/v1",
+    "backend artifact"
+  ],
+  "productionOwners": [
+    "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/WistLanguageFeaturePackage.cs",
+    "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/WistLanguageRuntimeProvider.cs"
+  ],
+  "focusedTests": "UniversalToolchain/UniversalToolchain.LanguageSdk.Tests/WistCanonicalArtifactGraphTests.cs",
+  "acceptance": {
+    "exactRouteContainsBytecode": true,
+    "syntaxToAirShortcutAbsent": true,
+    "bytecodeContractMismatchFailsClosed": true,
+    "contractIdentityAffectsPlanHashAndLock": true,
+    "manifestRoundTripPreservesBoundary": true,
+    "genericSdkRemainsWistNeutral": true
+  },
+  "exactHeadEvidence": [
+    {"workflow":".NET CI","runId":31198171379,"result":"success"},
+    {"workflow":"UniversalToolchain validation","runId":31198172275,"result":"success"},
+    {"workflow":"Package Compatibility Review","runId":31198172552,"result":"success"},
+    {"workflow":"Docs Check","runId":31198170516,"result":"success"},
+    {"workflow":"Benchmark Smoke","runId":31198170560,"result":"success"}
+  ],
+  "testContract": {
+    "totalPassed": 1612,
+    "languageSdkPassed": 87,
+    "failed": 0,
+    "skipped": 0
+  },
+  "residualLegacy": [
+    "WistDialectExecutionWorkflow",
+    "WistDialectPlanFactory",
+    "SelectedRuntimePlan",
+    "BasicCoreImpl"
+  ],
+  "nextStage": "S02-languageplan-single-authority"
+}

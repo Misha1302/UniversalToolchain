@@ -1,5 +1,3 @@
-using UniversalToolchain.Dialects.Wist.Facade;
-using UniversalToolchain.Dialects.Wist.Presets;
 using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
 using UniversalToolchain.LanguageSdk;
@@ -20,8 +18,11 @@ public sealed class WistRemediationRegressionTests
         var featureId = new LanguageFeatureId("external.injected-feature");
         var source = StandardLanguageArtifactKinds.SourceText.Contract;
         var syntax = WistArtifactKinds.SyntaxTreeContract;
+        var bytecode = WistArtifactKinds.BytecodeContract;
         var air = WistArtifactKinds.AirContract;
         var output = WistArtifactKinds.InterpreterArtifactContract;
+        var syntaxToBytecodeSlot = new LanguageSlotId("wist.lowering.syntax-to-bytecode");
+        var bytecodeToAirSlot = new LanguageSlotId("wist.lowering.bytecode-to-air");
 
         LanguageContributionDescriptor Module(string id, string alias) =>
             new(
@@ -38,11 +39,17 @@ public sealed class WistRemediationRegressionTests
                 ContributionMergePolicy.RejectDuplicate,
                 transformation: new ArtifactTransformationDescriptor(source, syntax, 1)),
             new(
-                WistContributionIds.LoweringToAir,
-                LanguageSlots.Lowering,
+                WistContributionIds.LoweringToBytecode,
+                syntaxToBytecodeSlot,
                 LanguageSlotMultiplicity.Single,
                 ContributionMergePolicy.RejectDuplicate,
-                transformation: new ArtifactTransformationDescriptor(syntax, air, 1)),
+                transformation: new ArtifactTransformationDescriptor(syntax, bytecode, 1)),
+            new(
+                WistContributionIds.LoweringToAir,
+                bytecodeToAirSlot,
+                LanguageSlotMultiplicity.Single,
+                ContributionMergePolicy.RejectDuplicate,
+                transformation: new ArtifactTransformationDescriptor(bytecode, air, 1)),
             new(
                 WistContributionIds.InterpreterBackend,
                 LanguageSlots.Backends,
@@ -196,6 +203,7 @@ public sealed class WistRemediationRegressionTests
         var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package)).Compile(
             LanguageDefinitionBuilder.Create("Conditions.Runtime.Check", "1")
                 .UseFeature(WistFeatureIds.Conditions)
+                .UseFeature(WistFeatureIds.Numbers)
                 .EnableBackend(interpreter)
                 .EnableBackend(cil)
                 .UseRuntimeProvider(WistLanguageFeaturePackage.RuntimeProviderId, WistLanguageFeaturePackage.PackageVersion)
@@ -219,35 +227,33 @@ public sealed class WistRemediationRegressionTests
 
     [TestCase("2 + 3 * 4")]
     [TestCase("(10 - 4) / 2")]
-    public void MinimalArithmeticPreset_GenericPack_HasExecutableEquivalence(string source)
+    public void MinimalArithmeticPreset_ProviderFacadeMatchesExactRouteRuntime(string source)
     {
         var backend = new BackendId("interpreter");
-        var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(new WistLanguageFeaturePackage())).Compile(
+        var package = new WistLanguageFeaturePackage();
+        var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package)).Compile(
             LanguageDefinitionBuilder.Create("Minimal.Arithmetic.Parity", "1")
                 .UseFeature(WistFeatureIds.Arithmetic)
                 .EnableBackend(backend)
                 .UseRuntimeProvider(WistLanguageFeaturePackage.RuntimeProviderId, WistLanguageFeaturePackage.PackageVersion)
                 .Build()).GetRequiredPlan();
 
-        using var genericRuntime = LanguageRuntime.Create(
+        using var providerRuntime = LanguageRuntime.Create(
             plan,
             new LanguageRuntimeProviderRegistry().AddProvider(new WistLanguageRuntimeProvider()));
-        using var legacyRuntime = WistRuntimeFacadeBuilder
-            .CreateDefault()
-            .WithShippedDialectPreset(WistShippedDialectPresets.MinimalArithmetic)
-            .Build();
+        using var exactRouteRuntime = LanguageRuntime.Create(
+            plan,
+            new ILanguageRouteComponentSource[] { package });
 
-        var genericResult = genericRuntime.Run(new LanguageExecutionRequest(source, backend)).Value;
-        var legacyResult = legacyRuntime.Run(
-            new WistRunRequest(source, new Dictionary<string, object?>(), "interpreter"));
+        var providerResult = providerRuntime.Run(new LanguageExecutionRequest(source, backend)).Value;
+        var exactRouteResult = exactRouteRuntime.Run(new LanguageExecutionRequest(source, backend)).Value;
 
         Assert.Multiple(() =>
         {
-            Assert.That(genericResult?.GetType(), Is.EqualTo(legacyResult?.GetType()));
-            Assert.That(genericResult?.ToString(), Is.EqualTo(legacyResult?.ToString()));
+            Assert.That(providerResult?.GetType(), Is.EqualTo(exactRouteResult?.GetType()));
+            Assert.That(providerResult?.ToString(), Is.EqualTo(exactRouteResult?.ToString()));
         });
     }
-
 
     [TestCase(WistLanguageDefinitions.FullDefaultId)]
     [TestCase(WistLanguageDefinitions.FullDefaultNativeId)]

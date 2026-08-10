@@ -2,9 +2,7 @@ using CommonExceptions;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace InternalPreprocessorLexemesModule;
-
-[DialectModuleAlias("InternalPreprocessorLexemes")]
-[DialectRuntimeExport("FrontendModule", "InternalPreprocessorLexemes")]
+[DialectComponentContract("FrontendModule", "InternalPreprocessorLexemes")]
 [AutoRegisterService]
 public class InternalPreprocessorLexemesModuleImpl : IFrontendCoreModule
 {

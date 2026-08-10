@@ -5,7 +5,6 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>14</LangVersion>
-        <EmitDialectRuntimeManifest>true</EmitDialectRuntimeManifest>
     </PropertyGroup>
 
     <ItemGroup>
@@ -15,7 +14,6 @@
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
         <ProjectReference Include="..\UniversalIntermediateRepresentation\UniversalIntermediateRepresentation.csproj"/>
         <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj"/>
-    </ItemGroup>
+</ItemGroup>
 
 </Project>

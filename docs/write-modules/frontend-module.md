@@ -55,9 +55,8 @@ metadata attributes
 For example, the arithmetic module exposes a dialect alias, registers arithmetic lexemes, registers parser node creators and registers AST visitors:
 
 ```csharp
-[DialectModuleAlias("Arithmetic")]
 [DialectCapabilityProvider(typeof(global::ArithmeticModule.ArithmeticCapabilityProvider))]
-[DialectRuntimeExport("FrontendModule", "Arithmetic")]
+[DialectComponentContract("FrontendModule", "Arithmetic")]
 [AutoRegisterService]
 public class ArithmeticModuleImpl : IFrontendCoreModule
 {

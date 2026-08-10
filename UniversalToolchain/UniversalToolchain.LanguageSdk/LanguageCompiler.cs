@@ -55,6 +55,9 @@ public sealed class LanguageCompiler
         ValidateContributionRequirements(effectiveContributions, diagnostics);
         if (HasErrors(diagnostics))
             return LanguageBuildResult.Failure(diagnostics);
+        effectiveContributions = ApplyDefinitionContributionOrder(definition, effectiveContributions, diagnostics);
+        if (HasErrors(diagnostics))
+            return LanguageBuildResult.Failure(diagnostics);
 
         ResolvedLanguageContribution? effectiveRuntimeProvider = null;
         if (runtimeProvider != null)
@@ -490,6 +493,83 @@ public sealed class LanguageCompiler
                     "Select a provider for the missing capability."));
             }
         }
+    }
+
+    private static IReadOnlyList<ResolvedLanguageContribution> ApplyDefinitionContributionOrder(
+        LanguageDefinition definition,
+        IReadOnlyList<ResolvedLanguageContribution> contributions,
+        ICollection<LanguageDiagnostic> diagnostics)
+    {
+        if (definition.ContributionOrderConstraints.Count == 0)
+            return contributions;
+
+        var byId = contributions.ToDictionary(static item => item.Contribution.Id);
+        foreach (var constraint in definition.ContributionOrderConstraints)
+        {
+            if (!byId.TryGetValue(constraint.Source, out var source) || !byId.TryGetValue(constraint.Target, out var target))
+            {
+                diagnostics.Add(Error(
+                    "UTL2110",
+                    "planning",
+                    $"Definition-level contribution order references an unselected contribution: '{constraint.Source.Value}' {constraint.Kind} '{constraint.Target.Value}'.",
+                    constraint.Source.Value,
+                    "Select both contributions or remove the ordering constraint."));
+                continue;
+            }
+            if (source.Contribution.Slot != target.Contribution.Slot)
+            {
+                diagnostics.Add(Error(
+                    "UTL2111",
+                    "planning",
+                    $"Definition-level contribution order cannot cross slots: '{constraint.Source.Value}' is in '{source.Contribution.Slot.Value}', while '{constraint.Target.Value}' is in '{target.Contribution.Slot.Value}'.",
+                    constraint.Source.Value,
+                    "Order contributions only within one language slot."));
+            }
+        }
+        if (HasErrors(diagnostics))
+            return contributions;
+
+        var result = new List<ResolvedLanguageContribution>(contributions.Count);
+        foreach (var slotGroup in contributions
+                     .GroupBy(static item => item.Contribution.Slot)
+                     .OrderBy(static group => group.Key.Value, StringComparer.Ordinal))
+        {
+            var candidates = slotGroup.ToDictionary(static item => item.Contribution.Id);
+            var predecessors = candidates.Keys.ToDictionary(static id => id, static _ => new HashSet<LanguageContributionId>());
+            foreach (var constraint in definition.ContributionOrderConstraints.Where(constraint =>
+                         candidates.ContainsKey(constraint.Source) && candidates.ContainsKey(constraint.Target)))
+            {
+                if (constraint.Kind == LanguageContributionOrderKind.Before)
+                    predecessors[constraint.Target].Add(constraint.Source);
+                else
+                    predecessors[constraint.Source].Add(constraint.Target);
+            }
+
+            var emitted = new HashSet<LanguageContributionId>();
+            while (emitted.Count != candidates.Count)
+            {
+                var ready = candidates.Values
+                    .Where(item => !emitted.Contains(item.Contribution.Id))
+                    .Where(item => predecessors[item.Contribution.Id].All(emitted.Contains))
+                    .OrderBy(static item => item.Contribution.Order)
+                    .ThenBy(static item => item.Contribution.Id.Value, StringComparer.Ordinal)
+                    .FirstOrDefault();
+                if (ready == null)
+                {
+                    diagnostics.Add(Error(
+                        "UTL2112",
+                        "planning",
+                        $"Definition-level contribution order for slot '{slotGroup.Key.Value}' contains a cycle.",
+                        slotGroup.Key.Value,
+                        "Remove the cyclic Requires/Before/After constraints."));
+                    return contributions;
+                }
+
+                result.Add(ready);
+                emitted.Add(ready.Contribution.Id);
+            }
+        }
+        return result;
     }
 
     private static IReadOnlyList<LanguageArtifactRoute> BuildRoutes(

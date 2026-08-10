@@ -1,6 +1,5 @@
 using ExceptionsManager;
 using System.Globalization;
-using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Wist;
 
@@ -8,8 +7,6 @@ internal static class WistResultConverter
 {
     public static T ConvertTo<T>(object? value)
     {
-        value = WistRuntimeValueNormalizer.Normalize(value);
-
         if (value is T typedValue)
             return typedValue;
 

@@ -3,12 +3,9 @@ using NumbersModule.Contracts;
 using UniversalToolchain.ModuleContracts;
 
 namespace NumbersModule.Module;
-
-[DialectModuleAlias("Numbers")]
 [DialectCapabilityProvider(typeof(NumbersCapabilityProvider))]
-[DialectRuntimeExport("FrontendModule", "Numbers")]
+[DialectComponentContract("FrontendModule", "Numbers")]
 [AutoRegisterService]
-[ArithmeticModeCompatibility(ArithmeticMode.Universal)]
 public class NumbersModuleImpl : IFrontendCoreModule, IModuleContractDescriptorProvider
 {
     public IReadOnlyList<ContractNamespaceOwner> NamespaceOwners => _contractDescriptorProvider.NamespaceOwners;

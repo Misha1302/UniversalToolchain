@@ -1,14 +1,10 @@
 using BasicCore.Builtins;
 using BasicCore.Capabilities;
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 
 namespace ConditionsModule.Optimizers;
-
-[DialectOptimizerAlias("ComparisonIntrinsicOptimization")]
-[DialectRuntimeExport("Optimizer", "ComparisonIntrinsicOptimization")]
+[DialectComponentContract("Optimizer", "ComparisonIntrinsicOptimization")]
 [AutoRegisterService]
-[IntrinsicDescriptorProvider(typeof(ComparisonIntrinsicDescriptorProvider))]
 [UsedImplicitly]
 public class ComparisonIntrinsicOptimizerModule : IAirOptimizer
 {

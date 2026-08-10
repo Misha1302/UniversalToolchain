@@ -1,66 +1,57 @@
 ---
 title: Create Your First Module
-description: Build a small frontend module from syntax idea to tested dialect behavior.
+description: Build a small Wist frontend module and register it in the canonical LanguagePlan path.
 ---
 
 # Create Your First Module
 
-This tutorial builds a real, intentionally small frontend module: `TextualAddition`.
-
-It adds this Wist syntax:
+This tutorial uses the repository's `TextualAddition` feature. It adds:
 
 ```wist
 2 plus 3
 ```
 
-Expected result:
+with result:
 
 ```text
 5
 ```
 
-The feature is deliberately small. It exercises the module pipeline without requiring a new backend, new AIR shape, or new intrinsic.
+The important S11 rule is that implementing syntax is only half of a built-in Wist feature. The feature must also be registered in the typed Wist LanguagePack so `LanguageCompiler` can place it in the canonical `LanguagePlan`.
 
-## What you will build
+## Canonical authoring flow
 
-| Concern | Value |
-|---|---|
-| Module alias | `TextualAddition` |
-| Runtime export | `FrontendModule/TextualAddition` |
-| New syntax | `<expression> plus <expression>` |
-| Parser precedence | same as addition/subtraction |
-| Runtime behavior | lower to the existing `Add` operation |
-| Required related modules | `Whitespaces`, `Numbers`, `Scopes`, `Arithmetic` |
-| Tests | positive execution, precedence, missing-module rejection |
+```text
+module implementation
+  + typed Wist feature/contribution registration
+  + dependency declaration
+  -> LanguageDefinition
+  -> LanguageCompiler
+  -> LanguagePlan
+  -> LanguageRuntime
+```
 
-## Files created
+There is no runtime-manifest discovery step in the canonical Wist path.
 
-| Concern | File |
+## Files involved
+
+| Concern | Current owner |
 |---|---|
 | Module entry point | `UniversalToolchain/ArithmeticModule/Module/TextualAdditionModuleImpl.cs` |
-| Parser node creator | `UniversalToolchain/ArithmeticModule/Creators/TextualAdditionOperationNodeCreator.cs` |
+| Parser creator | `UniversalToolchain/ArithmeticModule/Creators/TextualAdditionOperationNodeCreator.cs` |
 | AST visitor | `UniversalToolchain/ArithmeticModule/Visitors/TextualAdditionAstVisitor.cs` |
-| Tests | `UniversalToolchain/UniversalToolchain.Dialects.Tests/TextualAdditionModuleTests.cs` |
+| Feature/contribution ids | `UniversalToolchain.Wist.LanguagePack/WistLanguageFeaturePackage.cs` |
+| Alias → implementation factory | `UniversalToolchain.Wist.LanguagePack/WistRuntimeComponentCatalog.cs` |
+| Typed feature dependencies | `WistLanguageFeaturePackage.GetRequiredFeatures(...)` |
+| Behavior tests | `UniversalToolchain.Dialects.Tests/TextualAdditionModuleTests.cs` |
 
-The example lives in `ArithmeticModule` because it is semantically arithmetic-related. A larger external feature can live in its own project, but the same responsibilities apply.
+## Step 1. Implement the source-level feature
 
-## Step 1. Define the feature boundary
-
-`TextualAddition` owns exactly one source-level feature: the keyword-like binary operator `plus`.
-
-It does not own numbers, scopes, multiplication, backend selection, or optimizer behavior. Those remain separate module/backend concerns.
-
-## Step 2. Add the module entry point
-
-Create `UniversalToolchain/ArithmeticModule/Module/TextualAdditionModuleImpl.cs` with the complete file content below:
+`TextualAdditionModuleImpl` owns the `plus` token, parser node creator and AST visitor:
 
 ```csharp
-namespace ArithmeticModule.Module;
-
-[DialectModuleAlias("TextualAddition")]
-[DialectRuntimeExport("FrontendModule", "TextualAddition")]
+[DialectComponentContract("FrontendModule", "TextualAddition")]
 [AutoRegisterService]
-[ArithmeticModeCompatibility(ArithmeticMode.Universal)]
 public class TextualAdditionModuleImpl : IFrontendCoreModule
 {
     private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =
@@ -74,226 +65,145 @@ public class TextualAdditionModuleImpl : IFrontendCoreModule
     ];
 
     public void InitLexer(ILexer lexer) => lexer.AddLexemes(_lexemeRegistrations);
-
     public void InitParser(IParser parser) => parser.AddNodeCreators(_nodeCreatorRegistrations);
-
-    public void InitAstTranslator(IAstToBytecodeTranslator translator) => translator.AddVisitors(new TextualAdditionAstVisitor());
+    public void InitAstTranslator(IAstToBytecodeTranslator translator) =>
+        translator.AddVisitors(new TextualAdditionAstVisitor());
 }
 ```
 
-Important details:
+The attributes remain useful compatibility/metadata annotations, but they do not by themselves make the module selectable by the canonical Wist planner.
 
-- `DialectModuleAlias` makes the module selectable from a dialect file.
-- `DialectRuntimeExport` exposes it to manifest-backed runtime composition.
-- `\bplus\b` prevents accidental matches inside words such as `surplus`.
-- priority `110f` keeps `plus` above identifier-like lexemes when both are selected.
-- parser priority `-30f` matches ordinary addition/subtraction precedence.
+## Step 2. Give the feature stable typed identities
 
-## Step 2.1. Do not create runtime JSON by hand
-
-Older module registration flows required hand-maintained JSON metadata. Current module projects should not do that.
-
-Runtime manifest JSON files are generated during build from attributes such as:
+Built-in Wist features use explicit ids in `WistLanguageFeaturePackage.cs`:
 
 ```csharp
-[DialectModuleAlias("TextualAddition")]
-[DialectRuntimeExport("FrontendModule", "TextualAddition")]
+public static LanguageFeatureId TextualAddition { get; } = new("wist.textual-addition");
 ```
 
-If you add a module inside an existing project that already emits manifests, such as `ArithmeticModule`, no extra JSON file is needed.
-
-If you create a new standalone module project, enable manifest generation in that project's `.csproj`:
-
-```xml
-<PropertyGroup>
-    <EmitDialectRuntimeManifest>true</EmitDialectRuntimeManifest>
-</PropertyGroup>
-```
-
-The build then emits a file named like this in the output directory:
-
-```text
-YourModuleAssembly.dialect.runtime.json
-```
-
-The generated file is a build artifact. Do not commit a hand-written copy unless a future document explicitly says a specific scenario still needs one.
-
-## Step 3. Add the parser node creator
-
-Create `UniversalToolchain/ArithmeticModule/Creators/TextualAdditionOperationNodeCreator.cs` with the complete file content below:
+and:
 
 ```csharp
-namespace ArithmeticModule.Creators;
-
-[AutoRegisterService]
-[ArithmeticModeCompatibility(ArithmeticMode.Universal)]
-public class TextualAdditionOperationNodeCreator() : BinaryOperationBase("TextualAddition");
+public static LanguageContributionId TextualAdditionModule { get; } =
+    new("wist.module.textual-addition");
 ```
 
-This transforms a flat token sequence like `2 plus 3` into a binary AST node with left and right operands.
+These ids are the semantic identities captured in `LanguageDefinition` and `LanguagePlan`. The user-facing alias `TextualAddition` is only configuration syntax that maps to them.
 
-The node type remains `TextualAddition`, not `Addition`, because this module owns a distinct syntax surface. The AST visitor maps that syntax to addition semantics explicitly.
+## Step 3. Bind the alias to the implementation factory
 
-## Step 4. Add the AST visitor
-
-Create `UniversalToolchain/ArithmeticModule/Visitors/TextualAdditionAstVisitor.cs` with the complete file content below:
+Add the built-in module to `WistRuntimeComponentCatalog.Modules`:
 
 ```csharp
-namespace ArithmeticModule.Visitors;
-
-[AutoRegisterService]
-[ArithmeticModeCompatibility(ArithmeticMode.Universal)]
-public class TextualAdditionAstVisitor : IAstVisitor
-{
-    private static readonly ExtensibleEnum<AstNodeTag> _nodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("TextualAddition");
-
-    public void TryVisit(BytecodeVisitorData data)
-    {
-        if (data.Node.NodeType != _nodeType)
-            return;
-
-        foreach (var child in data.Node.Children)
-            data.AstToBytecodeTranslator.Translate(child);
-
-        var method = new AbstractMethodImpl(
-            "Op_plus",
-            (il, context) => il.CallCSharp(context.Stack[^1].GetMethod("Add").NotNull())
-        );
-
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
-    }
-}
+Module(
+    WistContributionIds.TextualAdditionModule,
+    WistFeatureIds.TextualAddition,
+    "TextualAddition",
+    190,
+    static () => typeof(TextualAdditionModuleImpl),
+    static services => ActivatorUtilities.CreateInstance<TextualAdditionModuleImpl>(services))
 ```
 
-The visitor must self-filter. It should emit bytecode only for `TextualAddition` nodes.
+This catalog is the Wist-specific translation/materialization bridge:
 
-The stack order is:
+- the alias resolves to a typed feature/contribution;
+- the implementation factory is used only after the plan has selected that contribution;
+- catalog order must not become a second semantic planner.
 
-```text
-left operand -> right operand -> Add operation
+## Step 4. Expose the feature in the package descriptor
+
+`WistLanguageFeaturePackage.CreateFeatures()` must expose the feature:
+
+```csharp
+Feature(WistFeatureIds.TextualAddition, WistContributionIds.TextualAdditionModule)
 ```
 
-That mirrors the existing arithmetic visitor and keeps compiler/interpreter behavior aligned.
+`CreateContributions()` obtains module contribution descriptors from the canonical runtime-component catalog. The resulting package descriptor is what `LanguageCompiler` plans against.
 
-## Step 5. Enable the module in a dialect
+## Step 5. Declare typed dependencies
 
-The syntax exists only when the dialect selects the module:
+If the feature requires other Wist features, declare them in `GetRequiredFeatures(...)`.
+
+The current `TextualAddition` contract requires scopes and whitespace handling:
+
+```csharp
+if (id == WistFeatureIds.TextualAddition)
+    return [WistFeatureIds.Scopes, WistFeatureIds.Whitespaces];
+```
+
+This is deliberately different from forcing every dialect file to repeat transitive requirements. `LanguageCompiler` closes the feature dependency graph.
+
+The example expression also uses numeric literals, so the demo dialect requests `Numbers` explicitly:
 
 ```text
 dialect TextualAdditionDemo
-use Whitespaces,Numbers,Scopes,Arithmetic,TextualAddition
+use TextualAddition,Numbers
 backend cil,interpreter
 ```
 
-Without `TextualAddition`, `2 plus 3` should be rejected. This is part of the module contract, not an optional nicety.
+The resulting `LanguagePlan` also contains the required `Scopes` and `Whitespaces` contributions even though the file does not need to repeat them.
 
-## Step 6. Add tests
+## Step 6. Keep exclusion semantics fail-closed
 
-Create `UniversalToolchain/UniversalToolchain.Dialects.Tests/TextualAdditionModuleTests.cs` with the complete file content below:
+A dialect `exclude` directive is translated to `LanguageDefinition.ExcludedContributions`.
 
-```csharp
-using UniversalToolchain.Modules.Tests;
+If a new feature declares a dependency whose contribution the dialect excludes, `LanguageCompiler` must fail with the canonical planning diagnostic instead of silently reactivating the module.
 
-namespace UniversalToolchain.Dialects.Tests;
+Do not implement a Wist-only dependency resolver to work around this. Typed feature dependencies and exclusions already belong to the generic planner.
 
-[TestFixture]
-public sealed class TextualAdditionModuleTests
-{
-    private const string TextualAdditionDialect = """
-                                                 dialect TextualAdditionDemo
-                                                 use Whitespaces,Numbers,Scopes,Arithmetic,TextualAddition
-                                                 backend cil,interpreter
-                                                 """;
+## Step 7. Test selection and parity
 
-    private const string ArithmeticOnlyDialect = """
-                                                dialect ArithmeticOnlyDemo
-                                                use Whitespaces,Numbers,Scopes,Arithmetic
-                                                backend cil,interpreter
-                                                """;
+The repository's `TextualAdditionModuleTests` verifies:
 
-    [Test]
-    public void TextualAddition_Module_ExecutesPlusKeyword()
-    {
-        var result = DialectTestHostInfrastructure.RunInBothBackends(TextualAdditionDialect, "2 plus 3");
+- `2 plus 3` executes when `TextualAddition` is selected;
+- `2 plus 3 * 4` preserves addition-level precedence;
+- the same syntax fails when the module is omitted;
+- compiler and interpreter agree.
 
-        Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(5.0d).Within(1e-9));
-    }
+For a built-in feature, also keep architecture/package tests that prove:
 
-    [Test]
-    public void TextualAddition_Module_UsesAdditionPrecedence()
-    {
-        var result = DialectTestHostInfrastructure.RunInBothBackends(TextualAdditionDialect, "2 plus 3 * 4");
+- its feature and contribution ids are present in the package descriptor;
+- alias translation maps to the expected typed feature;
+- dependency closure is owned by `LanguageCompiler`;
+- minimal plans do not materialize unrelated module assemblies.
 
-        Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(14.0d).Within(1e-9));
-    }
+## Step 8. Use explicit component contracts and package registration
 
-    [Test]
-    public void TextualAddition_Syntax_IsUnavailable_WhenModuleIsNotSelected()
-    {
-        var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(ArithmeticOnlyDialect, "2 plus 3");
+Runtime-manifest emission/discovery was retired. A module participates only through explicit typed ownership:
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(compilerResult.IsSuccess, Is.False, "Compiler path must reject syntax owned by an unselected module.");
-            Assert.That(interpreterResult.IsSuccess, Is.False, "Interpreter path must reject syntax owned by an unselected module.");
-            Assert.That(compilerResult.Exception, Is.Not.Null);
-            Assert.That(interpreterResult.Exception, Is.Not.Null);
-        });
-    }
-}
-```
+- `DialectComponentContract` describes the module-contract identity used by verification;
+- the owning `ILanguageExtensionPackage` declares feature/contribution ids and dependencies;
+- the route-component source binds the planned contribution to an implementation;
+- `LanguageCompiler` closes dependencies and `LanguageRuntime` activates exactly the resulting plan.
 
-These tests prove three things:
+Do not solve a missing Wist alias by scanning assemblies, adding reflection annotations, writing `.dialect.runtime.json`, or constructing a second selected-runtime plan. Fix the typed Wist LanguagePack/catalog registration instead.
 
-- `2 plus 3` works when `TextualAddition` is selected.
-- `2 plus 3 * 4` returns `14`, proving addition-level precedence.
-- `2 plus 3` fails when the dialect selects `Arithmetic` but not `TextualAddition`, proving dialect visibility is real.
-
-Use `BackendParityInfrastructure` rather than a legacy smoke-test base. A module is not done until the intended backend paths agree.
-
-## Step 7. Run the checks
+## Step 9. Run repository checks
 
 From repository root:
 
 ```bash ci-run=false
-dotnet restore UniversalToolchain/Wist.sln
-dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
-dotnet test UniversalToolchain/Wist.sln -c Release --no-build
+./build.sh --skip-docs --skip-pack
 ```
 
-For documentation smoke checks:
+On Windows:
 
-```bash ci-run=false
-python3 .github/scripts/run-markdown-bash-blocks.py
+```powershell
+./build.ps1 -SkipDocs -SkipPack
 ```
 
-These blocks are marked `ci-run=false` because the GitHub workflow already runs restore/build/test before the markdown smoke pass. The commands remain copyable for humans without making the documentation smoke step slow or recursive.
+The canonical gate builds the repository, enforces architecture boundaries and runs the exact test contract. When the test count changes intentionally, do not edit `eng/test-counts.json` first: obtain a semantically clean observed census, then reconcile the manifest and verification docs in a separate reviewed change.
 
-## Verification
+## Definition of done
 
-The files above are intentionally complete, not illustrative fragments. The implementation in this repository follows these exact steps:
+A built-in Wist module is complete when:
 
-- `TextualAdditionModuleImpl` registers the `plus` lexeme, parser creator, and AST visitor.
-- `TextualAdditionOperationNodeCreator` creates a binary AST shape for the operator.
-- `TextualAdditionAstVisitor` lowers the node to the existing `Add` operation.
-- Runtime manifest metadata is generated from module/export attributes during build; this tutorial does not require a hand-written `.dialect.runtime.json` file.
-- `TextualAdditionModuleTests` verifies positive execution, precedence, and missing-module rejection through both selected backend paths.
-
-## Finished module checklist
-
-Before considering a module complete, verify:
-
-- the module has a clear alias;
-- runtime export metadata is present;
-- hand-written runtime JSON is not needed; manifest generation is enabled when the module lives in a new project;
-- syntax belongs to lexer/parser, not raw source scanning;
-- parser priority is intentional and tested;
-- AST visitors self-filter;
-- bytecode emission preserves stack discipline;
-- the feature is available only when selected by dialect;
-- selected backend modes agree on observable results;
-- negative tests prove omitted syntax stays unavailable.
-
-## Next
-
-Read [Frontend Module](/write-modules/frontend-module) for the contract shape, then [Testing a Module](/write-modules/testing-module) for the broader test matrix.
+- syntax/parser/AST behavior is implemented;
+- stable feature and contribution ids exist;
+- alias and implementation factory are registered in `WistRuntimeComponentCatalog`;
+- the package descriptor exposes the feature/contribution;
+- typed feature dependencies are declared;
+- canonical planning selects the expected contribution;
+- both supported backend routes agree;
+- omitted/excluded behavior fails as intended;
+- no manifest-backed or service-container planner is needed to make it work.

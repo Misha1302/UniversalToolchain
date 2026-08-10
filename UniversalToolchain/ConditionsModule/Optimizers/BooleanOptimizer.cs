@@ -1,14 +1,10 @@
 using BasicCore.Builtins;
 using BasicCore.Capabilities;
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 
 namespace ConditionsModule.Optimizers;
-
-[DialectOptimizerAlias("BooleanOptimization")]
-[DialectRuntimeExport("Optimizer", "BooleanOptimization")]
+[DialectComponentContract("Optimizer", "BooleanOptimization")]
 [AutoRegisterService]
-[IntrinsicDescriptorProvider(typeof(BooleanIntrinsicDescriptorProvider))]
 [UsedImplicitly]
 public class BooleanOptimizerModule : IAirOptimizer
 {

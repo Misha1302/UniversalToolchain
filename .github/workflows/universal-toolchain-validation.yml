@@ -35,9 +35,12 @@ jobs:
         run: |
           ! rg "UniversalToolchain\.Rules|UniversalToolchain\.Dialects\.Wist|SafeMathFunctionsModule|ConditionsModule" UniversalToolchain/BasicCore -g "*.cs" -g "*.csproj"
 
-      - name: Wist layer must not know SafeMath implementation
+      - name: Generic planning and runtime layers must not know SafeMath implementation
         run: |
-          ! rg "SafeMathFunctionsModule|typeof\(SafeMathFunctions\)|nameof\(SafeMathFunctions" UniversalToolchain/UniversalToolchain.Dialects.Wist -g "*.cs"
+          ! rg "SafeMathFunctionsModule|typeof\(SafeMathFunctions\)|nameof\(SafeMathFunctions" \
+            UniversalToolchain/UniversalToolchain.LanguageSdk \
+            UniversalToolchain/UniversalToolchain.Runtime \
+            -g "*.cs"
 
       - name: Parser and resolver must not hardcode SafeMath function names
         run: |

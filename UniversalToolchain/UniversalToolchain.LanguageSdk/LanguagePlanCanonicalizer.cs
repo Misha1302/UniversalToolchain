@@ -6,7 +6,7 @@ namespace UniversalToolchain.LanguageSdk;
 
 internal static class LanguagePlanCanonicalizer
 {
-    public const int FormatVersion = 1;
+    public const int FormatVersion = 2;
 
     public static string ComputeHash(
         LanguageDefinition definition,
@@ -120,6 +120,29 @@ internal static class LanguagePlanCanonicalizer
                 writer.WriteString(item.Key.Value, item.Value.Value);
             writer.WriteEndObject();
             WriteStrings(writer, "excludedContributions", definition.ExcludedContributions.Select(static x => x.Value));
+            writer.WritePropertyName("contributionOrderConstraints");
+            writer.WriteStartArray();
+            foreach (var constraint in definition.ContributionOrderConstraints)
+            {
+                writer.WriteStartObject();
+                writer.WriteString("kind", constraint.Kind.ToString());
+                writer.WriteString("source", constraint.Source.Value);
+                writer.WriteString("target", constraint.Target.Value);
+                writer.WriteEndObject();
+            }
+            writer.WriteEndArray();
+            writer.WritePropertyName("intrinsicPolicy");
+            writer.WriteStartArray();
+            foreach (var directive in definition.IntrinsicPolicy)
+            {
+                writer.WriteStartObject();
+                writer.WriteString("intrinsic", directive.Intrinsic.Value);
+                writer.WriteBoolean("allowed", directive.Allowed);
+                if (directive.Backend is { } backend)
+                    writer.WriteString("backend", backend.Value);
+                writer.WriteEndObject();
+            }
+            writer.WriteEndArray();
             writer.WritePropertyName("metadata");
             writer.WriteStartObject();
             foreach (var pair in definition.Metadata.OrderBy(static x => x.Key, StringComparer.Ordinal))

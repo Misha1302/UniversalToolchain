@@ -34,9 +34,14 @@ public class WhitespacesModulePipelineTests
     }
 
     [Test]
-    public void Whitespaces_ModuleDisabled_SameProgramFailsDeterministically()
+    public void Whitespaces_OmittedExplicitly_AreRestoredBySelectedFeatureDependencies()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFailsContaining("let x = 2; x + 3", _modules.Where(x => x != "Whitespaces"), "token");
+        var withoutExplicitWhitespaces = _modules.Where(static module => module != "Whitespaces").ToArray();
+
+        var result = h.ExecuteBoth("let x = 2; x + 3", withoutExplicitWhitespaces);
+
+        ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
+        Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(5));
     }
 }

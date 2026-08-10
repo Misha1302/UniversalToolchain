@@ -1,7 +1,6 @@
 namespace ArithmeticModule.Visitors;
 
 [AutoRegisterService]
-[ArithmeticModeCompatibility(ArithmeticMode.Universal)]
 public class UnaryMinusAstVisitor : IAstVisitor
 {
     private static readonly ExtensibleEnum<AstNodeTag> _unaryMinusNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("UnaryMinus");

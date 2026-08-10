@@ -11,18 +11,17 @@ For module authoring guidance, read [Writing Modules](/write-modules/). This pag
 
 ## Alias source
 
-Module aliases are declared through `DialectModuleAliasAttribute`.
+Module ids/aliases are declared by the owning typed language package/catalog. The implementation carries only its explicit verification identity.
 
 The attribute accepts one or more aliases:
 
 ```csharp
-[DialectModuleAlias("Arithmetic")]
 ```
 
 Most Wist frontend modules also expose themselves through:
 
 ```csharp
-[DialectRuntimeExport("FrontendModule", "...")]
+[DialectComponentContract("FrontendModule", "...")]
 ```
 
 Runtime export metadata is what lets dialect/runtime composition select concrete runtime components.
@@ -66,7 +65,7 @@ These should be used only when the dialect actually needs the corresponding surf
 
 ## Optimizer aliases
 
-Optimizers are separate from frontend modules and use `DialectOptimizerAliasAttribute`.
+Optimizers are separate typed contributions. Their ids/ordering/dependencies are owned by the language package descriptor and `LanguageCompiler`.
 
 Examples visible in current code include:
 

@@ -55,6 +55,10 @@ def normalized_expression(value: str) -> str:
     return re.sub(r"\s+", "", value).lower()
 
 
+def normalized_project_path(value: str) -> str:
+    return value.replace("\\", "/").lower()
+
+
 def named_targets(root: ET.Element) -> dict[str, ET.Element]:
     return {
         element.attrib.get("Name", ""): element
@@ -129,19 +133,14 @@ def require_language_pack_provider_contract(root: Path) -> None:
     emitter_root = parse_project(emitter)
     wist_root = parse_project(wist)
 
-    expected_paths = {
-        "FeatureManifestEmitterProjectPath": (
-            "$(MSBuildThisFileDirectory)..\\UniversalToolchain.FeatureManifestEmitter\\"
-            "UniversalToolchain.FeatureManifestEmitter.csproj"
-        ),
-        "WistProjectPath": (
-            "$(MSBuildThisFileDirectory)..\\UniversalToolchain.Wist\\"
-            "UniversalToolchain.Wist.csproj"
-        ),
-    }
-    for property_name, expected in expected_paths.items():
-        if child_text(language_pack_root, property_name) != expected:
-            raise BuildTopologyError(f"language pack has an unexpected {property_name}")
+    expected_emitter = (
+        "$(MSBuildThisFileDirectory)..\\UniversalToolchain.FeatureManifestEmitter\\"
+        "UniversalToolchain.FeatureManifestEmitter.csproj"
+    )
+    if child_text(language_pack_root, "FeatureManifestEmitterProjectPath") != expected_emitter:
+        raise BuildTopologyError("language pack has an unexpected FeatureManifestEmitterProjectPath")
+    if child_text(language_pack_root, "WistProjectPath") is not None:
+        raise BuildTopologyError("language pack must not declare legacy WistProjectPath")
 
     prohibited_top_level_guesses = {
         "FeatureManifestEmitterTargetFramework",
@@ -150,6 +149,7 @@ def require_language_pack_provider_contract(root: Path) -> None:
         "FeatureManifestEmitterConfiguredOutputDll",
         "FeatureManifestEmitterTargetDirDll",
         "WistRuntimeOutputDirectory",
+        "WistProjectPath",
     }
     present_guesses = sorted(top_level_property_names(language_pack_root) & prohibited_top_level_guesses)
     if present_guesses:
@@ -175,11 +175,34 @@ def require_language_pack_provider_contract(root: Path) -> None:
        emitter_reference.attrib.get("Private", "").lower() != "false":
         raise BuildTopologyError("emitter ProjectReference must be build-only and not Copy Local")
 
-    wist_references = [
-        element for element in references if element.attrib.get("Include") == "$(WistProjectPath)"
+    legacy_wist_references = [
+        element
+        for element in references
+        if normalized_project_path(element.attrib.get("Include", "")).endswith(
+            "/universaltoolchain.wist/universaltoolchain.wist.csproj"
+        ) or element.attrib.get("Include") == "$(WistProjectPath)"
     ]
-    if len(wist_references) != 1:
-        raise BuildTopologyError("language pack must declare exactly one canonical Wist ProjectReference")
+    if legacy_wist_references:
+        raise BuildTopologyError(
+            "language pack must not reference the UniversalToolchain.Wist facade; dependency direction is Wist -> LanguagePack"
+        )
+
+    wist_references = [
+        element
+        for element in wist_root.iter()
+        if local_name(element.tag) == "ProjectReference"
+    ]
+    language_pack_references = [
+        element
+        for element in wist_references
+        if normalized_project_path(element.attrib.get("Include", "")).endswith(
+            "/universaltoolchain.wist.languagepack/universaltoolchain.wist.languagepack.csproj"
+        )
+    ]
+    if len(language_pack_references) != 1:
+        raise BuildTopologyError(
+            "UniversalToolchain.Wist facade must declare exactly one LanguagePack ProjectReference"
+        )
 
     require_provider_target(
         emitter_root,
@@ -187,25 +210,18 @@ def require_language_pack_provider_contract(root: Path) -> None:
         expected_return="$(TargetPath)",
         description="feature manifest emitter",
     )
-    require_provider_target(
-        wist_root,
-        target_name="GetBuiltWistOutputDirectory",
-        expected_return="$(TargetDir)",
-        description="Wist runtime",
-    )
 
     targets = named_targets(language_pack_root)
     resolver = targets.get("ResolveLanguagePackBuildProviders")
     if resolver is None:
         raise BuildTopologyError("language pack lacks ResolveLanguagePackBuildProviders")
-    required_before_targets = {
-        "EmitToolchainFeatureManifest",
-        "ExposeWistRuntimeClosureToProjectReferences",
-        "CollectWistRuntimeManifests",
+    actual_before_targets = {
+        target for target in resolver.attrib.get("BeforeTargets", "").split(";") if target
     }
-    actual_before_targets = set(resolver.attrib.get("BeforeTargets", "").split(";"))
-    if not required_before_targets.issubset(actual_before_targets):
-        raise BuildTopologyError("language pack provider resolution is missing required BeforeTargets")
+    if actual_before_targets != {"EmitToolchainFeatureManifest"}:
+        raise BuildTopologyError(
+            "language pack provider resolution must run only before EmitToolchainFeatureManifest"
+        )
     if "ResolveProjectReferences" in actual_before_targets:
         raise BuildTopologyError("language pack provider resolution must not race ResolveProjectReferences")
     after_targets = set(resolver.attrib.get("AfterTargets", "").split(";"))
@@ -216,33 +232,21 @@ def require_language_pack_provider_contract(root: Path) -> None:
         raise BuildTopologyError("language pack provider resolution must be disabled only for DesignTimeBuild=true")
 
     msbuild_tasks = direct_children(resolver, "MSBuild")
-    if len(msbuild_tasks) != 2:
-        raise BuildTopologyError("language pack provider resolver must contain exactly two direct MSBuild tasks")
-    tasks_by_project = {task.attrib.get("Projects", ""): task for task in msbuild_tasks}
-    expected_tasks = {
-        "$(FeatureManifestEmitterProjectPath)": (
-            "GetBuiltFeatureManifestEmitterTargetPath",
-            "_FeatureManifestEmitterTargetPath",
-        ),
-        "$(WistProjectPath)": (
-            "GetBuiltWistOutputDirectory",
-            "_WistOutputDirectory",
-        ),
-    }
-    if set(tasks_by_project) != set(expected_tasks):
+    if len(msbuild_tasks) != 1:
+        raise BuildTopologyError("language pack provider resolver must contain exactly one direct MSBuild task")
+    task = msbuild_tasks[0]
+    if task.attrib.get("Projects") != "$(FeatureManifestEmitterProjectPath)":
         raise BuildTopologyError("language pack provider resolver invokes an unexpected project set")
-    for project, (target_name, output_item) in expected_tasks.items():
-        task = tasks_by_project[project]
-        if task.attrib.get("Targets") != target_name:
-            raise BuildTopologyError(f"provider resolver for {project} invokes the wrong target")
-        if normalized_expression(task.attrib.get("Properties", "")) != "buildprojectreferences=true":
-            raise BuildTopologyError(
-                f"provider resolver for {project} must force only BuildProjectReferences=true"
-            )
-        outputs = direct_children(task, "Output")
-        if len(outputs) != 1 or outputs[0].attrib.get("TaskParameter") != "TargetOutputs" or \
-           outputs[0].attrib.get("ItemName") != output_item:
-            raise BuildTopologyError(f"provider resolver for {project} must capture TargetOutputs")
+    if task.attrib.get("Targets") != "GetBuiltFeatureManifestEmitterTargetPath":
+        raise BuildTopologyError("provider resolver for emitter invokes the wrong target")
+    if normalized_expression(task.attrib.get("Properties", "")) != "buildprojectreferences=true":
+        raise BuildTopologyError(
+            "provider resolver for emitter must force only BuildProjectReferences=true"
+        )
+    outputs = direct_children(task, "Output")
+    if len(outputs) != 1 or outputs[0].attrib.get("TaskParameter") != "TargetOutputs" or \
+       outputs[0].attrib.get("ItemName") != "_FeatureManifestEmitterTargetPath":
+        raise BuildTopologyError("provider resolver for emitter must capture TargetOutputs")
 
     resolved_values = {
         local_name(element.tag): (element.text or "").strip()
@@ -251,25 +255,21 @@ def require_language_pack_provider_contract(root: Path) -> None:
     }
     if resolved_values.get("FeatureManifestEmitterResolvedDll") != "@(_FeatureManifestEmitterTargetPath)":
         raise BuildTopologyError("emitter executable path must derive from captured TargetOutputs")
-    if resolved_values.get("WistRuntimeOutputDirectory") != "@(_WistOutputDirectory)":
-        raise BuildTopologyError("Wist runtime directory must derive from captured TargetOutputs")
+    if "WistRuntimeOutputDirectory" in resolved_values:
+        raise BuildTopologyError("language pack provider resolver must not resolve legacy Wist runtime output")
 
     expected_error_conditions = {
         normalized_expression(
             "'$(FeatureManifestEmitterResolvedDll)' == '' or "
             "!Exists('$(FeatureManifestEmitterResolvedDll)')"
-        ),
-        normalized_expression(
-            "'$(WistRuntimeOutputDirectory)' == '' or "
-            "!Exists('$(WistRuntimeOutputDirectory)')"
-        ),
+        )
     }
     actual_error_conditions = {
         normalized_expression(error.attrib.get("Condition", ""))
         for error in direct_children(resolver, "Error")
     }
     if actual_error_conditions != expected_error_conditions:
-        raise BuildTopologyError("provider resolver must fail on empty or absent returned paths")
+        raise BuildTopologyError("provider resolver must fail on empty or absent returned emitter path")
 
     emit_target = targets.get("EmitToolchainFeatureManifest")
     if emit_target is None:
@@ -278,44 +278,26 @@ def require_language_pack_provider_contract(root: Path) -> None:
     if len(execs) != 1 or "$(FeatureManifestEmitterResolvedDll)" not in execs[0].attrib.get("Command", ""):
         raise BuildTopologyError("feature manifest emission must execute the provider-returned TargetPath")
 
-    expose_target = targets.get("ExposeWistRuntimeClosureToProjectReferences")
-    if expose_target is None:
-        raise BuildTopologyError("language pack lacks ExposeWistRuntimeClosureToProjectReferences")
-    runtime_files = [
-        element
-        for element in expose_target.iter()
-        if local_name(element.tag) == "WistRuntimeFileForCopy"
-    ]
-    expected_closure = (
-        "$(WistRuntimeOutputDirectory)*.dll;"
-        "$(WistRuntimeOutputDirectory)*.dialect.runtime.json"
-    )
-    if len(runtime_files) != 1 or runtime_files[0].attrib.get("Include") != expected_closure:
-        raise BuildTopologyError("runtime closure must come from the provider-returned Wist output directory")
-    assign_tasks = direct_children(expose_target, "AssignTargetPath")
-    if len(assign_tasks) != 1 or assign_tasks[0].attrib.get("Files") != "@(WistRuntimeFileForCopy)" or \
-       assign_tasks[0].attrib.get("RootFolder") != "$(WistRuntimeOutputDirectory)":
-        raise BuildTopologyError("runtime closure must preserve file-relative target paths")
-    assigned_outputs = direct_children(assign_tasks[0], "Output")
-    if len(assigned_outputs) != 1 or assigned_outputs[0].attrib.get("TaskParameter") != "AssignedFiles" or \
-       assigned_outputs[0].attrib.get("ItemName") != "ContentWithTargetPath":
-        raise BuildTopologyError("runtime closure must publish AssignTargetPath outputs")
-
-    collect_target = targets.get("CollectWistRuntimeManifests")
-    if collect_target is None:
-        raise BuildTopologyError("language pack lacks CollectWistRuntimeManifests")
-    manifest_items = [
-        element
-        for element in collect_target.iter()
-        if local_name(element.tag) == "WistRuntimeManifest"
-    ]
-    if len(manifest_items) != 1 or manifest_items[0].attrib.get("Include") != \
-       "$(WistRuntimeOutputDirectory)*.dialect.runtime.json":
-        raise BuildTopologyError("runtime manifests must come from the provider-returned Wist output directory")
+    for legacy_target in (
+        "ExposeWistRuntimeClosureToProjectReferences",
+        "CollectWistRuntimeManifests",
+    ):
+        if legacy_target in targets:
+            raise BuildTopologyError(
+                f"language pack must not retain legacy runtime-closure target '{legacy_target}'"
+            )
 
     raw_language_pack = language_pack.read_text(encoding="utf-8-sig")
-    if "UniversalToolchain.Wist\\$(OutputPath)" in raw_language_pack:
-        raise BuildTopologyError("language pack still concatenates the Wist project path with $(OutputPath)")
+    for forbidden in (
+        "WistProjectPath",
+        "WistRuntimeOutputDirectory",
+        "ExposeWistRuntimeClosureToProjectReferences",
+        "CollectWistRuntimeManifests",
+    ):
+        if forbidden in raw_language_pack:
+            raise BuildTopologyError(
+                f"language pack still contains legacy facade/runtime-closure token '{forbidden}'"
+            )
 
 
 def uncommented_text(path: Path) -> str:
@@ -351,6 +333,16 @@ def require_canonical_gate_order(root: Path) -> None:
         r"^\s*python3\s+Tools/test-build-topology-runtime\.py\b",
         "build.sh runtime topology invocation",
     )
+    bash_retired = require_one(
+        bash,
+        r"^\s*python3\s+Tools/check-retired-surface\.py\b",
+        "build.sh retired surface checker invocation",
+    )
+    bash_retired_mutants = require_one(
+        bash,
+        r"^\s*python3\s+Tools/test-retired-surface-mutants\.py\b",
+        "build.sh retired surface mutant invocation",
+    )
     bash_restore = bash.index('"$dotnet_command" restore')
     bash_build = bash.index('"$dotnet_command" build "$solution"')
     bash_tests = bash.index("python3 Tools/run-test-contract.py")
@@ -375,6 +367,16 @@ def require_canonical_gate_order(root: Path) -> None:
         r'Invoke-CheckedNative\s+"python"\s+@\(\s*"Tools/test-build-topology-runtime\.py"',
         "build.ps1 runtime topology invocation",
     )
+    ps_retired = require_one(
+        powershell,
+        r'Invoke-CheckedNative\s+"python"\s+@\("Tools/check-retired-surface\.py"',
+        "build.ps1 retired surface checker invocation",
+    )
+    ps_retired_mutants = require_one(
+        powershell,
+        r'Invoke-CheckedNative\s+"python"\s+@\("Tools/test-retired-surface-mutants\.py"',
+        "build.ps1 retired surface mutant invocation",
+    )
     ps_restore = powershell.index("Invoke-CheckedNative $dotnet (New-RestoreArguments $solution)")
     ps_build = powershell.index('"build", $solution')
     ps_tests = powershell.index('"Tools/run-test-contract.py"')
@@ -385,6 +387,18 @@ def require_canonical_gate_order(root: Path) -> None:
 
     bash_pack = bash.index('if [[ "$skip_pack" == false ]]')
     ps_pack = powershell.index("if (-not $SkipPack)")
+    for description, position in (
+        ("build.sh retired surface checker", bash_retired),
+        ("build.sh retired surface mutants", bash_retired_mutants),
+    ):
+        if not bash_tests < position < bash_pack:
+            raise BuildTopologyError(f"{description} must run after the test contract and before packaging")
+    for description, position in (
+        ("build.ps1 retired surface checker", ps_retired),
+        ("build.ps1 retired surface mutants", ps_retired_mutants),
+    ):
+        if not ps_tests < position < ps_pack:
+            raise BuildTopologyError(f"{description} must run after the test contract and before packaging")
     release_invocations = (
         (
             "build.sh package metadata checker",
@@ -430,6 +444,54 @@ def require_windows_powershell_gate(root: Path) -> None:
     require_one(text, pattern, "Windows canonical PowerShell CI job")
 
 
+def require_wist_engine_exact_runtime_binding(root: Path) -> None:
+    engine = root / "UniversalToolchain" / "UniversalToolchain.Wist" / "WistEngine.cs"
+    if not engine.is_file():
+        raise BuildTopologyError(f"WistEngine source does not exist: {engine}")
+    text = engine.read_text(encoding="utf-8-sig")
+    forbidden = [
+        token
+        for token in ("LanguageRuntimeProviderRegistry", "WistLanguageRuntimeProvider")
+        if token in text
+    ]
+    if forbidden:
+        raise BuildTopologyError(
+            "WistEngine must not reintroduce provider-registry/manual runtime binding: "
+            + ", ".join(forbidden)
+        )
+    required = (
+        "new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package))",
+        "new ILanguageRouteComponentSource[] { package }",
+    )
+    missing = [marker for marker in required if marker not in text]
+    if missing:
+        raise BuildTopologyError(
+            "WistEngine must materialize the compiled LanguagePlan through the exact planned package component source; missing: "
+            + ", ".join(missing)
+        )
+
+
+def require_benchmark_smoke_trigger_scope(root: Path) -> None:
+    workflow = root / ".github" / "workflows" / "benchmark-smoke.yml"
+    if not workflow.is_file():
+        raise BuildTopologyError(f"Benchmark Smoke workflow does not exist: {workflow}")
+    text = workflow.read_text(encoding="utf-8-sig")
+    required_paths = (
+        "UniversalToolchain/UniversalToolchain.Runtime/**/*.cs",
+        "UniversalToolchain/UniversalToolchain.Runtime/**/*.csproj",
+        "UniversalToolchain/UniversalToolchain.FeatureSdk/**/*.cs",
+        "UniversalToolchain/UniversalToolchain.FeatureSdk/**/*.csproj",
+        "UniversalToolchain/UniversalToolchain.Language.Abstractions/**/*.cs",
+        "UniversalToolchain/UniversalToolchain.Language.Abstractions/**/*.csproj",
+    )
+    missing = [path for path in required_paths if f'      - "{path}"' not in text]
+    if missing:
+        raise BuildTopologyError(
+            "Benchmark Smoke must trigger for every generic runtime/planning-input owner path; missing: "
+            + ", ".join(missing)
+        )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Validate IDE-safe project references and canonical build topology gates."
@@ -443,6 +505,8 @@ def main() -> int:
         require_language_pack_provider_contract(root)
         require_canonical_gate_order(root)
         require_windows_powershell_gate(root)
+        require_wist_engine_exact_runtime_binding(root)
+        require_benchmark_smoke_trigger_scope(root)
     except (BuildTopologyError, OSError, ValueError) as exc:
         print(f"BUILD_TOPOLOGY=FAIL: {exc}", file=sys.stderr)
         return 1

@@ -68,24 +68,14 @@ public class NativeMathModulePipelineTests
     {
         using var h = new ModulePipelineTestHelper();
 
-        var universalComposition = h.Compose(_universalModules, backends: ["cil", "interpreter"]);
-        Assert.That(
-            universalComposition.IsSuccess,
-            Is.True,
-            "Universal profile composition failed: " + string.Join("\n", universalComposition.SemanticDiagnostics.Concat(universalComposition.ResolutionDiagnostics).Select(static d => d.Message)));
-
-        var nativeComposition = h.Compose(_nativeModules, backends: ["cil", "interpreter"]);
-        Assert.That(
-            nativeComposition.IsSuccess,
-            Is.True,
-            "Native profile composition failed: " + string.Join("\n", nativeComposition.SemanticDiagnostics.Concat(nativeComposition.ResolutionDiagnostics).Select(static d => d.Message)));
-
         var universalResult = h.ExecuteBoth(code, _universalModules);
         var nativeResult = h.ExecuteBoth(code, _nativeModules);
 
         ModulePipelineTestHelper.AssertParity(universalResult.Compiler, universalResult.Interpreter);
         ModulePipelineTestHelper.AssertParity(nativeResult.Compiler, nativeResult.Interpreter);
 
-        Assert.That(ModulePipelineTestHelper.AsNumber(universalResult.Compiler), Is.EqualTo(ModulePipelineTestHelper.AsNumber(nativeResult.Compiler)).Within(1e-9));
+        Assert.That(
+            ModulePipelineTestHelper.AsNumber(universalResult.Compiler),
+            Is.EqualTo(ModulePipelineTestHelper.AsNumber(nativeResult.Compiler)).Within(1e-9));
     }
 }

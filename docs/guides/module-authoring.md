@@ -31,7 +31,7 @@ attributes
 -> InitParser
 -> InitAstTranslator
 -> tests
--> runtime manifest/export metadata
+-> explicit component contract + typed package registration
 ```
 
 Use this as the default feature recipe unless the feature is intentionally not a frontend feature.

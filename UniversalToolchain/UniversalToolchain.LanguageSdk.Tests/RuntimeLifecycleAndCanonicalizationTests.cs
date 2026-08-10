@@ -421,7 +421,7 @@ public sealed class RuntimeLifecycleAndCanonicalizationTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(LanguageLockFile.SchemaVersion, Is.EqualTo(5));
+            Assert.That(LanguageLockFile.SchemaVersion, Is.EqualTo(6));
             Assert.That(pretty, Does.Not.Contain("\r"));
             Assert.That(pretty, Does.EndWith("\n"));
             Assert.That(canonical, Does.Not.Contain((byte)'\r').And.Not.Contain((byte)'\n'));

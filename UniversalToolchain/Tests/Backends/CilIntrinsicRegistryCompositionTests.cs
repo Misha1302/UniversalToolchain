@@ -1,6 +1,10 @@
+using BasicCore.Builtins;
+using BasicCore.Capabilities;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
-using UniversalToolchain.Dialects.Integration;
-using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.FeatureSdk;
+using UniversalToolchain.Language.Abstractions;
+using UniversalToolchain.LanguageSdk;
+using UniversalToolchain.Wist.LanguagePack;
 
 namespace Tests.Backends;
 
@@ -29,16 +33,23 @@ public sealed class CilIntrinsicRegistryCompositionTests
     }
 
     [Test]
-    public void WistCilBackendRegistrar_ShouldExposeRegistryIntrinsicSurface()
+    public void CanonicalWistCilRoute_UsesCompilerIntrinsicCapabilitySurface()
     {
-        var services = new ServiceCollection();
-        services.AddWistCilBackend();
-
-        using var provider = services.BuildServiceProvider();
-
+        var package = new WistLanguageFeaturePackage();
+        var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package))
+            .Compile(WistLanguageDefinitions.Create(WistLanguageDefinitions.FullDefaultNativeId))
+            .GetRequiredPlan();
+        var compiler = new AbstractMethodsCompilerImpl();
         var registry = new CilIntrinsicRegistry();
-        var registrar = provider.GetServices<IDialectBackendRuntimeRegistrar>().Single();
+        var capabilities = WistIntrinsicPlanPolicy.Create(plan, new BackendId("cil")).ApplyTo(
+            new OptimizerIntrinsicCapabilityContext(
+                new CompilerIntrinsicCapabilitySetFactory().Create(compiler)));
 
-        Assert.That(registrar.SupportedIntrinsics, Is.EqualTo(registry.SupportedIntrinsics));
+        Assert.Multiple(() =>
+        {
+            Assert.That(compiler.SupportedIntrinsics, Is.EqualTo(registry.SupportedIntrinsics));
+            Assert.That(registry.SupportedIntrinsics, Does.Contain("add_f64"));
+            Assert.That(capabilities.Supports(BuiltinIntrinsicSymbols.Arithmetic.Add, typeof(double)), Is.True);
+        });
     }
 }

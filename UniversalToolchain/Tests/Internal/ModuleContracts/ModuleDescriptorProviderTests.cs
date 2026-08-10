@@ -133,7 +133,7 @@ public sealed class ModuleDescriptorProviderTests
         var exception = Assert.Throws<InvalidOperationException>(() =>
             provider.Build([new UndeclaredFrontendModule()], []));
 
-        Assert.That(exception!.Message, Does.Contain("must declare DialectRuntimeExportAttribute"));
+        Assert.That(exception!.Message, Does.Contain("must declare DialectComponentContractAttribute"));
     }
 
     private sealed class UndeclaredFrontendModule : IFrontendCoreModule;

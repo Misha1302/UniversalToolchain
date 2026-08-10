@@ -1,37 +1,40 @@
 # Current Canonical Runtime Pipeline
 
-This document describes the currently supported runtime composition flow in this repository.
+This document describes the currently supported Wist runtime composition flow in this repository.
 It is intentionally limited to behavior that exists today.
 
 ## Canonical pipeline
 
-1. **Dialect DSL compilation** — compile `.wistdialect` text or file into a dialect model.
-2. **Build-plan projection** — convert the dialect model into `DialectBuildPlan`.
-3. **Manifest-backed runtime selection** — resolve a deterministic `SelectedRuntimePlan` from runtime manifests.
-4. **Wist execution configuration** — map the selected runtime plan to `ToolchainRuntimeConfiguration`.
-5. **Host creation with selected activation only** — create `WistDialectExecutionHost` from that configuration and activate only selected runtime components/backends; backend registrars are resolved from selected backend manifest entries.
-6. **Execution** — run source text through the created host in the selected mode.
+1. **Dialect DSL compilation** — `DialectDslCompiler` parses `.wistdialect` text into a typed dialect slice.
+2. **Language-definition translation** — `WistFacadeLanguageDefinitionFactory` translates requested module aliases, backend choice, security/intrinsic policy, ordering constraints and exclusions into `LanguageDefinition`.
+3. **Canonical planning** — `LanguageCompiler` is the only owner that closes feature dependencies, resolves contribution/capability providers, applies exclusions and order constraints, selects the runtime provider, and builds backend artifact routes.
+4. **Immutable plan** — the result is one `LanguagePlan` containing the exact resolved features, contributions, provider identity and backend routes.
+5. **Runtime materialization** — `LanguageRuntime` binds only the exact runtime graph selected by that plan to exact package/component sources. Materialization does not make new semantic selection decisions.
+6. **Execution or build** — source follows the planned route `Source -> Syntax/AST -> Bytecode -> AIR -> optimizers/optional SSA -> backend artifact -> execution`.
+
+For the public Wist facade, `WistEngine.Create` performs steps 1–5 once and keeps the resulting `LanguagePlan` and `LanguageRuntime` for subsequent `Evaluate`, `Validate` and `Compile` calls.
 
 ## Canonical runtime constraints
 
-- Runtime selection is completed before host creation.
-- Host creation depends on the selected runtime surface, not on full-catalog eager discovery.
-- Reflection-based resolution remains part of runtime infrastructure, but in the canonical path it is targeted exact activation of selected types, not broad eager assembly/type discovery.
-- Known backends exposed for execution are derived from selected backend entries in the runtime plan.
+- There is no second Wist build-plan or selected-runtime-plan owner after `LanguageCompiler`.
+- Feature dependency closure belongs to `LanguageCompiler`; a dialect may request a high-level feature without manually repeating all of its required features.
+- `exclude` directives become `LanguageDefinition.ExcludedContributions`. If dependency closure requires an excluded contribution, planning fails closed instead of silently reactivating it.
+- Runtime component sources are provenance-checked against the exact package instances and manifests captured by `LanguagePlan`.
+- Runtime materialization requires sources only for components that are actually part of the executable runtime graph; unrelated tooling-only planned contributions do not become runtime dependencies.
+- Backend availability and route order come from `LanguagePlan`, not from service-registration or reflection enumeration order.
+- Restricted host interop is enforced by the typed runtime policy and explicit allowed-assembly boundary.
 
 ## Ownership boundary
 
-- `UniversalToolchain.Dialects.Integration` owns **generic runtime infrastructure** bootstrap:
-  - file-system runtime catalog registrations,
-  - reflection-based runtime resolution registrations,
-  - selected-runtime activation classification and backend runtime configuration projection,
-  - intrinsic semantic bootstrap contracts and two-phase validation helpers.
-- `UniversalToolchain.Dialects.Wist` owns **Wist-specific orchestration**:
-  - Wist workflow composition,
-  - Wist execution configuration building,
-  - Wist host/provider creation.
+- `UniversalToolchain.Language.Abstractions` owns typed language, feature, contribution, backend and artifact contracts.
+- `UniversalToolchain.FeatureSdk` owns package descriptors and exact package registration identity.
+- `UniversalToolchain.LanguageSdk` owns deterministic planning and `LanguagePlan` construction.
+- `UniversalToolchain.Runtime` owns exact plan verification, runtime materialization, lifecycle and route execution.
+- `UniversalToolchain.Wist.LanguagePack` translates Wist configuration into generic language contracts and supplies Wist implementations for already-planned contributions.
+- `UniversalToolchain.Wist` is the public facade over the canonical plan/runtime path.
 
-`AddWistDialectServices()` remains the canonical convenience method for Wist and composes Wist core services with the
-generic Integration runtime infrastructure blocks. Canonical shipped paths do not require explicit backend registrar
-imports; compatibility helpers may still register backend registrars for older/manual wiring, but manifest-selected exact
-activation is the default runtime path.
+S13 removes the former `UniversalToolchain.Dialects.Integration` runtime/profile host and `UniversalToolchain.Dialects.Wist` compatibility project entirely. S14 retires runtime-manifest emission, packaging and activation as runtime architecture. Surviving `.toolchain.feature.json` feature metadata is tooling/package metadata only; it is not an activation or composition authority.
+
+## What is intentionally retired
+
+The final architecture does not use `DialectBuildPlan`, `SelectedRuntimePlan`, `SelectedRuntimePlanResolver`, `ToolchainCompositionWorkflow`, `WistDialectExecutionWorkflow`, `WistDialectExecutionHost` or `WistDialectPlanFactory` as production owners. Permanent architecture tests reject reintroduction of these retired paths/symbols.

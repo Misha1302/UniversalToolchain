@@ -3,7 +3,6 @@ using System.Collections.Frozen;
 namespace NativeMathModule;
 
 [AutoRegisterService]
-[ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class NativeArithmeticAstVisitor : IAstVisitor
 {
     private static readonly FrozenDictionary<string, string> _opToMethodName = new Dictionary<string, string>

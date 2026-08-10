@@ -17,24 +17,26 @@
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageTags>dotnet;csharp;rule-engine;expression-engine;embedded-dsl;business-rules;formula;compiler;interpreter;cil;runtime;language-tooling;ssa;wist</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageReleaseNotes>Deterministic shared-contract boundary alpha: replaces process-history-dependent default-context sharing with an explicit immutable host registry, full assembly identity matching, strict SHA-256 validation, collectible implementation isolation, fresh-process preload invariance tests, and package metadata consistency gates. This release intentionally does not provide binary compatibility with pre-hardening 1.0.0.0 runtime assemblies.</PackageReleaseNotes>
+        <PackageReleaseNotes>Canonical LanguagePlan/LanguageRuntime facade migration candidate. This release intentionally does not provide binary compatibility with pre-hardening 1.0.0.0 runtime assemblies.</PackageReleaseNotes>
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <DebugType>portable</DebugType>
-        <!-- NU5131 normally expects a matching ref assembly for every lib assembly. This
-             package intentionally exposes only the facade in ref/ while keeping the
-             implementation closure runtime-only in lib/. The package-surface checker
-             verifies that boundary explicitly. -->
         <NoWarn>$(NoWarn);NU5131</NoWarn>
-        <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeProjectReferenceAssembliesInPackage</TargetsForTfmSpecificBuildOutput>
-        <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeFacadeReferenceAssemblyInPackage;IncludeRuntimeManifestsInPackage</TargetsForTfmSpecificContentInPackage>
+        <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeCanonicalWistRuntimeClosureInPackage</TargetsForTfmSpecificBuildOutput>
+        <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeFacadeReferenceAssemblyInPackage;IncludeFeatureMetadataInPackage</TargetsForTfmSpecificContentInPackage>
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\UniversalToolchain.Wist.LanguagePack\UniversalToolchain.Wist.LanguagePack.csproj" PrivateAssets="all" />
+        <ProjectReference Include="..\UniversalToolchain.Runtime\UniversalToolchain.Runtime.csproj" PrivateAssets="all" />
+        <ProjectReference Include="..\UniversalToolchain.LanguageSdk\UniversalToolchain.LanguageSdk.csproj" PrivateAssets="all" />
+        <ProjectReference Include="..\UniversalToolchain.Language.Abstractions\UniversalToolchain.Language.Abstractions.csproj" PrivateAssets="all" />
+        <ProjectReference Include="..\UniversalToolchain.FeatureSdk\UniversalToolchain.FeatureSdk.csproj" PrivateAssets="all" />
+        <ProjectReference Include="..\UniversalToolchain.Ssa.Optimization\UniversalToolchain.Ssa.Optimization.csproj" PrivateAssets="all" />
         <ProjectReference Include="..\BasicCilCompiler\BasicCilCompiler.csproj" PrivateAssets="all"/>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\CommonExceptions\CommonExceptions.csproj" PrivateAssets="all"/>
         <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" PrivateAssets="all"/>
         <ProjectReference Include="..\UniversalToolchain.ModuleContracts\UniversalToolchain.ModuleContracts.csproj" PrivateAssets="all"/>
     </ItemGroup>
 
@@ -58,14 +60,30 @@
         </Content>
     </ItemGroup>
 
-    <Target Name="IncludeProjectReferenceAssembliesInPackage" DependsOnTargets="ResolveReferences">
+    <Target Name="IncludeCanonicalWistRuntimeClosureInPackage" DependsOnTargets="Build;ResolveReferences">
+        <MSBuild Projects="..\UniversalToolchain.Wist.LanguagePack\UniversalToolchain.Wist.LanguagePack.csproj"
+                 Targets="GetWistLanguagePackRuntimeClosure"
+                 Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework);BuildProjectReferences=true"
+                 BuildInParallel="false">
+            <Output TaskParameter="TargetOutputs" ItemName="_WistLanguagePackRuntimeClosure" />
+        </MSBuild>
         <ItemGroup>
-            <!-- Runtime implementation closure. The facade reference assembly under ref/
-                 is the only compile-time contract selected by NuGet. -->
-            <BuildOutputInPackage
-                Include="@(ReferenceCopyLocalPaths)"
-                Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference' and '%(ReferenceCopyLocalPaths.Extension)' == '.dll'" />
+            <_CanonicalWistRuntimeDependencyClosure Include="@(_WistLanguagePackRuntimeClosure)" />
+            <BuildOutputInPackage Include="@(_CanonicalWistRuntimeDependencyClosure)" />
         </ItemGroup>
+    </Target>
+
+    <Target Name="MaterializeCanonicalWistRuntimeClosure"
+            DependsOnTargets="Build;IncludeCanonicalWistRuntimeClosureInPackage">
+        <Error Condition="'$(CanonicalWistRuntimeReferenceDirectory)' == ''"
+               Text="CanonicalWistRuntimeReferenceDirectory must be provided when materializing the Wist runtime closure." />
+        <MakeDir Directories="$(CanonicalWistRuntimeReferenceDirectory)" />
+        <ItemGroup>
+            <_CanonicalWistRuntimeMaterializedClosure Include="$(TargetPath);@(_CanonicalWistRuntimeDependencyClosure)" />
+        </ItemGroup>
+        <Copy SourceFiles="@(_CanonicalWistRuntimeMaterializedClosure)"
+              DestinationFolder="$(CanonicalWistRuntimeReferenceDirectory)"
+              SkipUnchangedFiles="false" />
     </Target>
 
     <Target Name="IncludeFacadeReferenceAssemblyInPackage" DependsOnTargets="Build">
@@ -82,9 +100,9 @@
         </ItemGroup>
     </Target>
 
-    <Target Name="IncludeRuntimeManifestsInPackage">
+    <Target Name="IncludeFeatureMetadataInPackage">
         <ItemGroup>
-            <TfmSpecificPackageFile Include="$(TargetDir)*.dialect.runtime.json">
+            <TfmSpecificPackageFile Include="$(TargetDir)*.toolchain.feature.json">
                 <PackagePath>contentFiles/any/$(TargetFramework)</PackagePath>
                 <BuildAction>Content</BuildAction>
                 <PackageCopyToOutput>true</PackageCopyToOutput>
@@ -92,9 +110,5 @@
             </TfmSpecificPackageFile>
         </ItemGroup>
     </Target>
-
-    <Target Name="GetBuiltWistOutputDirectory"
-            DependsOnTargets="Build"
-            Returns="$(TargetDir)" />
 
 </Project>

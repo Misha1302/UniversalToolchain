@@ -1,181 +1,176 @@
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using UniversalToolchain.Dialects.Wist.Presets;
-using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
 using UniversalToolchain.Wist.LanguagePack;
 
 namespace Tests.Architecture;
 
 [TestFixture]
-public sealed partial class WistMigrationGateTests
+public sealed class WistMigrationGateTests
 {
     [Test]
-    public void ParityMatrix_MapsTypedFeaturesAndInfrastructureOwners()
+    public void DialectDslFrontend_CannotReintroduceLegacyPlanning()
     {
         var root = FindRepositoryRoot();
-        using var document = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "WIST_PARITY_MATRIX.json")));
+        var matrixPath = Path.Combine(root, "WIST_PARITY_MATRIX.json");
+        var matrixText = File.ReadAllText(matrixPath);
+        using var document = JsonDocument.Parse(matrixText);
         var matrix = document.RootElement;
-        var descriptor = new WistLanguageFeaturePackage().Descriptor;
-        var violations = new List<string>();
+        var contracts = matrix.GetProperty("artifactContracts");
+
+        var matrixBackends = matrix.GetProperty("backends")
+            .EnumerateArray()
+            .Select(static entry => entry.GetString())
+            .Where(static value => !string.IsNullOrWhiteSpace(value))
+            .Select(static value => value!)
+            .ToHashSet(StringComparer.Ordinal);
+        var packageBackends = new WistLanguageFeaturePackage().Descriptor.Contributions
+            .Where(static contribution => contribution.Slot == LanguageSlots.Backends)
+            .SelectMany(static contribution => contribution.SupportedBackends)
+            .Select(static backend => backend.Value)
+            .ToHashSet(StringComparer.Ordinal);
+        var matrixPresets = matrix.GetProperty("presets")
+            .EnumerateArray()
+            .Select(static entry => entry.GetString())
+            .Where(static value => !string.IsNullOrWhiteSpace(value))
+            .Select(static value => value!)
+            .ToHashSet(StringComparer.Ordinal);
+        var typedPresets = WistLanguageDefinitions.PresetIds.ToHashSet(StringComparer.Ordinal);
 
         Assert.Multiple(() =>
         {
+            Assert.That(matrix.GetProperty("schemaVersion").GetInt32(), Is.EqualTo(3));
             Assert.That(
-                matrix.GetProperty("genericPackPositioning").GetString(),
-                Is.EqualTo("Canonical typed Wist authoring package over the canonical Wist dialect runtime"));
-            Assert.That(matrix.GetProperty("replacementClaimAllowed").GetBoolean(), Is.True);
-            Assert.That(
-                matrix.GetProperty("replacementGate").GetProperty("scope").GetString(),
-                Is.EqualTo("shipped presets and typed runtime selection"));
+                matrix.GetProperty("positioning").GetString(),
+                Is.EqualTo("LanguageDefinition -> LanguageCompiler -> LanguagePlan -> LanguageRuntime"));
+            Assert.That(matrix.GetProperty("parityBasis").GetString(), Is.EqualTo("typed-semantic-projection"));
+            Assert.That(matrixBackends, Is.EquivalentTo(packageBackends));
+            Assert.That(matrixPresets, Is.EquivalentTo(typedPresets));
+            Assert.That(contracts.GetProperty("syntax").GetString(), Is.EqualTo(WistArtifactKinds.SyntaxTreeContract.ValueTypeIdentity));
+            Assert.That(contracts.GetProperty("bytecode").GetString(), Is.EqualTo(WistArtifactKinds.BytecodeContract.ValueTypeIdentity));
+            Assert.That(contracts.GetProperty("air").GetString(), Is.EqualTo(WistArtifactKinds.AirContract.ValueTypeIdentity));
+            Assert.That(contracts.GetProperty("cil").GetString(), Is.EqualTo(WistArtifactKinds.CilArtifactContract.ValueTypeIdentity));
+            Assert.That(contracts.GetProperty("interpreter").GetString(), Is.EqualTo(WistArtifactKinds.InterpreterArtifactContract.ValueTypeIdentity));
+            Assert.That(matrixText, Does.Not.Contain("runtimeAlias"));
+            Assert.That(matrixText, Does.Not.Contain("canonical Wist dialect runtime"));
+            Assert.That(matrixText, Does.Not.Contain("SelectedRuntimePlan"));
+            Assert.That(matrixText, Does.Not.Contain("DialectBuildPlan"));
         });
 
-        var featureById = descriptor.Features.ToDictionary(static feature => feature.Id);
-        var contributionById = descriptor.Contributions.ToDictionary(static contribution => contribution.Id);
-        var typedModuleAliases = descriptor.Contributions
-            .Where(static contribution => contribution.Slot == LanguageSlots.FrontendSyntax)
-            .Select(static contribution => contribution.Metadata.GetValueOrDefault("wist.moduleAlias"))
-            .Where(static alias => !string.IsNullOrWhiteSpace(alias))
-            .Select(static alias => alias!)
-            .ToHashSet(StringComparer.Ordinal);
-        var typedOptimizerAliases = descriptor.Contributions
-            .Where(static contribution => contribution.Slot == LanguageSlots.Optimizers)
-            .Select(static contribution => contribution.Metadata.GetValueOrDefault("wist.optimizerAlias"))
-            .Where(static alias => !string.IsNullOrWhiteSpace(alias))
-            .Select(static alias => alias!)
-            .ToHashSet(StringComparer.Ordinal);
-
-        var matrixModuleAliases = ReadStringSet(matrix.GetProperty("modules"), "runtimeAlias");
-        var matrixInfrastructureAliases = ReadStringSet(matrix.GetProperty("infrastructureModules"), "runtimeAlias");
-        var matrixOptimizerAliases = ReadStringSet(matrix.GetProperty("optimizers"), "runtimeAlias");
-        var matrixBackendIds = ReadStringSet(matrix.GetProperty("backends"), "typedBackendId");
-
-        if (!matrixModuleAliases.SetEquals(typedModuleAliases))
-            violations.Add("Parity matrix module aliases differ from typed Wist module contributions.");
-        if (!matrixOptimizerAliases.SetEquals(typedOptimizerAliases))
-            violations.Add("Parity matrix optimizer aliases differ from typed Wist optimizer contributions.");
-        if (!matrixBackendIds.SetEquals(new WistLanguageRuntimeProvider().SupportedBackends.Select(static backend => backend.Value)))
-            violations.Add("Parity matrix backend IDs differ from the Wist runtime provider.");
-
-        ValidateFeatureMappings(
-            matrix.GetProperty("modules"),
-            "wist.moduleAlias",
-            featureById,
-            contributionById,
-            violations);
-        ValidateFeatureMappings(
-            matrix.GetProperty("optimizers"),
-            "wist.optimizerAlias",
-            featureById,
-            contributionById,
-            violations);
-
-        var exports = ScanProductionRuntimeExports(root);
-        var expectedInfrastructureAliases = exports
-            .Where(static export => export.Kind == "FrontendModule")
-            .Select(static export => export.Alias)
-            .Where(alias => !typedModuleAliases.Contains(alias))
-            .ToHashSet(StringComparer.Ordinal);
-        if (!matrixInfrastructureAliases.SetEquals(expectedInfrastructureAliases))
-            violations.Add("Parity matrix infrastructure modules differ from non-selectable production runtime exports.");
-
-        foreach (var entry in matrix.GetProperty("infrastructureModules").EnumerateArray())
+        var compilerSource = File.ReadAllText(Path.Combine(
+            root,
+            "UniversalToolchain",
+            "UniversalToolchain.Dialects.Frontend",
+            "DialectDslCompiler.cs"));
+        var translatorSource = File.ReadAllText(Path.Combine(
+            root,
+            "UniversalToolchain",
+            "UniversalToolchain.Wist.LanguagePack",
+            "WistFacadeLanguageDefinitionFactory.cs"));
+        var forbidden = new[]
         {
-            if (string.IsNullOrWhiteSpace(entry.GetProperty("typedOwner").GetString()))
-                violations.Add($"Infrastructure module '{entry.GetProperty("runtimeAlias").GetString()}' has no typed owner.");
-        }
-
-        foreach (var export in exports)
-        {
-            var covered = export.Kind switch
-            {
-                "FrontendModule" => matrixModuleAliases.Contains(export.Alias) || matrixInfrastructureAliases.Contains(export.Alias),
-                "Optimizer" => matrixOptimizerAliases.Contains(export.Alias),
-                "Backend" => matrixBackendIds.Contains(export.Alias),
-                _ => true
-            };
-            if (!covered)
-                violations.Add($"{export.Kind} '{export.Alias}' from {export.RelativePath} is missing from WIST_PARITY_MATRIX.json");
-        }
-
-        var matrixPresetIds = ReadStringSet(matrix.GetProperty("presets"), "id");
-        var shippedPresetIds = WistShippedDialectPresets.All.Select(static x => x.Id).ToHashSet(StringComparer.Ordinal);
-        var typedPresetIds = WistLanguageDefinitions.PresetIds.ToHashSet(StringComparer.Ordinal);
-        if (!matrixPresetIds.SetEquals(shippedPresetIds))
-            violations.Add("Parity matrix preset IDs differ from shipped dialect presets.");
-        if (!matrixPresetIds.SetEquals(typedPresetIds))
-            violations.Add("Parity matrix preset IDs differ from typed Wist definitions.");
-
-        var availableEvidenceTests = ScanNUnitTestNames(root);
-        var allowedStatuses = ReadStringSet(matrix.GetProperty("statusVocabulary"));
-        var expectedStatuses = new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            ["modules"] = "SelectionEquivalent",
-            ["infrastructureModules"] = "InfrastructureEquivalent",
-            ["optimizers"] = "SelectionEquivalent",
-            ["backends"] = "ExecutableEquivalent",
-            ["presets"] = "ExecutableEquivalent"
+            "BasicCoreImpl",
+            "DialectBuildPlan",
+            "SelectedRuntimePlan",
+            "SelectedRuntimePlanResolver",
+            "ToolchainCompositionWorkflow",
+            "WistDialectExecutionWorkflow",
+            "WistLanguageRuntimeProvider"
         };
-        foreach (var (sectionName, expectedStatus) in expectedStatuses)
+        foreach (var symbol in forbidden)
         {
-            foreach (var entry in matrix.GetProperty(sectionName).EnumerateArray())
+            Assert.Multiple(() =>
             {
-                var status = entry.GetProperty("status").GetString();
-                if (status == null || !allowedStatuses.Contains(status))
-                    violations.Add($"{sectionName} contains an unknown status '{status}'.");
-                if (status != expectedStatus)
-                    violations.Add($"{sectionName} must use status '{expectedStatus}', not '{status}'.");
-                var evidenceTests = entry.GetProperty("tests")
-                    .EnumerateArray()
-                    .Select(static test => test.GetString())
-                    .Where(static test => !string.IsNullOrWhiteSpace(test))
-                    .Select(static test => test!)
-                    .ToArray();
-                if (evidenceTests.Length == 0)
-                {
-                    violations.Add($"{sectionName} contains an entry without evidence references.");
-                }
-                foreach (var evidenceTest in evidenceTests)
-                {
-                    if (!availableEvidenceTests.Contains(evidenceTest))
-                        violations.Add($"{sectionName} references missing NUnit evidence test '{evidenceTest}'.");
-                }
-            }
+                Assert.That(compilerSource, Does.Not.Contain(symbol), $"DialectDslCompiler must not reference {symbol}.");
+                Assert.That(translatorSource, Does.Not.Contain(symbol), $"Wist dialect translator must not reference {symbol}.");
+            });
         }
-
-        Assert.That(violations, Is.Empty);
     }
 
-    private static void ValidateFeatureMappings(
-        JsonElement entries,
-        string aliasMetadataKey,
-        IReadOnlyDictionary<LanguageFeatureId, LanguageFeatureDescriptor> featureById,
-        IReadOnlyDictionary<LanguageContributionId, LanguageContributionDescriptor> contributionById,
-        ICollection<string> violations)
+    [Test]
+    public void CanonicalProjects_DoNotDependOnLegacyWistRuntimeProject()
     {
-        foreach (var entry in entries.EnumerateArray())
-        {
-            var runtimeAlias = entry.GetProperty("runtimeAlias").GetString()!;
-            var featureId = new LanguageFeatureId(entry.GetProperty("typedFeatureId").GetString()!);
-            if (!featureById.TryGetValue(featureId, out var feature))
-            {
-                violations.Add($"Runtime alias '{runtimeAlias}' references missing typed feature '{featureId.Value}'.");
-                continue;
-            }
+        var root = FindRepositoryRoot();
+        string[] canonicalProjects =
+        [
+            "UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj",
+            "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/UniversalToolchain.Wist.LanguagePack.csproj",
+            "UniversalToolchain/Wistc/Wistc.csproj",
+            "UniversalToolchain/Example/Example.csproj"
+        ];
 
-            var mappedAliases = feature.Contributions
-                .Where(contributionById.ContainsKey)
-                .Select(contributionId => contributionById[contributionId].Metadata.GetValueOrDefault(aliasMetadataKey))
-                .Where(static alias => !string.IsNullOrWhiteSpace(alias))
-                .ToHashSet(StringComparer.Ordinal);
-            if (!mappedAliases.Contains(runtimeAlias))
+        var violations = canonicalProjects
+            .Where(project => File.ReadAllText(Path.Combine(root, project.Replace('/', Path.DirectorySeparatorChar)))
+                .Contains("UniversalToolchain.Dialects.Wist", StringComparison.Ordinal))
+            .Select(static project => $"Canonical project still depends on legacy Wist runtime project: {project}")
+            .ToArray();
+
+        Assert.That(violations, Is.Empty, string.Join(Environment.NewLine, violations));
+    }
+
+    [Test]
+    public void BasicCore_CannotRecreateEndToEndOrchestrationOwner()
+    {
+        var root = FindRepositoryRoot();
+        var basicCore = Path.Combine(root, "UniversalToolchain", "BasicCore");
+        string[] orchestrationMarkers =
+        [
+            "ILexer",
+            "IParser",
+            "IAstToBytecodeTranslator",
+            "IAbstractMethodsTranslator",
+            "IAbstractIrCompiler",
+            "IExecutor"
+        ];
+
+        var violations = Directory.EnumerateFiles(basicCore, "*.cs", SearchOption.AllDirectories)
+            .Where(path => !NormalizePath(path).Contains("/bin/", StringComparison.Ordinal)
+                           && !NormalizePath(path).Contains("/obj/", StringComparison.Ordinal))
+            .Select(path => (Path: path, Source: File.ReadAllText(path)))
+            .Select(item => (item.Path, Count: orchestrationMarkers.Count(marker => item.Source.Contains(marker, StringComparison.Ordinal))))
+            .Where(static item => item.Count >= 5)
+            .Select(item => $"BasicCore file owns too many end-to-end pipeline roles ({item.Count}/6): {NormalizePath(Path.GetRelativePath(root, item.Path))}")
+            .ToArray();
+
+        Assert.That(violations, Is.Empty,
+            "BasicCore may provide reusable stage contracts/helpers, but no renamed coordinator may re-own frontend, lowering, backend compilation and execution together.");
+    }
+
+    [Test]
+    public void LegacyRuntimeTopologyProjects_ArePhysicallyRetiredAndUnreferenced()
+    {
+        var root = FindRepositoryRoot();
+        string[] retiredProjects =
+        [
+            "UniversalToolchain/UniversalToolchain.Dialects.Integration",
+            "UniversalToolchain/UniversalToolchain.Dialects.Wist"
+        ];
+
+        var violations = new List<string>();
+        foreach (var relative in retiredProjects)
+        {
+            var absolute = Path.Combine(root, relative.Replace('/', Path.DirectorySeparatorChar));
+            if (Directory.Exists(absolute) || File.Exists(absolute + ".csproj"))
+                violations.Add($"Retired topology owner returned: {relative}");
+        }
+
+        string[] retiredReferenceFragments =
+        [
+            "UniversalToolchain.Dialects.Integration",
+            "UniversalToolchain.Dialects.Wist"
+        ];
+        foreach (var project in Directory.EnumerateFiles(Path.Combine(root, "UniversalToolchain"), "*.csproj", SearchOption.AllDirectories))
+        {
+            var text = File.ReadAllText(project);
+            foreach (var fragment in retiredReferenceFragments)
             {
-                violations.Add(
-                    $"Typed feature '{featureId.Value}' does not select runtime alias '{runtimeAlias}' through '{aliasMetadataKey}'.");
+                if (text.Contains(fragment, StringComparison.Ordinal))
+                    violations.Add($"ProjectReference/build edge still targets retired topology owner '{fragment}': {NormalizePath(Path.GetRelativePath(root, project))}");
             }
         }
+
+        Assert.That(violations, Is.Empty,
+            "S13 removes the reflection/runtime-profile compatibility topology instead of keeping it as a transitive dependency or build-order container.");
     }
 
     [Test]
@@ -213,63 +208,60 @@ public sealed partial class WistMigrationGateTests
             }
         }
 
-        Assert.That(violations, Is.Empty);
-    }
+        string[] canonicalDocs =
+        [
+            "docs/CURRENT_ARCHITECTURE_STATUS.md",
+            "docs/current-canonical-runtime-pipeline.md",
+            "docs/build-dsls/dialect-files.md",
+            "docs/reference/dialect-reference.md",
+            "docs/dialect-groups.md",
+            "docs/start/what-is-wist.md",
+            "docs/internals/dependency-injection.md",
+            "docs/CONTRIBUTING.md",
+            "docs/write-modules/create-your-first-module.md",
+            "UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-grouped/README.md",
+            "internal-docs/policies-and-reports/public-claim-ledger.md",
+            "internal-docs/policies-and-reports/technical-debt.md"
+        ];
+        string[] staleCurrentClaims =
+        [
+            "Runtime manifests are how dialect composition discovers selectable runtime components",
+            "The source of truth should be the module/export attributes plus generated manifest output",
+            "is the main orchestration object for dialect execution",
+            "source of truth for public Wist dialect execution is the manifest-backed runtime workflow",
+            "Keep the canonical dialect path deterministic: dialect compilation, build-plan construction, manifest-backed runtime",
+            "selected dialect is compiled into a build plan, resolved against runtime manifests",
+            "Wist runtime selection goes through dialect build plans, manifests and capabilities",
+            "runtime-manifest emitter/serializer infrastructure",
+            "generated manifests for normal module authoring",
+            "runtime manifest deployed next to the backend assembly"
+        ];
 
-    private static HashSet<string> ReadStringSet(JsonElement array, string property) =>
-        array.EnumerateArray()
-            .Select(entry => entry.GetProperty(property).GetString())
-            .Where(static value => !string.IsNullOrWhiteSpace(value))
-            .Select(static value => value!)
-            .ToHashSet(StringComparer.Ordinal);
-
-    private static HashSet<string> ReadStringSet(JsonElement array) =>
-        array.EnumerateArray()
-            .Select(static entry => entry.GetString())
-            .Where(static value => !string.IsNullOrWhiteSpace(value))
-            .Select(static value => value!)
-            .ToHashSet(StringComparer.Ordinal);
-
-    private static HashSet<string> ScanNUnitTestNames(string root)
-    {
-        var names = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var path in Directory.EnumerateFiles(Path.Combine(root, "UniversalToolchain"), "*.cs", SearchOption.AllDirectories))
+        foreach (var relativePath in canonicalDocs)
         {
-            var normalized = NormalizePath(path);
-            if (normalized.Contains("/bin/", StringComparison.Ordinal)
-                || normalized.Contains("/obj/", StringComparison.Ordinal)
-                || !IsTestSourcePath(normalized))
+            var text = File.ReadAllText(Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar)));
+            if (!text.Contains("LanguageCompiler", StringComparison.Ordinal))
+                violations.Add($"Canonical documentation does not name LanguageCompiler: {relativePath}");
+            if (!text.Contains("LanguagePlan", StringComparison.Ordinal))
+                violations.Add($"Canonical documentation does not name LanguagePlan: {relativePath}");
+            foreach (var staleClaim in staleCurrentClaims)
             {
-                continue;
-            }
-
-            var rootNode = CSharpSyntaxTree.ParseText(File.ReadAllText(path)).GetRoot();
-            foreach (var method in rootNode.DescendantNodes().OfType<MethodDeclarationSyntax>())
-            {
-                var isNUnitTest = method.AttributeLists
-                    .SelectMany(static list => list.Attributes)
-                    .Select(static attribute => attribute.Name.ToString())
-                    .Any(static name => name is "Test" or "TestCase" or "TestCaseSource"
-                                         || name.EndsWith(".Test", StringComparison.Ordinal)
-                                         || name.EndsWith(".TestCase", StringComparison.Ordinal)
-                                         || name.EndsWith(".TestCaseSource", StringComparison.Ordinal));
-                if (isNUnitTest)
-                    names.Add(method.Identifier.ValueText);
+                if (text.Contains(staleClaim, StringComparison.OrdinalIgnoreCase))
+                    violations.Add($"Retired Wist runtime claim remains current in {relativePath}: {staleClaim}");
             }
         }
-        return names;
-    }
 
-    private static IReadOnlyList<RuntimeExport> ScanProductionRuntimeExports(string root)
-    {
-        var exports = new List<RuntimeExport>();
-        foreach (var path in EnumerateProductionSources(root))
-        {
-            var relativePath = NormalizePath(Path.GetRelativePath(root, path));
-            foreach (Match match in RuntimeExportRegex().Matches(File.ReadAllText(path)))
-                exports.Add(new RuntimeExport(match.Groups["kind"].Value, match.Groups["alias"].Value, relativePath));
-        }
-        return exports;
+        var claimLedger = File.ReadAllText(Path.Combine(
+            root,
+            "internal-docs",
+            "policies-and-reports",
+            "public-claim-ledger.md"));
+        if (!claimLedger.Contains("| Wist runtime selection is `LanguagePlan`-backed |", StringComparison.Ordinal))
+            violations.Add("Public claim ledger no longer pins Wist runtime selection to LanguagePlan.");
+        if (claimLedger.Contains("| Runtime selection is manifest-backed |", StringComparison.Ordinal))
+            violations.Add("Public claim ledger restored manifest-backed Wist runtime selection as an active claim.");
+
+        Assert.That(violations, Is.Empty, string.Join(Environment.NewLine, violations));
     }
 
     private static IEnumerable<string> EnumerateProductionSources(string root) =>
@@ -304,9 +296,4 @@ public sealed partial class WistMigrationGateTests
         normalizedPath.Split('/', StringSplitOptions.RemoveEmptyEntries)
             .Any(static segment => segment.Equals("Tests", StringComparison.Ordinal)
                                    || segment.EndsWith(".Tests", StringComparison.Ordinal));
-
-    [GeneratedRegex("DialectRuntimeExport\\(\\\"(?<kind>FrontendModule|Optimizer|Backend)\\\"\\s*,\\s*\\\"(?<alias>[^\\\"]+)\\\"", RegexOptions.CultureInvariant)]
-    private static partial Regex RuntimeExportRegex();
-
-    private sealed record RuntimeExport(string Kind, string Alias, string RelativePath);
 }

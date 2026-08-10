@@ -5,21 +5,29 @@ description: Document the runtime dialect file format and its role.
 
 # Dialect Files
 
-Dialect files describe which modules, optimizers, capabilities and backends are available for a Wist runtime composition.
+Dialect files are the Wist-facing configuration syntax for requesting language features, optimizers, policy and backends. They do not create a second runtime plan.
 
 ## Problem
 
-A reusable DSL framework needs a way to select language features without hardcoding them into one compiler. Dialect files are that selection layer. They let a DSL developer assemble a runtime surface from existing modules and make the selected surface explicit.
+A reusable language framework needs a way to request a language surface without hardcoding one fixed compiler configuration. Wist `.wistdialect` files provide that user-facing selection syntax, while the generic language stack remains the semantic authority.
 
-## Concept
+## Canonical flow
 
-A Wist dialect file uses the `.wistdialect` extension. It is compiled before program execution and becomes part of the runtime selection path:
+A Wist dialect file uses the `.wistdialect` extension. The current public path is:
 
 ```text
-dialect source → dialect compilation → build plan → manifest-backed runtime selection → host creation → execution
+dialect source
+  → DialectDslCompiler
+  → Wist LanguageDefinition translation
+  → LanguageCompiler
+  → LanguagePlan
+  → LanguageRuntime
+  → execution/build
 ```
 
-The public runtime dialect format used by shipped Wist profiles is intentionally compact. Selection directives accept comma-separated identifier lists:
+The Wist translation layer maps aliases and policy into typed generic contracts. `LanguageCompiler` alone closes feature dependencies, resolves contributions/providers, applies exclusions and ordering constraints, and creates backend artifact routes. `LanguageRuntime` materializes the exact graph from that plan.
+
+The compact source format used by shipped Wist profiles looks like:
 
 ```text
 dialect FullDefault
@@ -31,11 +39,9 @@ security trusted
 capability unsafe-interop
 ```
 
-This is the format used by the executable examples under `UniversalToolchain/Dialects/examples/wist`.
+Executable examples live under `UniversalToolchain/Dialects/examples/wist`.
 
 ## Minimal example
-
-A minimal arithmetic dialect looks like this:
 
 ```text
 dialect MinimalArithmetic
@@ -43,13 +49,13 @@ use Arithmetic,Numbers,Scopes,Whitespaces
 backend interpreter
 ```
 
-This dialect can run a program such as:
+It can run:
 
 ```wist
 2 + 3 * 4
 ```
 
-Expected result:
+with expected result:
 
 ```text
 14
@@ -65,31 +71,33 @@ Declares the dialect name:
 dialect MinimalArithmetic
 ```
 
-The name is used in diagnostics and composition output.
+The name is retained in language metadata for diagnostics and provenance.
 
 ### `use`
 
-Selects one or more module aliases:
+Requests one or more canonical Wist module aliases:
 
 ```text
 use Arithmetic,Numbers,Scopes,Whitespaces
 ```
 
-A module must be selected for its syntax and runtime behavior to exist. For example, arithmetic syntax needs arithmetic and number support; variable syntax usually needs variables and identifier support.
+The textual list is not the final dependency graph. Features declare typed dependencies, and `LanguageCompiler` closes them deterministically. A caller therefore does not need to duplicate every transitive requirement merely to keep the runtime valid.
 
 ### `exclude`
 
-Removes one or more modules from a composition:
+Marks one or more module contributions as unavailable:
 
 ```text
 exclude CSharpInterop
 ```
 
-Use this when deriving a narrower profile from a broader one.
+The translator maps these aliases to `LanguageDefinition.ExcludedContributions`. If dependency closure requires an excluded contribution, planning fails with a canonical planning diagnostic instead of silently reactivating it.
+
+The current public Wist facade does not implement base-dialect inheritance, so `exclude` is a fail-closed constraint on the current definition rather than a hidden profile-inheritance mechanism.
 
 ### `backend`
 
-Selects one or more execution backend ids:
+Declares one or more backend ids:
 
 ```text
 backend interpreter
@@ -98,10 +106,10 @@ backend cil,interpreter
 
 Currently documented user-facing modes are:
 
-- `cil`, which maps to the CIL backend when the dialect exposes `cil`;
-- `interpreter`, which runs through the interpreter backend when exposed.
+- `cil`, which maps to the CIL backend;
+- `interpreter`, which maps to the interpreter backend.
 
-Some dialects expose both `cil` and `interpreter`. Others expose only one backend.
+A declared backend becomes executable only if canonical planning resolves its backend contribution and artifact route.
 
 ### `enable` / `disable`
 
@@ -112,18 +120,18 @@ enable ArithmeticOptimization
 disable EGraphOptimization
 ```
 
-Optimizer directives apply to the current runtime dialect frontend policy. Enable optimizers after base semantics are already correct.
+Enabled optimizer aliases become typed selected features. Ordering and placement belong to `LanguageCompiler` and the planned route.
 
 ### `allow` / `forbid`
 
-Allows or forbids an intrinsic name:
+Allows or forbids one intrinsic name:
 
 ```text
 allow add_i32
 forbid reflect-call
 ```
 
-This is a dialect-level intrinsic policy directive. It should match backend capability expectations.
+These are translated to typed intrinsic policy directives before planning.
 
 ### `security`
 
@@ -139,18 +147,18 @@ or:
 security trusted
 ```
 
-A restricted dialect is a composition constraint, not a process isolation guarantee.
+The profile is translated to typed runtime policy/features. A restricted dialect is a composition/host-interop constraint, not a process-isolation guarantee.
 
 ### `capability`
 
-Declares one or more enabled capability markers:
+Declares a supported Wist configuration capability:
 
 ```text
-capability interop-enabled
-capability pricing-formula,user-authored
+capability unsafe-interop
+capability composition-restricted
 ```
 
-Capabilities explain selected composition. They must not be treated as hidden runtime activation mechanisms.
+Supported capability names map to typed policy/features. Unknown names fail rather than becoming hidden activation switches. `unsafe-interop` requires `security trusted`.
 
 ## Shipped dialect examples
 
@@ -161,23 +169,24 @@ Examples are located under `UniversalToolchain/Dialects/examples/wist`:
 | `full-default` | Standard Wist profile over `cil` and `interpreter`. |
 | `full-default-native` | Native arithmetic/type profile over `cil` and `interpreter`. |
 | `function-calls-safe-math` | Function calls plus SafeMath profile without rule declarations. |
-| `minimal-arithmetic` | Smallest interpreter arithmetic profile. |
-| `minimal-arithmetic-native` | Smallest native arithmetic profile over `cil`. |
-| `pricing-restricted` | Composition-constrained pricing profile with a restricted runtime surface. |
+| `minimal-arithmetic` | Small interpreter arithmetic profile. |
+| `minimal-arithmetic-native` | Small native arithmetic profile over `cil`. |
+| `pricing-restricted` | Restricted pricing profile. |
 | `composition-restricted` | Composition-constrained profile; not an isolation guarantee. |
 
-## How it fits into the pipeline
+## How it fits into the runtime
 
-`ComposeText` and `ComposeFile` compile a dialect definition, build a deterministic plan and resolve selected modules, optimizers and backends from runtime manifests. `CreateHost` then builds the runtime provider for that selected composition.
+For public execution, `WistEngine.Create` resolves the dialect source to one `LanguageDefinition`, compiles it once to one `LanguagePlan`, and creates one `LanguageRuntime` from exact component sources. `Evaluate`, `Validate` and `Compile` reuse that canonical plan/runtime instead of invoking another composition workflow.
+
+Runtime materialization may instantiate only the components selected by the plan. It does not select extra features, reorder contributions or infer a second backend plan.
 
 ## Rules and constraints
 
-- Do not document rules as an available public runtime feature. `rule-schema`, `rule-run`, raw-source RuleSet MVP parsing and `RuleDeclarationsModule` are temporarily removed.
-- Keep dialect files explicit. A future reader should be able to see which syntax and backend paths are available.
-- Do not treat `composition-restricted` as a process isolation guarantee.
+- `LanguageCompiler` is the only semantic planner.
+- Do not document `DialectBuildPlan`, `SelectedRuntimePlan`, manifest-backed Wist runtime selection or `WistDialectExecutionWorkflow` as current production architecture; those owners are retired in S11.
+- Keep aliases stable and map them to typed feature/contribution IDs.
+- Treat `exclude` as a canonical planning constraint, not as text-only documentation.
+- Do not treat `composition-restricted` as a process-isolation guarantee.
 - Do not add raw-source parsing workarounds for missing language features. Syntax must be owned by lexer/parser/AST/module code.
-- Keep public dialect examples aligned with the shipped runtime dialect frontend, not with secondary parser experiments.
-
-## Next
-
-Continue with [Minimal DSL](/build-dsls/minimal-dsl).
+- Do not document removed rule-schema/rule-run surfaces as public runtime features.
+- Keep shipped examples, CLI behavior and this documentation aligned with the same Wist configuration frontend and generic planning/runtime contracts.

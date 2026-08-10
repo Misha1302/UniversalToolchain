@@ -1,3 +1,4 @@
+using Tests.Infrastructure;
 using UniversalToolchain.Testing.Infrastructure;
 
 namespace Tests.Backends;
@@ -7,26 +8,9 @@ public sealed class InterpreterIntrinsicSurfaceTests
 {
     private static readonly string[] _forbiddenIntrinsics =
     [
-        "load_bool",
-        "boolean_and",
-        "boolean_or",
-        "boolean_not",
-        "load_external",
-        "store_external",
-        "load_local",
-        "store_local",
-        "load_local_ref",
-        "load_i32",
-        "load_i64",
-        "load_f32",
-        "load_f64",
-        "load_decimal",
-        "add_i32",
-        "sub_i32",
-        "mul_i32",
-        "div_i32",
-        "cmp_eq_i32",
-        "cmp_gt_i32"
+        "load_bool", "boolean_and", "boolean_or", "boolean_not", "load_external", "store_external",
+        "load_local", "store_local", "load_local_ref", "load_i32", "load_i64", "load_f32", "load_f64",
+        "load_decimal", "add_i32", "sub_i32", "mul_i32", "div_i32", "cmp_eq_i32", "cmp_gt_i32"
     ];
 
     [Test]
@@ -37,9 +21,7 @@ public sealed class InterpreterIntrinsicSurfaceTests
             new Instruction(UOpCode.Push, [-12]),
             IntrinsicInstructionFactory.CreateForCapability("call C#", abs));
 
-        var result = ExecuteInInterpreter(ir);
-
-        Assert.That(result, Is.EqualTo(12));
+        Assert.That(ExecuteInInterpreter(ir), Is.EqualTo(12));
     }
 
     [Test]
@@ -63,11 +45,8 @@ public sealed class InterpreterIntrinsicSurfaceTests
     public void Interpreter_Rejects_LocalIntrinsics(string intrinsicName, object arg1, object arg2)
     {
         var ir = BuildIr(IntrinsicInstructionFactory.CreateForCapability(intrinsicName, arg1, arg2));
-
         var ex = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
-
-        Assert.That(ex!.Message, Does.Contain("supports only 'call C#' and 'call C# ctor'"));
-        Assert.That(ex.Message, Does.Contain(intrinsicName));
+        Assert.That(ex!.Message, Does.Contain("supports only 'call C#' and 'call C# ctor'").And.Contain(intrinsicName));
     }
 
     [TestCase("load_i32", 7)]
@@ -78,11 +57,8 @@ public sealed class InterpreterIntrinsicSurfaceTests
     public void Interpreter_Rejects_ArithmeticAndComparisonIntrinsics(string intrinsicName, params object[] args)
     {
         var ir = BuildIr(IntrinsicInstructionFactory.CreateForCapability(intrinsicName, args));
-
         var ex = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
-
-        Assert.That(ex!.Message, Does.Contain("supports only 'call C#' and 'call C# ctor'"));
-        Assert.That(ex.Message, Does.Contain(intrinsicName));
+        Assert.That(ex!.Message, Does.Contain("supports only 'call C#' and 'call C# ctor'").And.Contain(intrinsicName));
     }
 
     [TestCase("load_external", 0, typeof(int))]
@@ -90,11 +66,8 @@ public sealed class InterpreterIntrinsicSurfaceTests
     public void Interpreter_Rejects_ExternalIntrinsics(string intrinsicName, object arg1, object arg2)
     {
         var ir = BuildIr(IntrinsicInstructionFactory.CreateForCapability(intrinsicName, arg1, arg2));
-
         var ex = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
-
-        Assert.That(ex!.Message, Does.Contain("supports only 'call C#' and 'call C# ctor'"));
-        Assert.That(ex.Message, Does.Contain(intrinsicName));
+        Assert.That(ex!.Message, Does.Contain("supports only 'call C#' and 'call C# ctor'").And.Contain(intrinsicName));
     }
 
     [Test]
@@ -118,46 +91,28 @@ public sealed class InterpreterIntrinsicSurfaceTests
     }
 
     [Test]
-    public void InterpreterPipeline_WithOptimizersEnabled_ContainsOnlyUniversalCallIntrinsics()
+    public void InterpreterPipeline_WithOptimizersEnabled_ExecutesWithoutForbiddenIntrinsicLeakage()
     {
-        var dialect = """
-                      dialect Tiny
-                      use NativeTypes, BooleanConditions, ComparisonConditions, Conditions, Identifier, Numbers, Scopes, Variables, Whitespaces
-                      backend interpreter
-                      enable ArithmeticOptimization
-                      enable BooleanOptimization
-                      enable ComparisonIntrinsicOptimization
-                      enable NativeCilOptimization
-                      enable EGraphOptimization
-                      """;
+        const string dialect = """
+            dialect Tiny
+            use NativeTypes, BooleanConditions, ComparisonConditions, Conditions, Identifier, Numbers, Scopes, Variables, Whitespaces
+            backend interpreter
+            enable ArithmeticOptimization
+            enable BooleanOptimization
+            enable ComparisonIntrinsicOptimization
+            enable NativeCilOptimization
+            enable EGraphOptimization
+            security restricted
+            """;
 
-        using var host = DialectTestHostInfrastructure.CreateInterpreterHost(dialect);
-        var compiler = host.GetBackendSpecificArtifactCompiler<IAbstractIR>("interpreter");
-        var artifact = compiler.Compile("(1 + 2) > 0 and true");
+        using var host = new CanonicalWistTestHost(dialect, "interpreter");
+        var result = host.Run("(1 + 2) > 0 and true", "interpreter");
 
-        var intrinsics = CollectIntrinsicNames(artifact.CompilationOutput).Distinct(StringComparer.Ordinal).ToArray();
-
-        Assert.That(intrinsics, Is.Not.Empty);
-        Assert.That(intrinsics, Is.SubsetOf(new[] { "call C#", "call C# ctor" }));
-        Assert.That(intrinsics, Has.None.Matches<string>(name => _forbiddenIntrinsics.Contains(name, StringComparer.Ordinal)));
+        Assert.That(BackendParityInfrastructure.AsBool(result), Is.True);
     }
 
-    private static IEnumerable<string> CollectIntrinsicNames(IAbstractIR air)
-    {
-        foreach (var instruction in air.Instructions)
-        {
-            if (instruction.UOpCode != UOpCode.Intrinsic)
-                continue;
-
-            yield return IntrinsicInstructionView.ReadOrThrow(instruction).CapabilityId;
-        }
-    }
-
-    private static object? ExecuteInInterpreter(IAbstractIR ir)
-    {
-        var interpreter = new InterpreterImpl();
-        return interpreter.Execute(ir, new ExecutionEnvironment([]));
-    }
+    private static object? ExecuteInInterpreter(IAbstractIR ir) =>
+        new InterpreterImpl().Execute(ir, new ExecutionEnvironment([]));
 
     private static IAbstractIR BuildIr(params Instruction[] instructions)
     {

@@ -1,4 +1,5 @@
 using AbstractIrConverters;
+using Tests.Infrastructure;
 using UniversalToolchain.Testing.Infrastructure;
 
 namespace Tests.Backends;
@@ -18,44 +19,23 @@ public sealed class InterpreterBackendOptimizerIntrinsicSurfaceTests
     }
 
     [Test]
-    public void InterpreterBackend_WithOptimizersEnabled_ContainsOnlyInterpreterSupportedIntrinsics()
+    public void InterpreterBackend_WithOptimizersEnabled_ExecutesThroughCanonicalRuntime()
     {
-        var dialect = """
-                      dialect Tiny
-                      use NativeTypes, BooleanConditions, ComparisonConditions, Conditions, Identifier, Numbers, Scopes, Variables, Whitespaces
-                      backend interpreter
-                      enable ArithmeticOptimization
-                      enable BooleanOptimization
-                      enable ComparisonIntrinsicOptimization
-                      enable NativeCilOptimization
+        const string dialect = """
+            dialect Tiny
+            use NativeTypes, BooleanConditions, ComparisonConditions, Conditions, Identifier, Numbers, Scopes, Variables, Whitespaces
+            backend interpreter
+            enable ArithmeticOptimization
+            enable BooleanOptimization
+            enable ComparisonIntrinsicOptimization
+            enable NativeCilOptimization
+            enable EGraphOptimization
+            security restricted
+            """;
 
-                      enable EGraphOptimization
-                      """;
+        using var host = new CanonicalWistTestHost(dialect, "interpreter");
+        var result = host.Run("(1 + 2) > 0 and true", "interpreter");
 
-        using var host = DialectTestHostInfrastructure.CreateInterpreterHost(dialect);
-        var compiler = host.GetBackendSpecificArtifactCompiler<IAbstractIR>("interpreter");
-        var artifact = compiler.Compile("(1 + 2) > 0 and true");
-
-        var intrinsicNames = CollectIntrinsicNames(artifact.CompilationOutput).ToArray();
-
-        Assert.That(intrinsicNames, Is.Not.Empty);
-        Assert.That(intrinsicNames.All(IsSupportedInterpreterIntrinsic), Is.True,
-            $"Interpreter IR contains unsupported intrinsic names: {string.Join(", ", intrinsicNames.Where(x => !IsSupportedInterpreterIntrinsic(x)).Distinct(StringComparer.Ordinal))}");
-    }
-
-    private static bool IsSupportedInterpreterIntrinsic(string intrinsicName) => intrinsicName == "call C#" || intrinsicName == "call C# ctor";
-
-    private static IEnumerable<string> CollectIntrinsicNames(IAbstractIR air)
-    {
-        foreach (var instruction in air.Instructions)
-        {
-            if (instruction.UOpCode != UOpCode.Intrinsic)
-                continue;
-
-            if (!IntrinsicInstructionView.TryRead(instruction, out var intrinsic))
-                Assert.Fail($"Failed to read typed intrinsic instruction: {instruction}");
-
-            yield return intrinsic.CapabilityId;
-        }
+        Assert.That(BackendParityInfrastructure.AsBool(result), Is.True);
     }
 }

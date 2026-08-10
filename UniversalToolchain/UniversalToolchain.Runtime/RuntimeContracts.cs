@@ -40,12 +40,59 @@ public interface ILanguageRuntimePolicyValidator
 
 public sealed class LanguageRuntimeOptions
 {
+    private readonly List<ILanguageArtifactRouteObserver> _routeObservers = [];
+
     public LanguageRuntimeOptions(IEnumerable<Assembly>? allowedAssemblies = null)
     {
         AllowedAssemblies = new ReadOnlyCollection<Assembly>((allowedAssemblies ?? []).Distinct().ToList());
     }
 
     public IReadOnlyList<Assembly> AllowedAssemblies { get; }
+
+    internal IReadOnlyList<ILanguageArtifactRouteObserver> RouteObservers => _routeObservers;
+
+    internal LanguageRuntimeOptions AddRouteObserver(ILanguageArtifactRouteObserver observer)
+    {
+        _routeObservers.Add(observer ?? throw new ArgumentNullException(nameof(observer)));
+        return this;
+    }
+}
+
+internal sealed record LanguageArtifactRouteObservation(
+    LanguagePlan Plan,
+    LanguageExecutionRequest Request,
+    LanguageRuntimeOptions Options,
+    BackendId Backend,
+    IReadOnlyList<LanguageArtifactRouteStep> RouteSteps,
+    int StepIndex,
+    LanguageArtifactRouteStep Step,
+    LanguageArtifact Artifact);
+
+internal interface ILanguageArtifactRouteObserver
+{
+    void AfterTransformation(LanguageArtifactRouteObservation observation);
+}
+
+internal static class LanguageArtifactRouteObservationDispatcher
+{
+    public static void Notify(
+        LanguagePlan plan,
+        LanguageExecutionRequest request,
+        LanguageRuntimeOptions options,
+        BackendId backend,
+        IReadOnlyList<LanguageArtifactRouteStep> routeSteps,
+        int stepIndex,
+        LanguageArtifactRouteStep step,
+        LanguageArtifact artifact)
+    {
+        if (options.RouteObservers.Count == 0)
+            return;
+
+        var observation = new LanguageArtifactRouteObservation(
+            plan, request, options, backend, routeSteps, stepIndex, step, artifact);
+        foreach (var observer in options.RouteObservers)
+            observer.AfterTransformation(observation);
+    }
 }
 
 public sealed class LanguageExecutionRequest
@@ -770,8 +817,9 @@ public sealed class LanguageRouteRuntimeProvider : ILanguageRuntimeProvider, ILa
                 throw new InvalidOperationException(
                     $"Execution input '{current.Contract}' does not match route entry contract '{route.SourceContract}'.");
             }
-            foreach (var step in route.Steps)
+            for (var stepIndex = 0; stepIndex < route.Steps.Count; stepIndex++)
             {
+                var step = route.Steps[stepIndex];
                 if (!LanguageArtifactRoute.ContractsConnect(current.Contract, step.SourceContract))
                 {
                     throw new InvalidOperationException(
@@ -784,6 +832,8 @@ public sealed class LanguageRouteRuntimeProvider : ILanguageRuntimeProvider, ILa
                     throw new InvalidOperationException(
                         $"Transformer '{step.ContributionId.Value}' returned '{current.Contract}', but the route requires '{step.TargetContract}'.");
                 }
+                LanguageArtifactRouteObservationDispatcher.Notify(
+                    _plan, request, _options, request.Backend, route.Steps, stepIndex, step, current);
             }
             var value = _executors[request.Backend].Execute(current, context);
             return new LanguageExecutionResult(request.Backend, value);
