@@ -48,7 +48,7 @@ public sealed class MyBackendRuntimeRegistrar : IDialectBackendRuntimeRegistrar
 }
 ```
 
-For Wist-compatible backends that follow the standard `BasicCoreImpl<TCompilationOutput>` shape, prefer the public backend registrar base/helper provided by the Wist integration layer instead of copying the built-in CIL or interpreter wiring.
+Do not build a backend by recreating an end-to-end BasicCore pipeline. Backends should implement the backend-specific runtime/route contract and be selected through the language plan; shared frontend/lowering mechanics remain separate stage services.
 
 ## Manifest emission
 

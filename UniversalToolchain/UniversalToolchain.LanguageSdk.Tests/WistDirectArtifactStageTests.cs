@@ -2,11 +2,10 @@ using System.Collections.Concurrent;
 using AbstractIrConverters;
 using ArithmeticModule.Module;
 using BasicCodeTranslator;
+using BasicCore.Binding;
 using BasicCore.Compilation;
 using BasicCore.Contracts;
 using BasicCore.Core;
-using BasicCore.Execution;
-using BasicCore.ExecutorWrapper;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.Registration;
@@ -33,42 +32,42 @@ public sealed class WistDirectArtifactStageTests
     private static readonly BackendId Interpreter = new("interpreter");
 
     [Test]
-    public void DirectStages_MatchLegacyBytecodeAndAir_ForRepresentativeArithmetic()
+    public void DirectStages_MatchCanonicalCoreBytecodeAndAir_ForRepresentativeArithmetic()
     {
         const string source = "2 + 3 * 4";
-        var legacy = RunLegacy(source, CreateCanonicalModules());
+        var canonical = RunCanonicalCoreStages(source, CreateCanonicalModules());
         var direct = RunDirect(source, CreateCanonicalModuleFactories());
 
         Assert.Multiple(() =>
         {
-            Assert.That(direct.Bytecode.Bytecode.ToString(), Is.EqualTo(legacy.Bytecode!.ToString()));
-            Assert.That(AirSignature(direct.Air.Air), Is.EqualTo(AirSignature(legacy.Air!)));
+            Assert.That(direct.Bytecode.Bytecode.ToString(), Is.EqualTo(canonical.Bytecode.ToString()));
+            Assert.That(AirSignature(direct.Air.Air), Is.EqualTo(AirSignature(canonical.Air)));
             Assert.That(direct.Air.Air.Instructions, Is.Not.Empty);
         });
     }
 
     [Test]
-    public void DirectFrontend_PreservesLegacySourceSpans_ForLfCrLfAndCr()
+    public void DirectFrontend_PreservesCanonicalSourceSpans_ForLfCrLfAndCr()
     {
         foreach (var newline in new[] { "\n", "\r\n", "\r" })
         {
             var source = $"1 + 2{newline}+ 3";
-            var legacyCapture = new AstSpanCapture();
+            var canonicalCapture = new AstSpanCapture();
             var directCapture = new AstSpanCapture();
 
-            _ = RunLegacy(source, CreateCanonicalModules(new AstSpanCaptureModule(legacyCapture)));
+            _ = RunCanonicalCoreStages(source, CreateCanonicalModules(new AstSpanCaptureModule(canonicalCapture)));
             _ = RunDirect(source, CreateCanonicalModuleFactories(() => new AstSpanCaptureModule(directCapture)));
 
             Assert.Multiple(() =>
             {
-                Assert.That(directCapture.Signature, Is.EqualTo(legacyCapture.Signature), $"newline={Escape(newline)}");
+                Assert.That(directCapture.Signature, Is.EqualTo(canonicalCapture.Signature), $"newline={Escape(newline)}");
                 Assert.That(directCapture.Signature, Does.Contain("3@2:2"), $"newline={Escape(newline)}");
             });
         }
     }
 
     [Test]
-    public void DirectFrontend_InvalidTokenMatchesLegacyStructuredDiagnostic()
+    public void DirectFrontend_InvalidTokenMatchesCanonicalStructuredDiagnostic()
     {
         const string source = "1 + @\n2";
         var plan = CreatePlan();
@@ -77,14 +76,14 @@ public sealed class WistDirectArtifactStageTests
         var context = CreateContext(plan, source);
 
         var direct = Assert.Throws<LexerException>(() => frontend.Transform(source, context));
-        var legacy = Assert.Throws<LexerException>(() =>
-            RunLegacy(source, CreateCanonicalModules()));
+        var canonical = Assert.Throws<LexerException>(() =>
+            RunCanonicalCoreStages(source, CreateCanonicalModules()));
 
         Assert.Multiple(() =>
         {
-            Assert.That(direct!.Stage, Is.EqualTo(legacy!.Stage));
-            Assert.That(direct.Location?.Line, Is.EqualTo(legacy.Location?.Line));
-            Assert.That(direct.Location?.Column, Is.EqualTo(legacy.Location?.Column));
+            Assert.That(direct!.Stage, Is.EqualTo(canonical!.Stage));
+            Assert.That(direct.Location?.Line, Is.EqualTo(canonical.Location?.Line));
+            Assert.That(direct.Location?.Column, Is.EqualTo(canonical.Location?.Column));
             Assert.That(direct.Location?.Line, Is.EqualTo(1));
             Assert.That(direct.Location?.Column, Is.EqualTo(4));
         });
@@ -166,7 +165,7 @@ public sealed class WistDirectArtifactStageTests
             Assert.That(types.Select(static type => type.Assembly).Distinct(), Is.EqualTo(new[] { assembly }));
             Assert.That(types.All(static type => !type.IsPublic), Is.True);
             Assert.That(types.All(type => type.Namespace == typeof(WistLanguageFeaturePackage).Namespace), Is.True);
-            Assert.That(assembly, Is.Not.EqualTo(typeof(BasicCoreImpl<>).Assembly));
+            Assert.That(assembly, Is.Not.EqualTo(typeof(CompilationInputNormalizer).Assembly));
         });
     }
 
@@ -183,26 +182,35 @@ public sealed class WistDirectArtifactStageTests
         return new DirectSnapshot(syntax, bytecode, air);
     }
 
-    private static LegacySnapshot RunLegacy(
+    private static CanonicalCoreSnapshot RunCanonicalCoreStages(
         string source,
         IReadOnlyList<IFrontendCoreModule> modules)
     {
-        var observer = new SnapshotObserver();
-        var core = new BasicCoreImpl<string>(
-            static () => new BasicLexerImpl(),
-            static () => new BasicParserImpl(),
-            static () => new BasicAstToBytecodeTranslatorImpl(),
-            CreateMethodsTranslator,
-            static () => new CaptureCompiler(),
-            static () => new NoOpExecutor(),
-            modules,
-            [],
-            [],
-            pipelineObservers: [observer]);
         var input = new CompilationInputNormalizer().NormalizeRuntimeInput(source);
+        var lexer = new BasicLexerImpl();
+        var parser = new BasicParserImpl();
+        var astTranslator = new BasicAstToBytecodeTranslatorImpl();
+        var methodsTranslator = CreateMethodsTranslator();
 
-        _ = core.Compile(input);
-        return new LegacySnapshot(observer.Bytecode, observer.Air);
+        var targetCode = modules.Aggregate(input.SourceText, static (current, module) => module.ProcessText(current));
+        foreach (var module in modules)
+            module.InitLexer(lexer);
+        var lexemes = lexer.Lexemize(targetCode);
+        var targetLexemes = modules.Aggregate(lexemes, static (current, module) => module.ProcessLexemes(current));
+        foreach (var module in modules)
+            module.InitParser(parser);
+        var astRoot = parser.Parse(targetLexemes);
+        var targetRoot = modules.Aggregate(astRoot, static (current, module) => module.ProcessAst(current));
+        var bindingRules = modules.SelectMany(static module => module.GetAstBindingRules()).ToArray();
+        var boundRoot = new Binder(input.ExternalBindings, bindingRules).Bind(targetRoot);
+
+        foreach (var module in modules)
+            module.InitAstTranslator(astTranslator, modules);
+        var bytecode = modules.Aggregate(
+            astTranslator.Translate(boundRoot),
+            static (current, module) => module.ProcessBytecode(current));
+        var air = methodsTranslator.Translate(bytecode);
+        return new CanonicalCoreSnapshot(bytecode, air);
     }
 
     private static WistDirectArtifactStageFactory CreateDirectFactory(
@@ -277,26 +285,7 @@ public sealed class WistDirectArtifactStageTests
         WistBytecodeArtifact Bytecode,
         WistAirArtifact Air);
 
-    private sealed record LegacySnapshot(Bytecode? Bytecode, IAbstractIR? Air);
-
-    private sealed class SnapshotObserver : ICompilationPipelineObserver
-    {
-        public Bytecode? Bytecode { get; private set; }
-        public IAbstractIR? Air { get; private set; }
-
-        public void AfterBytecode(CompilationPipelineBytecodeContext context) => Bytecode = context.Bytecode;
-        public void AfterAir(CompilationPipelineAirContext context) => Air = context.Air;
-    }
-
-    private sealed class CaptureCompiler : IAbstractIrCompiler<string>
-    {
-        public string Compile(IAbstractIR air, CompilationInput input) => input.SourceText;
-    }
-
-    private sealed class NoOpExecutor : IExecutor<string>
-    {
-        public object? Execute(string compilation, IExecutionEnvironment environment) => compilation;
-    }
+    private sealed record CanonicalCoreSnapshot(Bytecode Bytecode, IAbstractIR Air);
 
     private sealed class AstSpanCapture
     {

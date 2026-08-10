@@ -27,6 +27,8 @@ def main() -> int:
         for index, relative in enumerate([
             "UniversalToolchain/LocalVariablesOptimizerModule/LocalVariablesOptimizerModule.csproj",
             "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistDialectExecutionConfiguration.cs",
+            "UniversalToolchain/BasicCore/Core/BasicCoreImpl.cs",
+            "UniversalToolchain/BasicCore/Core/PreparedExecutionBuilder.cs",
         ]):
             mutant = tmp / f"path-{index}"
             target = mutant / relative
@@ -38,7 +40,7 @@ def main() -> int:
         mutant = tmp / "symbol"
         source = mutant / "UniversalToolchain/Example/Returned.cs"
         source.parent.mkdir(parents=True, exist_ok=True)
-        source.write_text("internal sealed class LocalVariablesOptimizerModule {}", encoding="utf-8")
+        source.write_text("internal sealed class BasicCoreImpl<T> {}", encoding="utf-8")
         if run(checker, mutant, temp_registry) == 0:
             raise RuntimeError("retired symbol mutant survived")
         print("SURVIVOR=0 mutant=retired-symbol")

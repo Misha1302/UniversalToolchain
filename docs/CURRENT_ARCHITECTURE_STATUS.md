@@ -93,7 +93,7 @@ These types are **not** the current Wist semantic planner or public execution ho
 
 `UniversalToolchain.Dialects.Wist` remains a non-packable compatibility-only project. Canonical Wist production projects are architecture-guarded from depending on it as a runtime/planning owner.
 
-The S11-retired Wist ownership path includes `DialectBuildPlan`, `SelectedRuntimePlan`, `SelectedRuntimePlanResolver`, `ToolchainCompositionWorkflow`, `WistDialectExecutionWorkflow`, `WistDialectExecutionHost` and `WistDialectPlanFactory`. Current architecture tests reject reintroduction of that production surface. `BasicCoreImpl` is a separate remaining owner intentionally deferred to migration stage S12.
+The retired orchestration surface now spans both S11 and S12. S11 removed `DialectBuildPlan`, `SelectedRuntimePlan`, `SelectedRuntimePlanResolver`, `ToolchainCompositionWorkflow`, `WistDialectExecutionWorkflow`, `WistDialectExecutionHost` and `WistDialectPlanFactory`. S12 removes the independent BasicCore end-to-end owners `BasicCoreImpl` and `PreparedExecutionBuilder`. Architecture tests and the retired-surface manifest reject reintroduction of either planning/runtime path.
 
 ## Module/IR verification boundary
 
@@ -137,7 +137,7 @@ The study is bounded evidence for the exact UniversalToolchain boundaries and au
 - typed metadata coverage is an engineering contract, not a formal proof of semantic completeness;
 - no hardened in-process sandbox is claimed;
 - generic runtime-profile/manifest/host compatibility infrastructure has not all been removed simply because Wist no longer uses it as its semantic owner;
-- `BasicCoreImpl` retirement remains an S12 task;
+- S12 retires the old BasicCore end-to-end orchestration island; reusable BasicCore stage contracts remain while topology cleanup continues in S13;
 - release-package compatibility requires reviewed external baseline artifacts and is separate from ordinary CI.
 
 ## Verification identity

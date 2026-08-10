@@ -109,6 +109,34 @@ public sealed class WistMigrationGateTests
     }
 
     [Test]
+    public void BasicCore_CannotRecreateEndToEndOrchestrationOwner()
+    {
+        var root = FindRepositoryRoot();
+        var basicCore = Path.Combine(root, "UniversalToolchain", "BasicCore");
+        string[] orchestrationMarkers =
+        [
+            "ILexer",
+            "IParser",
+            "IAstToBytecodeTranslator",
+            "IAbstractMethodsTranslator",
+            "IAbstractIrCompiler",
+            "IExecutor"
+        ];
+
+        var violations = Directory.EnumerateFiles(basicCore, "*.cs", SearchOption.AllDirectories)
+            .Where(path => !NormalizePath(path).Contains("/bin/", StringComparison.Ordinal)
+                           && !NormalizePath(path).Contains("/obj/", StringComparison.Ordinal))
+            .Select(path => (Path: path, Source: File.ReadAllText(path)))
+            .Select(item => (item.Path, Count: orchestrationMarkers.Count(marker => item.Source.Contains(marker, StringComparison.Ordinal))))
+            .Where(static item => item.Count >= 5)
+            .Select(item => $"BasicCore file owns too many end-to-end pipeline roles ({item.Count}/6): {NormalizePath(Path.GetRelativePath(root, item.Path))}")
+            .ToArray();
+
+        Assert.That(violations, Is.Empty,
+            "BasicCore may provide reusable stage contracts/helpers, but no renamed coordinator may re-own frontend, lowering, backend compilation and execution together.");
+    }
+
+    [Test]
     public void RemovedLegacySurface_CannotReturn()
     {
         var root = FindRepositoryRoot();

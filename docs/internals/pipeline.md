@@ -5,13 +5,13 @@ description: Explain source to execution pipeline.
 
 # Pipeline
 
-The internal pipeline is the lifecycle that turns `CompilationInput` into a compiled artifact or a prepared execution session.
+The canonical pipeline is the plan-owned lifecycle that turns a typed entry artifact into the backend artifact selected by `LanguagePlan`, then executes that artifact through `LanguageRuntime`.
 
-The canonical implementation entry point is `PreparedExecutionBuilder<TCompilationOutput>`. `BasicCoreImpl<TCompilationOutput>` delegates compilation and preparation to this builder.
+There is deliberately no framework-level end-to-end BasicCore coordinator. `BasicCoreImpl<TCompilationOutput>` and `PreparedExecutionBuilder<TCompilationOutput>` are retired; reusable lexer/parser/binding/lowering mechanics remain narrow stage services.
 
 ## Why this page matters
 
-Most architecture mistakes happen when a change is placed in the wrong stage.
+Most architecture mistakes happen when a change is placed in the wrong stage or when a local helper becomes a second owner of planning/runtime selection.
 
 Examples:
 
@@ -19,284 +19,157 @@ Examples:
 - fixing AST shape during bytecode post-processing;
 - letting an optimizer provide required semantics;
 - making a backend silently accept unsupported intrinsics;
-- mixing runtime input values with local variable semantics.
+- re-selecting components after `LanguagePlan` already fixed the route;
+- recreating a lexer→parser→compiler→executor god object under a new name.
 
-This page defines the actual order of operations so each stage can keep a narrow responsibility.
+## Ownership before execution
 
-## Public model vs. internal lifecycle
-
-The public mental model is:
-
-```text
-source text
-  -> lexer
-  -> parser
-  -> AST
-  -> bytecode
-  -> AIR
-  -> backend
-  -> result
-```
-
-The internal lifecycle is more precise:
+The ownership chain is:
 
 ```text
-CompilationInput
-  -> create per-build services
-  -> modules.ProcessText
-  -> modules.InitLexer
-  -> lexer.Lexemize
-  -> modules.ProcessLexemes
-  -> modules.InitParser
-  -> parser.Parse
-  -> modules.ProcessAst
-  -> Binder
-  -> modules.InitAstTranslator
-  -> astTranslator.Translate
-  -> modules.ProcessBytecode
-  -> optimizers.InitMethodsTranslator
-  -> optimizers.InitIntrinsicCapabilityContext
-  -> methodsTranslator.Translate(bytecode)
-  -> optimizers.ProcessIr
-  -> ExtractAllowedRuntimeProviderTypes
-  -> middleEndModules.InitMethodsCompiler
-  -> compiler.Compile
-  -> middleEndModules.ProcessCompilation
-  -> middleEndModules.InitExecutor
-  -> compiled artifact or prepared session
+LanguageDefinition
+  -> LanguageCompiler
+  -> LanguagePlan
+  -> LanguageRuntime
+  -> exact route selected for the requested backend
 ```
 
-Use the second model when documenting internals.
+`LanguageCompiler` is the only planner. It resolves feature dependencies, contributions, explicit exclusions, capability providers, contribution order, runtime provider and artifact route.
 
-## Build setup
+`LanguageRuntime` verifies that immutable plan, validates exact provider identity/policy and owns the runtime/build-session lifecycle. It does not discover or re-plan an alternative route.
 
-`PreparedExecutionBuilder` creates fresh pipeline services for each build:
+## Artifact route execution
+
+For a Wist source request the concrete route is:
 
 ```text
-lexer
-parser
-AST translator
-bytecode-to-AIR translator
-backend cil
-executor
-intrinsic capability set
-optimizer capability context
+Source/Text
+  -> Wist frontend transformer
+      -> text/module hooks
+      -> lexer
+      -> lexeme/module hooks
+      -> parser
+      -> AST/module hooks
+      -> Binder
+  -> Wist bytecode transformer
+      -> AST visitor registration
+      -> AST-to-bytecode translation
+      -> bytecode/module hooks
+  -> Wist AIR transformer
+      -> bytecode-to-AIR translation
+  -> selected optimizer / optional SSA transformers
+  -> selected backend transformer/executor
 ```
 
-This matters because pipeline services may carry request-local state. Module instances may be shared by DI, but lexer/parser/translator/compiler/executor instances are created through factories during the build.
+`LanguageArtifactBuildPipeline` walks the route already stored in `LanguagePlan`. Every step must match the planned contribution and typed artifact contracts.
 
 ## Input normalization
 
-`BasicCoreImpl` accepts two common input shapes:
+Wist runtime and build requests both become `CompilationInput`, but they carry different binding information:
 
-- runtime input: `Run(string code, Dictionary<string, object>? parameters)`;
-- declared input: `Compile(string code, OrderedDictionary<string, Type>? parameters)`.
+- runtime requests carry argument values;
+- build requests carry declared binding types.
 
-Both are normalized into `CompilationInput` with `ExternalBinding` entries.
+`WistHostBindingAdapter` uses `CompilationInputNormalizer` for this conversion. Compile-time binding shape and runtime argument values remain separate concerns.
 
-Runtime input includes values. Declared input includes types. This distinction is important for compiled artifacts: compile-time parameter shape and runtime parameter values are not the same concern.
+## Frontend stage
 
-## Frontend text stage
+The Wist frontend transformer creates the plan-selected frontend modules and invokes `CanonicalArtifactStages.ParseAndBind`.
 
-First, every selected frontend module may transform source text:
+The reusable stage mechanics are:
 
 ```text
 modules.ProcessText
-```
-
-This stage should be used sparingly. It is appropriate for explicit text-level preprocessing, not for hidden syntax recognition that should belong to lexer/parser/AST stages.
-
-## Lexer stage
-
-Modules register lexemes through:
-
-```text
 modules.InitLexer
-```
-
-Then the lexer turns the processed source text into lexeme values:
-
-```text
-lexer.Lexemize(targetCode)
-```
-
-After lexing, modules may transform the lexeme list:
-
-```text
+lexer.Lexemize
 modules.ProcessLexemes
-```
-
-Lexeme post-processing should preserve the lexer/parser boundary. Do not use it to implement syntax that should be expressed through parser node creators.
-
-## Parser stage
-
-Modules register parser node creators through:
-
-```text
 modules.InitParser
-```
-
-Then the parser builds an AST:
-
-```text
-parser.Parse(targetLexemes)
-```
-
-Parser extensions are ordered and priority-sensitive. This stage owns syntax structure.
-
-## AST processing and binding
-
-After parsing, modules may transform the AST:
-
-```text
+parser.Parse
 modules.ProcessAst
+Binder.Bind
 ```
 
-Then external bindings are applied:
+Text hooks are for explicit preprocessing, not hidden grammar. Parser extensions own syntax structure; binding happens before bytecode lowering.
+
+## AST-to-bytecode stage
+
+The bytecode transformer invokes `CanonicalArtifactStages.LowerToBytecode`:
 
 ```text
-new Binder(input.ExternalBindings).Bind(targetRoot)
-```
-
-Binding happens before AST-to-bytecode translation. This placement is important: visitors should receive a bound AST rather than rediscover external bindings independently.
-
-## AST-to-bytecode translation
-
-Modules register AST visitors through:
-
-```text
-modules.InitAstTranslator(astTranslator, modules)
-```
-
-Then the translator produces bytecode:
-
-```text
-astTranslator.Translate(boundRoot)
-```
-
-Visitors must self-filter because multiple visitors may inspect the same node. A visitor should emit only feature-owned semantics.
-
-## Bytecode post-processing
-
-After translation, modules may process bytecode:
-
-```text
+modules.InitAstTranslator
+astTranslator.Translate
 modules.ProcessBytecode
 ```
 
-This is a bytecode-level hook. It should not be used to patch missing parser or AST behavior.
+AST visitors must self-filter because multiple visitors may inspect the same node. `ProcessBytecode` is a bytecode-level hook and must not repair missing parser/AST semantics.
 
-## Bytecode-to-AIR translation
+## Bytecode-to-AIR stage
 
-Optimizers first initialize the bytecode-to-AIR translator:
+The AIR transformer invokes `CanonicalArtifactStages.LowerToAir` through the selected `IAbstractMethodsTranslator`.
 
-```text
-optimizers.InitMethodsTranslator(methodsTranslator)
-```
+Bytecode and AIR are distinct semantic boundaries. AIR is the representation consumed by optimizers and backends; code must not infer a new runtime/component selection from AIR contents.
 
-Then they receive an intrinsic capability context:
+## Optimization and SSA routes
 
-```text
-optimizers.InitIntrinsicCapabilityContext(optimizerCapabilityContext)
-```
+Optimizers are explicit planned route components. Backend intrinsic capability policy is supplied through typed capability context before a transformation runs.
 
-Then bytecode is translated into AIR:
+Optional SSA is also represented as route-owned transformations. It is not an implicit global rewrite hidden inside a central orchestrator.
 
-```text
-methodsTranslator.Translate(targetBytecode)
-```
+Optimizers must preserve base semantics. A program may not depend on an optimizer being enabled in order to become correct.
 
-At this point, execution semantics are represented as backend-facing AIR instructions.
+## Backend stage
 
-## IR optimization
+The final planned transformer produces the backend artifact for the exact backend route. Interpreter and CIL use their own selected backend components, but both are selected by the same `LanguagePlan` authority.
 
-Selected AIR optimizers transform the current representation:
+Execution is owned by the runtime/build session associated with that exact route. A backend must reject unsupported intrinsics rather than silently accepting them.
 
-```text
-current = optimizer.Optimize(current)
-```
+## Verification and route observation
 
-Before optimization, each optimizer receives an `IOptimizerIntrinsicCapabilityContext` derived from the selected backend. Backend-specific instructions therefore remain capability-gated without passing a concrete compiler through the optimizer API.
+Module-contract verification observes canonical route boundaries through a read-only route observer. It can validate Bytecode, AIR, optimized AIR and backend facts, and it may reject an invalid transition according to policy.
 
-## Runtime provider extraction
+The observer does **not** choose features, contributions, optimizers, runtime providers or backends. Verification is therefore attached to the canonical route rather than implemented as a second composition workflow.
 
-The pipeline extracts allowed runtime provider types from AIR before compilation:
+## Lifecycle
 
-```text
-ExtractAllowedRuntimeProviderTypes(targetIr)
-```
+`LanguageRuntime` owns operation lifetime and disposal. Build-capable runtimes expose:
 
-Currently this scans AIR intrinsic calls for C# call descriptors that reference execution-scoped providers. The result becomes part of the compiled artifact.
+- `Build(LanguageArtifactBuildRequest)`;
+- `ExecuteBuilt(LanguageArtifactBuildResult)`;
+- typed access to a built artifact value.
 
-This is implementation-specific and should not be described as a general-purpose security boundary.
-
-## Backend compilation
-
-Middle-end modules initialize the compiler:
-
-```text
-middleEndModules.InitMethodsCompiler(compiler)
-```
-
-Then the backend cil compiles AIR:
-
-```text
-compiler.Compile(targetIr, input)
-```
-
-The output type depends on the selected backend. For example, the interpreter path can use AIR directly, while the CIL path compiles into a `DynamicMethod`.
-
-## Compilation post-processing and executor setup
-
-After backend compilation:
-
-```text
-middleEndModules.ProcessCompilation
-middleEndModules.InitExecutor
-```
-
-This lets middle-end modules adapt backend output and executor wiring.
+The runtime lifetime gate prevents disposal from racing in-flight operations. There is no `AsyncLocal` prepared-execution slot in the canonical core path.
 
 ## Observability and tracing
 
-The supported release does not include the old `logs.txt` text-log pipeline.
-That format covered only an older partial frontend view and did not represent
-AIR, optimized AIR, SSA route stages, verifier diagnostics, backend ownership
-or failed partial traces.
+The supported release does not include the old `logs.txt` text-log pipeline. That format covered only an older partial frontend view and did not represent AIR, optimized AIR, SSA route stages, verifier diagnostics, backend ownership or failed partial traces.
 
-Future tracing should observe the stage boundaries on this page without
-changing semantics. See [Debug Trace v2](/architecture/debug-trace-v2) for the
-decision record and [Debug Trace Schema](/reference/debug-trace-schema) for the
-planned JSON contract.
-
-## Artifact/session output
-
-`Compile(input)` returns a compiled artifact.
-
-`Build(input)` returns a prepared execution object containing:
-
-- source text;
-- compiled artifact;
-- execution session.
-
-`BasicCoreImpl.PrepareToRun` stores the prepared execution in an `AsyncLocal`, and `RunPrepared` executes the stored session.
+Future tracing should observe the canonical route boundaries without changing semantics. See [Debug Trace v2](/architecture/debug-trace-v2) and [Debug Trace Schema](/reference/debug-trace-schema).
 
 ## Stage ownership summary
 
-| Stage | Owns | Should not own |
+| Stage | Owns | Must not own |
 |---|---|---|
-| `ProcessText` | explicit text preprocessing | hidden grammar |
+| `LanguageCompiler` | dependency/contribution/route selection | runtime execution |
+| `LanguageRuntime` | exact plan verification, lifecycle, route execution | re-planning |
+| Frontend transformer | source→bound syntax/AST | backend selection |
 | Lexer | token recognition | AST shape |
-| `ProcessLexemes` | token-list normalization | semantic lowering |
 | Parser | AST structure | backend behavior |
-| `ProcessAst` | AST normalization | bytecode execution semantics |
-| Binder | external binding attachment | local variable runtime mutation |
+| Binder | external binding attachment | local runtime mutation |
 | AST visitors | bytecode emission | raw source parsing |
-| `ProcessBytecode` | bytecode-level transformations | parser fixes |
-| AIR translator | backend-facing instruction stream | optimizer-only semantics |
-| Optimizers | semantics-preserving IR transforms | required base semantics |
-| Backend compiler | backend artifact creation | language syntax decisions |
-| Executor | execution of compiled artifact | dialect composition |
+| Bytecode hooks | bytecode transformations | parser fixes |
+| AIR translator | backend-facing IR | runtime-provider discovery |
+| Optimizers/SSA | semantics-preserving planned IR transforms | required base semantics |
+| Backend | backend artifact creation/execution | language syntax decisions |
+| Route observer | verification/diagnostics | route or contribution selection |
+
+## Architecture lock
+
+Architecture tests and `eng/retired-surface.json` make the S12 cutover mechanical:
+
+- retired BasicCore orchestrator paths/symbols may not reappear;
+- BasicCore cannot recreate an end-to-end owner that combines lexer, parser, translators, compiler and executor;
+- canonical runtime code cannot infer runtime providers from optimized AIR;
+- Wist canonical runtime cannot revive raw legacy intrinsic routing.
 
 ## Next
 

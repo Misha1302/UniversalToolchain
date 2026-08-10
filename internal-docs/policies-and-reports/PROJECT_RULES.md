@@ -66,7 +66,7 @@ public PreparedExecution Build(CompilationInput input)
 
 ## 3. Naming Conventions
 
-The current codebase already strongly uses PascalCase for types and members such as `BasicCoreImpl`, `PreparedExecutionBuilder`, `CompilationInput`, `ExecutionEnvironment`, `TryVisit`, and `NormalizeRuntimeInput`, and underscore-prefixed private fields such as `_prepared`, `_inputNormalizer`, `_intrinsicCompiler`, `_assemblyCache`, and `_separator`.
+The current codebase already strongly uses PascalCase for types and members such as `LanguageRuntime`, `CompilationInput`, `ExecutionEnvironment`, `LanguageArtifactBuildPipeline`, `TryVisit`, and `NormalizeRuntimeInput`, and underscore-prefixed private fields such as `_prepared`, `_inputNormalizer`, `_intrinsicCompiler`, `_assemblyCache`, and `_separator`.
 These conventions must be treated as standard.
 
 ### 3.1 Types
@@ -79,7 +79,7 @@ Use `PascalCase` for:
 - attributes
 
 Examples:
-- `BasicCoreImpl`
+- `LanguageRuntime`
 - `PreparedExecution`
 - `IExecutionEnvironment`
 - `ExternalBindingKind`
@@ -171,7 +171,7 @@ Do not introduce new unclear abbreviations without strong reason.
 Test classes must end with `Tests`.
 
 Preferred:
-- `PreparedExecutionBuilderTests`
+- `LanguageRuntimeTests`
 - `IntrinsicDescriptorProviderTests`
 
 Test methods must follow:
@@ -239,7 +239,7 @@ Small tightly-coupled helper types may be nested when this improves locality.
 The file name should match the main type name.
 
 Examples:
-- `PreparedExecutionBuilder.cs` → `PreparedExecutionBuilder`
+- `LanguageRuntime.cs` → `LanguageRuntime`
 - `Thrower.cs` → `Thrower`
 
 ### 4.3 Namespaces

@@ -1,6 +1,5 @@
 using BasicCodeTranslator;
 using BasicCore.Compilation;
-using BasicCore.Core;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
@@ -213,19 +212,10 @@ public class FrameworkNativeVerticalSliceTests
     }
 
     [Test]
-    public void Compile_RequiresFrontendModulePipeline_WithoutModuleLexingFails()
+    public void LexerWithoutDialectFrontendModule_RejectsDialectSyntax()
     {
-        var coreWithoutDialectModule = new BasicCoreImpl<DialectDefinitionSlice>(
-            () => new BasicLexerImpl(new LexerConfiguration([])),
-            () => new BasicParserImpl(new ParserConfiguration([])),
-            () => new BasicAstToBytecodeTranslatorImpl(new BytecodeTranslatorConfiguration([])),
-            DialectDslTestSupport.CreateAbstractMethodsTranslator,
-            () => new DialectDefinitionSliceCompiler(),
-            () => new DialectDefinitionSliceExecutor(),
-            [],
-            [],
-            []);
+        var lexer = new BasicLexerImpl(new LexerConfiguration([]));
 
-        Assert.Throws<LexerException>(() => coreWithoutDialectModule.GetExecutable("dialect Tiny\n"));
+        Assert.Throws<LexerException>(() => lexer.Lexemize("dialect Tiny\n"));
     }
 }
