@@ -1,0 +1,81 @@
+name: CompilationLab S14 Docs Repair
+
+on:
+  pull_request:
+    branches:
+      - migration/languageplan-single-runtime-20260807
+    paths:
+      - ".github/workflows/compilationlab-s14-docs-repair.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    env:
+      EXPECTED_HEAD_SHA: bd238df98a03a2bec5b082b28f70435844e646c6
+      TARGET_BRANCH: migration/s14-manifest-activation-cleanup-20260810
+    steps:
+      - name: Checkout helper
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Repair exactly three stale VitePress links
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_target="$(git ls-remote origin "refs/heads/${TARGET_BRANCH}" | awk '{print $1}')"
+          test "$remote_target" = "$EXPECTED_HEAD_SHA"
+          git checkout --detach "$EXPECTED_HEAD_SHA"
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('docs/.vitepress/config.mts')
+          text = path.read_text(encoding='utf-8')
+          stale = [
+              "            { text: 'Runtime Manifests', link: '/write-modules/runtime-manifests' },\n",
+              "            { text: 'Manifest Format', link: '/runtime-manifest-format' },\n",
+              "            { text: 'Manifest Activation Model', link: '/runtime-manifest-activation-model' },\n",
+          ]
+          for line in stale:
+              count = text.count(line)
+              if count != 1:
+                  raise SystemExit(f'expected exactly one stale nav entry, found {count}: {line.strip()}')
+              text = text.replace(line, '')
+          for fragment in ('/write-modules/runtime-manifests', '/runtime-manifest-format', '/runtime-manifest-activation-model'):
+              if fragment in text:
+                  raise SystemExit(f'stale nav target survived: {fragment}')
+          path.write_text(text, encoding='utf-8')
+          PY
+          git add docs/.vitepress/config.mts
+          test "$(git diff --cached --name-only)" = "docs/.vitepress/config.mts"
+          git diff --cached --check
+          test "$(git diff --cached --numstat | awk '{print $1}')" = "0"
+          test "$(git diff --cached --numstat | awk '{print $2}')" = "3"
+          python3 Tools/check_documentation_status.py
+          python3 Tools/check_documentation_links.py
+          python3 Tools/check_documentation_release_state.py
+          python3 Tools/test-documentation-status-mutants.py --root .
+          tree="$(git write-tree)"
+          echo "$tree" > "$RUNNER_TEMP/tree"
+
+      - name: Push one docs-only repair commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_target="$(git ls-remote origin "refs/heads/${TARGET_BRANCH}" | awk '{print $1}')"
+          test "$remote_target" = "$EXPECTED_HEAD_SHA"
+          tree="$(git write-tree)"
+          test "$tree" = "$(cat "$RUNNER_TEMP/tree")"
+          export GIT_AUTHOR_NAME='github-actions[bot]'
+          export GIT_AUTHOR_EMAIL='41898282+github-actions[bot]@users.noreply.github.com'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          commit="$(printf '%s\n' 'docs(s14): remove retired runtime-manifest navigation' | git commit-tree "$tree" -p "$EXPECTED_HEAD_SHA")"
+          git push origin "${commit}:refs/heads/${TARGET_BRANCH}"
+          pushed="$(git ls-remote origin "refs/heads/${TARGET_BRANCH}" | awk '{print $1}')"
+          test "$pushed" = "$commit"
+          echo "S14_REPAIR_COMMIT=$commit"
+          echo "S14_REPAIR_TREE=$tree"
