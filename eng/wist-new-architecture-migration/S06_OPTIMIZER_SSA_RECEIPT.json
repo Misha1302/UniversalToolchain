@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "stage": "S06",
-  "status": "candidate-awaiting-exact-head-ci",
+  "status": "VERIFIED",
   "dependsOn": {
     "stage": "S05",
     "verifiedRevision": "f0e524dea25fdf1f6804359c16113863a9d948c5"
@@ -35,6 +35,31 @@
     "total": 1648,
     "languageSdk": 123
   },
-  "providerEvidence": null,
-  "note": "This receipt intentionally does not claim S06 verification until all required workflows succeed on the exact candidate revision."
+  "providerEvidence": {
+    "revision": "5da859de4f703ecb3c75d8febdff463850e60221",
+    "testContract": {
+      "total": 1276,
+      "core": 524,
+      "modules": 292,
+      "dialects": 253,
+      "languageSdk": 156,
+      "planFuzz": 41,
+      "isolated": 10
+    },
+    "runs": [
+      {"workflow":".NET CI","runId":31420273494,"result":"success"},
+      {"workflow":"Package Compatibility Review","runId":31420273119,"result":"success"},
+      {"workflow":"UniversalToolchain validation","runId":31420273920,"result":"success"},
+      {"workflow":"Benchmark Smoke","runId":31420273138,"result":"success"},
+      {"workflow":"Docs Check","runId":31420273036,"result":"success"},
+      {"workflow":"Published Wist package smoke","runId":31420273047,"result":"success"},
+      {"workflow":"Contract Experiment","runId":31420273043,"result":"success"},
+      {"workflow":"Wist Rollout Sample Smoke","runId":31420273054,"result":"success"},
+      {"workflow":"CGO27 End-to-End Experiment","runId":31420273507,"result":"success"},
+      {"workflow":"CGO27 Artifact","runId":31420273044,"result":"success"},
+      {"workflow":"CGO27 TensorRules","runId":31420273813,"result":"success"},
+      {"workflow":"CGO27 Ablations","runId":31420273065,"result":"success"}
+    ]
+  },
+  "note": "S06 stage closure is backed by the exact integrated migration revision above. Any later repository-content change requires fresh final integration verification, but does not rewrite this historical stage-closure identity."
 }
