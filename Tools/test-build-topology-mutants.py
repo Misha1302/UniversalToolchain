@@ -49,6 +49,27 @@ def run_checker(checker: Path, root: Path, expected_fragment: str | None = None)
         )
 
 
+def require_wist_runtime_reference_materialization_parity(root: Path) -> None:
+    target = "MaterializeCanonicalWistRuntimeClosure"
+    reference_dir = "artifacts/wist-runtime-reference"
+    property_name = "CanonicalWistRuntimeReferenceDirectory"
+    texts = {
+        "build.sh": (root / "build.sh").read_text(encoding="utf-8-sig"),
+        "build.ps1": (root / "build.ps1").read_text(encoding="utf-8-sig"),
+    }
+    for name, text in texts.items():
+        if text.count(target) != 1:
+            raise AssertionError(f"{name} must invoke {target} exactly once")
+        if text.count(reference_dir) != 1:
+            raise AssertionError(f"{name} must use the isolated {reference_dir} reference directory exactly once")
+        if property_name not in text:
+            raise AssertionError(f"{name} must pass {property_name} to the canonical Wist runtime-closure target")
+
+    powershell = texts["build.ps1"]
+    if "Split-Path -Parent $wistReferenceAssemblyPath" in powershell:
+        raise AssertionError("build.ps1 must not treat the ordinary Wist bin directory as the trusted package reference closure")
+
+
 def copy_inputs(source: Path, destination: Path) -> None:
     project_files = sorted((source / "UniversalToolchain").rglob("*.csproj"))
     if not project_files:
@@ -174,6 +195,7 @@ def fixture(root: Path, checker: Path) -> tuple[tempfile.TemporaryDirectory[str]
     path = Path(temporary.name)
     copy_inputs(root, path)
     run_checker(checker, path)
+    require_wist_runtime_reference_materialization_parity(path)
     return temporary, path
 
 
@@ -186,6 +208,12 @@ def main() -> int:
     checker = root / "Tools" / "check-build-topology.py"
     if not checker.is_file():
         print(f"BUILD_TOPOLOGY_MUTANTS=FAIL: checker does not exist: {checker}", file=sys.stderr)
+        return 1
+
+    try:
+        require_wist_runtime_reference_materialization_parity(root)
+    except (AssertionError, OSError) as exc:
+        print(f"BUILD_TOPOLOGY_MUTANTS=FAIL: {exc}", file=sys.stderr)
         return 1
 
     Mutation = tuple[str, Callable[[Path], None], str]
@@ -375,6 +403,35 @@ def main() -> int:
                 mutate(path)
                 run_checker(checker, path, expected)
                 print(f"SURVIVOR=0 mutant={name}")
+
+        parity_mutations: tuple[tuple[str, Callable[[Path], None]], ...] = (
+            (
+                "powershell-runtime-reference-target-disabled",
+                lambda path: replace_once(
+                    path / "build.ps1",
+                    "-t:MaterializeCanonicalWistRuntimeClosure",
+                    "-t:DisabledMaterializeCanonicalWistRuntimeClosure",
+                ),
+            ),
+            (
+                "powershell-runtime-reference-reverts-to-bin",
+                lambda path: replace_once(
+                    path / "build.ps1",
+                    'Join-Path $root "artifacts/wist-runtime-reference"',
+                    'Join-Path $root "UniversalToolchain/UniversalToolchain.Wist/bin/$Configuration/net10.0"',
+                ),
+            ),
+        )
+        for name, mutate in parity_mutations:
+            temporary, path = fixture(root, checker)
+            with temporary:
+                mutate(path)
+                try:
+                    require_wist_runtime_reference_materialization_parity(path)
+                except AssertionError:
+                    print(f"SURVIVOR=0 mutant={name}")
+                else:
+                    raise AssertionError(f"build entrypoint parity mutant survived: {name}")
     except (AssertionError, OSError) as exc:
         print(f"BUILD_TOPOLOGY_MUTANTS=FAIL: {exc}", file=sys.stderr)
         return 1
