@@ -1,0 +1,70 @@
+name: CompilationLab S13 Runtime Validator Repair
+
+on:
+  pull_request:
+    branches:
+      - migration/languageplan-single-runtime-20260807
+    paths:
+      - ".github/workflows/compilationlab-s13-runtime-validator-repair.yml"
+      - ".compilationlab/apply-s13-runtime-validator-repair.py"
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    env:
+      EXPECTED_HEAD: 8c39768b95968afc85eeea92c89fcf88f2e7995f
+      TARGET_BRANCH: migration/s13-topology-retirement-20260810
+    steps:
+      - name: Checkout helper
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+
+      - name: Apply exact repair to exact S13 head
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp .compilationlab/apply-s13-runtime-validator-repair.py "$RUNNER_TEMP/apply-repair.py"
+          remote_target="$(git ls-remote origin "refs/heads/${TARGET_BRANCH}" | awk '{print $1}')"
+          test "$remote_target" = "$EXPECTED_HEAD"
+          git checkout --detach "$EXPECTED_HEAD"
+          python3 "$RUNNER_TEMP/apply-repair.py" .
+          python3 -m py_compile Tools/test-build-topology-runtime.py Tools/check-retired-surface.py Tools/test-retired-surface-mutants.py
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' 'Tools/test-build-topology-runtime.py' 'Tools/test-retired-surface-mutants.py' 'eng/retired-surface.json' | sort)"
+          test "$actual" = "$expected"
+
+      - name: Validate repaired canonical entrypoint before mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./build.sh --skip-docs --skip-pack
+
+      - name: Create and push exact repair commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_target="$(git ls-remote origin "refs/heads/${TARGET_BRANCH}" | awk '{print $1}')"
+          test "$remote_target" = "$EXPECTED_HEAD"
+          git add -- Tools/test-build-topology-runtime.py Tools/test-retired-surface-mutants.py eng/retired-surface.json
+          tree="$(git write-tree)"
+          export GIT_AUTHOR_NAME='github-actions[bot]'
+          export GIT_AUTHOR_EMAIL='41898282+github-actions[bot]@users.noreply.github.com'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          commit="$(printf '%s\n' 'fix(s13): retire stale fresh-process topology oracle' | git commit-tree "$tree" -p "$EXPECTED_HEAD")"
+          test "$(git rev-parse "${commit}^")" = "$EXPECTED_HEAD"
+          git push origin "${commit}:refs/heads/${TARGET_BRANCH}"
+          pushed="$(git ls-remote origin "refs/heads/${TARGET_BRANCH}" | awk '{print $1}')"
+          test "$pushed" = "$commit"
+          echo "S13_REPAIR_COMMIT=$commit"
