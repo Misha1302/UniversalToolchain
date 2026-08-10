@@ -252,7 +252,7 @@ def main() -> int:
                 "ResolveLanguagePackBuildProviders",
                 "DisabledResolveLanguagePackBuildProviders",
             ),
-            "lacks ResolveLanguagePackProviders",
+            "lacks ResolveLanguagePackBuildProviders",
         ),
         (
             "emitter-project-redirected",
