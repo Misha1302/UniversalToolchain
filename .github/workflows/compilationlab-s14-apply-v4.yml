@@ -1,0 +1,129 @@
+name: CompilationLab S14 Apply v4
+
+on:
+  pull_request:
+    branches:
+      - migration/languageplan-single-runtime-20260807
+    paths:
+      - ".github/workflows/compilationlab-s14-apply-v4.yml"
+      - ".compilationlab/s14-v2.patch.part*"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    env:
+      EXPECTED_BASE_SHA: 1eaefc11e7cfe0c362fd38795768b3b984da9eb5
+      TARGET_BRANCH: migration/s14-manifest-activation-cleanup-20260810
+      EXPECTED_GZIP_SHA256: 7315c93f3ddbf70dc1b79a187e8f61d8a5c60378abd885c164cff4b40ea2bc31
+      EXPECTED_PATCH_SHA256: 6b4135ab6da195e6fc363ecd34d1438352fb8e2a6d109d39a387618c73e23d58
+    steps:
+      - name: Checkout helper payload
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+
+      - name: Reconstruct and verify exact S14 v2 payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.event.pull_request.base.sha }}" = "$EXPECTED_BASE_SHA"
+          remote_target="$(git ls-remote origin "refs/heads/${TARGET_BRANCH}" | awk '{print $1}')"
+          test "$remote_target" = "$EXPECTED_BASE_SHA"
+          cat .compilationlab/s14-v2.patch.part00 \
+              .compilationlab/s14-v2.patch.part01 \
+              .compilationlab/s14-v2.patch.part02 \
+              .compilationlab/s14-v2.patch.part03 \
+              > "$RUNNER_TEMP/s14-v2.patch.gz.b64"
+          base64 --decode "$RUNNER_TEMP/s14-v2.patch.gz.b64" > "$RUNNER_TEMP/s14-v2.patch.gz"
+          echo "$EXPECTED_GZIP_SHA256  $RUNNER_TEMP/s14-v2.patch.gz" | sha256sum -c -
+          gzip --decompress --stdout "$RUNNER_TEMP/s14-v2.patch.gz" > "$RUNNER_TEMP/s14-v2.patch"
+          echo "$EXPECTED_PATCH_SHA256  $RUNNER_TEMP/s14-v2.patch" | sha256sum -c -
+
+      - name: Apply S14 and deterministic test-locator repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout --detach "$EXPECTED_BASE_SHA"
+          git apply --check --binary "$RUNNER_TEMP/s14-v2.patch"
+          git apply --index --binary "$RUNNER_TEMP/s14-v2.patch"
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('UniversalToolchain/UniversalToolchain.Dialects.Tests/TestSourcePaths.cs')
+          text = path.read_text(encoding='utf-8')
+          old = 'Directory.Build.targets'
+          new = 'Directory.Build.props'
+          count = text.count(old)
+          if count != 2:
+              raise SystemExit(f'expected exactly 2 stale root markers, found {count}')
+          text = text.replace(old, new)
+          if old in text:
+              raise SystemExit('stale Directory.Build.targets marker survived repair')
+          path.write_text(text, encoding='utf-8')
+          PY
+          git add UniversalToolchain/UniversalToolchain.Dialects.Tests/TestSourcePaths.cs
+          git diff --cached --check
+          test ! -d UniversalToolchain/UniversalToolchain.Dialects.ManifestEmitter
+          test ! -f UniversalToolchain/Directory.Build.targets
+          test -f UniversalToolchain/UniversalToolchain.Dialects.Abstractions/DialectComponentContractAttribute.cs
+          grep -q 'class DialectComponentContractAttribute' UniversalToolchain/UniversalToolchain.Dialects.Abstractions/DialectComponentContractAttribute.cs
+          ! grep -q 'Directory.Build.targets' UniversalToolchain/UniversalToolchain.Dialects.Tests/TestSourcePaths.cs
+          grep -q 'Directory.Build.props' UniversalToolchain/UniversalToolchain.Dialects.Tests/TestSourcePaths.cs
+          python3 Tools/check-build-topology.py
+          python3 Tools/test-build-topology-mutants.py
+          python3 Tools/check-retired-surface.py
+          python3 Tools/test-retired-surface-mutants.py
+          python3 Tools/check_documentation_status.py
+          python3 Tools/test-documentation-status-mutants.py --root .
+          python3 Tools/check-wist-documentation-first-contact.py --root . --skip-compile
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          counts = json.loads(Path('eng/test-counts.json').read_text(encoding='utf-8'))
+          assert counts['totalPassed'] == 1276, counts
+          dialects = next(x for x in counts['main'] if x['label'] == 'Dialects')
+          assert dialects['expectedPassed'] == 253, dialects
+          surface = json.loads(Path('eng/wist-package-surface.json').read_text(encoding='utf-8'))
+          assert surface['schemaVersion'] == 4, surface
+          assert 'runtimeManifests' not in surface
+          assert 'runtimeManifestSha256' not in surface
+          assert 'System.Reflection.MetadataLoadContext.dll' not in surface['runtimeAssemblies']
+          PY
+          git write-tree > "$RUNNER_TEMP/s14.tree.before"
+
+      - name: Canonical Linux build/test before mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./build.sh --skip-docs --skip-pack
+          git diff --exit-code
+          tree_after="$(git write-tree)"
+          test "$tree_after" = "$(cat "$RUNNER_TEMP/s14.tree.before")"
+
+      - name: Create and push one causal S14 commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_target="$(git ls-remote origin "refs/heads/${TARGET_BRANCH}" | awk '{print $1}')"
+          test "$remote_target" = "$EXPECTED_BASE_SHA"
+          tree="$(git write-tree)"
+          test "$tree" = "$(cat "$RUNNER_TEMP/s14.tree.before")"
+          export GIT_AUTHOR_NAME='github-actions[bot]'
+          export GIT_AUTHOR_EMAIL='41898282+github-actions[bot]@users.noreply.github.com'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          commit="$(printf '%s\n' 'arch(s14): retire runtime-manifest activation representation' | git commit-tree "$tree" -p "$EXPECTED_BASE_SHA")"
+          test "$(git rev-parse "${commit}^")" = "$EXPECTED_BASE_SHA"
+          git push origin "${commit}:refs/heads/${TARGET_BRANCH}"
+          pushed="$(git ls-remote origin "refs/heads/${TARGET_BRANCH}" | awk '{print $1}')"
+          test "$pushed" = "$commit"
+          echo "S14_COMMIT=$commit"
+          echo "S14_TREE=$tree"
