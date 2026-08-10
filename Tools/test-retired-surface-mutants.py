@@ -64,6 +64,7 @@ def main() -> int:
             ("build.sh", "EmitDialectRuntimeManifest"),
             ("UniversalToolchain/Example/Returned.csproj", "CopyReferencedDialectRuntimeManifests"),
             ("docs/returned.md", "IncludeRuntimeManifestsInPackage"),
+            ("UniversalToolchain/UniversalToolchain.Wist/Returned.targets", "GetBuiltWistOutputDirectory"),
         ]):
             mutant = tmp / f"text-{index}"
             target = mutant / relative
