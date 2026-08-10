@@ -80,3 +80,270 @@ jobs:
       - name: Run canonical PowerShell build and test entrypoint
         shell: pwsh
         run: ./build.ps1 -SkipDocs -SkipPack
+
+  compilationlab-s15-apply:
+    if: github.event_name == 'pull_request' && github.head_ref == 'compilationlab/s15-final-lock-20260810'
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    env:
+      EXPECTED_BASE_SHA: 2fe52822250b72e83c6c493d153dd45c0edd3804
+      TARGET_BRANCH: migration/s15-final-architecture-lock-20260810
+
+    steps:
+      - name: Checkout helper head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+
+      - name: Apply final zero-reference and gate lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.event.pull_request.base.sha }}" = "$EXPECTED_BASE_SHA"
+          remote_target="$(git ls-remote origin "refs/heads/${TARGET_BRANCH}" | awk '{print $1}')"
+          test "$remote_target" = "$EXPECTED_BASE_SHA"
+          git checkout --detach "$EXPECTED_BASE_SHA"
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+
+          registry_path = Path('eng/retired-surface.json')
+          data = json.loads(registry_path.read_text(encoding='utf-8'))
+          if data.get('schemaVersion') != 1:
+              raise SystemExit(f"unexpected retired-surface schema: {data.get('schemaVersion')!r}")
+          paths = data.get('paths')
+          if not isinstance(paths, list):
+              raise SystemExit('retired-surface paths must be a list')
+          required_paths = [
+              'UniversalToolchain/Directory.Build.targets',
+              'docs/write-modules/runtime-manifests.md',
+              'docs/runtime-manifest-format.md',
+              'docs/runtime-manifest-activation-model.md',
+          ]
+          already = [value for value in required_paths if value in paths]
+          if already:
+              raise SystemExit(f'unexpected pre-existing S15 retired paths: {already}')
+          paths.extend(required_paths)
+          if 'currentTextPatterns' in data:
+              raise SystemExit('currentTextPatterns unexpectedly exists before S15')
+          data['currentTextPatterns'] = [
+              {
+                  'name': 'retired dialect runtime-manifest emitter owner',
+                  'pattern': r'UniversalToolchain\.Dialects\.ManifestEmitter',
+              },
+              {
+                  'name': 'retired dialect runtime-manifest emit target',
+                  'pattern': r'\bEmitDialectRuntimeManifest\b',
+              },
+              {
+                  'name': 'retired referenced runtime-manifest copy target',
+                  'pattern': r'\bCopyReferencedDialectRuntimeManifests\b',
+              },
+              {
+                  'name': 'retired runtime-manifest packaging switch',
+                  'pattern': r'\bIncludeRuntimeManifestsInPackage\b',
+              },
+          ]
+          registry_path.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+          PY
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('Tools/check-retired-surface.py')
+          text = path.read_text(encoding='utf-8')
+          helper_marker = '\n\ndef validate(root: Path, registry_path: Path) -> list[str]:\n'
+          if text.count(helper_marker) != 1:
+              raise SystemExit('retired-surface validate insertion anchor mismatch')
+          helpers = r'''
+
+          CURRENT_TEXT_SUFFIXES_BY_ROOT = {
+              ".github/workflows": frozenset({".yml", ".yaml"}),
+              "UniversalToolchain": frozenset({".csproj", ".props", ".targets", ".sln", ".slnx", ".md"}),
+              "samples": frozenset({".csproj", ".props", ".targets", ".md"}),
+              "docs": frozenset({".md", ".mts", ".ts"}),
+          }
+          CURRENT_DOC_EXCLUDED = frozenset({"archive", "reviews", "proposals", "talks", "maintainers", "vision"})
+
+
+          def current_text_surfaces(root: Path):
+              for relative in ("build.sh", "build.ps1"):
+                  path = root / relative
+                  if path.is_file():
+                      yield path
+              for relative_root, suffixes in CURRENT_TEXT_SUFFIXES_BY_ROOT.items():
+                  base = root / relative_root
+                  if not base.is_dir():
+                      continue
+                  for path in sorted(base.rglob("*")):
+                      if not path.is_file() or path.suffix.lower() not in suffixes:
+                          continue
+                      relative = path.relative_to(root)
+                      if any(part in EXCLUDED for part in relative.parts):
+                          continue
+                      if relative.parts and relative.parts[0] == "docs" and any(
+                          part in CURRENT_DOC_EXCLUDED for part in relative.parts[1:]
+                      ):
+                          continue
+                      yield path
+          '''
+          helpers = '\n'.join(line[10:] if line.startswith('          ') else line for line in helpers.splitlines())
+          text = text.replace(helper_marker, helpers + helper_marker, 1)
+          return_marker = '    return violations\n\n\ndef main() -> int:\n'
+          if text.count(return_marker) != 1:
+              raise SystemExit('retired-surface return insertion anchor mismatch')
+          scan = r'''    text_entries = data.get("currentTextPatterns", [])
+          if not isinstance(text_entries, list):
+              raise ValueError("currentTextPatterns must be a list")
+          text_patterns = [
+              (entry["name"], re.compile(entry["pattern"]))
+              for entry in text_entries
+          ]
+          for path in current_text_surfaces(root):
+              source = path.read_text(encoding="utf-8-sig")
+              for name, pattern in text_patterns:
+                  if pattern.search(source):
+                      violations.append(
+                          f"{name} returned in current text surface {path.relative_to(root).as_posix()}"
+                      )
+          return violations
+
+
+          def main() -> int:
+          '''
+          scan = '\n'.join(line[10:] if line.startswith('          ') else line for line in scan.splitlines())
+          text = text.replace(return_marker, scan, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('Tools/test-retired-surface-mutants.py')
+          text = path.read_text(encoding='utf-8')
+          path_anchor = '''            "UniversalToolchain/UniversalToolchain.Dialects.Abstractions/DialectRuntimeExportAttribute.cs",\n        ]):'''
+          if text.count(path_anchor) != 1:
+              raise SystemExit('retired path mutant anchor mismatch')
+          path_replacement = '''            "UniversalToolchain/UniversalToolchain.Dialects.Abstractions/DialectRuntimeExportAttribute.cs",\n            "UniversalToolchain/Directory.Build.targets",\n            "docs/write-modules/runtime-manifests.md",\n            "docs/runtime-manifest-format.md",\n            "docs/runtime-manifest-activation-model.md",\n        ]):'''
+          text = text.replace(path_anchor, path_replacement, 1)
+          symbol_anchor = '''            print(f"SURVIVOR=0 mutant=retired-symbol-{index}")\n    return 0\n'''
+          if text.count(symbol_anchor) != 1:
+              raise SystemExit('retired text mutant insertion anchor mismatch')
+          text_loop = '''            print(f"SURVIVOR=0 mutant=retired-symbol-{index}")\n        for index, (relative, token) in enumerate([\n            (".github/workflows/returned.yml", "UniversalToolchain.Dialects.ManifestEmitter"),\n            ("build.sh", "EmitDialectRuntimeManifest"),\n            ("UniversalToolchain/Example/Returned.csproj", "CopyReferencedDialectRuntimeManifests"),\n            ("docs/returned.md", "IncludeRuntimeManifestsInPackage"),\n        ]):\n            mutant = tmp / f"text-{index}"\n            target = mutant / relative\n            target.parent.mkdir(parents=True, exist_ok=True)\n            target.write_text(token + "\\n", encoding="utf-8")\n            if run(checker, mutant, temp_registry) == 0:\n                raise RuntimeError(f"retired current-text mutant survived: {relative}: {token}")\n            print(f"SURVIVOR=0 mutant=retired-current-text-{index}")\n    return 0\n'''
+          text = text.replace(symbol_anchor, text_loop, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('Tools/check-build-topology.py')
+          text = path.read_text(encoding='utf-8')
+          bash_anchor = '''    bash_runtime = require_one(\n        bash,\n        r"^\\s*python3\\s+Tools/test-build-topology-runtime\\.py\\b",\n        "build.sh runtime topology invocation",\n    )\n    bash_restore = bash.index('\"$dotnet_command\" restore')\n'''
+          if text.count(bash_anchor) != 1:
+              raise SystemExit('build-topology bash insertion anchor mismatch')
+          bash_replacement = '''    bash_runtime = require_one(\n        bash,\n        r"^\\s*python3\\s+Tools/test-build-topology-runtime\\.py\\b",\n        "build.sh runtime topology invocation",\n    )\n    bash_retired = require_one(\n        bash,\n        r"^\\s*python3\\s+Tools/check-retired-surface\\.py\\b",\n        "build.sh retired surface checker invocation",\n    )\n    bash_retired_mutants = require_one(\n        bash,\n        r"^\\s*python3\\s+Tools/test-retired-surface-mutants\\.py\\b",\n        "build.sh retired surface mutant invocation",\n    )\n    bash_restore = bash.index('\"$dotnet_command\" restore')\n'''
+          text = text.replace(bash_anchor, bash_replacement, 1)
+
+          ps_anchor = '''    ps_runtime = require_one(\n        powershell,\n        r'Invoke-CheckedNative\\s+"python"\\s+@\\(\\s*"Tools/test-build-topology-runtime\\.py"',\n        "build.ps1 runtime topology invocation",\n    )\n    ps_restore = powershell.index("Invoke-CheckedNative $dotnet (New-RestoreArguments $solution)")\n'''
+          if text.count(ps_anchor) != 1:
+              raise SystemExit('build-topology PowerShell insertion anchor mismatch')
+          ps_replacement = '''    ps_runtime = require_one(\n        powershell,\n        r'Invoke-CheckedNative\\s+"python"\\s+@\\(\\s*"Tools/test-build-topology-runtime\\.py"',\n        "build.ps1 runtime topology invocation",\n    )\n    ps_retired = require_one(\n        powershell,\n        r'Invoke-CheckedNative\\s+"python"\\s+@\\("Tools/check-retired-surface\\.py"',\n        "build.ps1 retired surface checker invocation",\n    )\n    ps_retired_mutants = require_one(\n        powershell,\n        r'Invoke-CheckedNative\\s+"python"\\s+@\\("Tools/test-retired-surface-mutants\\.py"',\n        "build.ps1 retired surface mutant invocation",\n    )\n    ps_restore = powershell.index("Invoke-CheckedNative $dotnet (New-RestoreArguments $solution)")\n'''
+          text = text.replace(ps_anchor, ps_replacement, 1)
+
+          pack_anchor = '''    bash_pack = bash.index('if [[ "$skip_pack" == false ]]')\n    ps_pack = powershell.index("if (-not $SkipPack)")\n    release_invocations = (\n'''
+          if text.count(pack_anchor) != 1:
+              raise SystemExit('build-topology retired gate order anchor mismatch')
+          pack_replacement = '''    bash_pack = bash.index('if [[ "$skip_pack" == false ]]')\n    ps_pack = powershell.index("if (-not $SkipPack)")\n    for description, position in (\n        ("build.sh retired surface checker", bash_retired),\n        ("build.sh retired surface mutants", bash_retired_mutants),\n    ):\n        if not bash_tests < position < bash_pack:\n            raise BuildTopologyError(f"{description} must run after the test contract and before packaging")\n    for description, position in (\n        ("build.ps1 retired surface checker", ps_retired),\n        ("build.ps1 retired surface mutants", ps_retired_mutants),\n    ):\n        if not ps_tests < position < ps_pack:\n            raise BuildTopologyError(f"{description} must run after the test contract and before packaging")\n    release_invocations = (\n'''
+          text = text.replace(pack_anchor, pack_replacement, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('Tools/test-build-topology-mutants.py')
+          text = path.read_text(encoding='utf-8')
+          anchor = '''        (\n            "windows-powershell-job-disabled",\n'''
+          if text.count(anchor) != 1:
+              raise SystemExit('build-topology mutant insertion anchor mismatch')
+          additions = '''        (\n            "bash-retired-surface-check-disabled",\n            lambda path: replace_once(\n                path / "build.sh",\n                "Tools/check-retired-surface.py",\n                "Tools/check-retired-surface.disabled.py",\n            ),\n            "build.sh retired surface checker invocation",\n        ),\n        (\n            "bash-retired-surface-mutants-disabled",\n            lambda path: replace_once(\n                path / "build.sh",\n                "Tools/test-retired-surface-mutants.py",\n                "Tools/test-retired-surface-mutants.disabled.py",\n            ),\n            "build.sh retired surface mutant invocation",\n        ),\n        (\n            "powershell-retired-surface-check-disabled",\n            lambda path: replace_once(\n                path / "build.ps1",\n                "Tools/check-retired-surface.py",\n                "Tools/check-retired-surface.disabled.py",\n            ),\n            "build.ps1 retired surface checker invocation",\n        ),\n        (\n            "powershell-retired-surface-mutants-disabled",\n            lambda path: replace_once(\n                path / "build.ps1",\n                "Tools/test-retired-surface-mutants.py",\n                "Tools/test-retired-surface-mutants.disabled.py",\n            ),\n            "build.ps1 retired surface mutant invocation",\n        ),\n'''
+          text = text.replace(anchor, additions + anchor, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          git add \
+            eng/retired-surface.json \
+            Tools/check-retired-surface.py \
+            Tools/test-retired-surface-mutants.py \
+            Tools/check-build-topology.py \
+            Tools/test-build-topology-mutants.py
+          git diff --cached --check
+          actual="$(git diff --cached --name-only)"
+          expected="$(printf '%s\n' \
+            Tools/check-build-topology.py \
+            Tools/check-retired-surface.py \
+            Tools/test-build-topology-mutants.py \
+            Tools/test-retired-surface-mutants.py \
+            eng/retired-surface.json)"
+          test "$actual" = "$expected"
+          python3 -m py_compile \
+            Tools/check-build-topology.py \
+            Tools/check-retired-surface.py \
+            Tools/test-build-topology-mutants.py \
+            Tools/test-retired-surface-mutants.py
+          python3 Tools/check-build-topology.py --root .
+          python3 Tools/test-build-topology-mutants.py --root .
+          python3 Tools/check-retired-surface.py --root .
+          python3 Tools/test-retired-surface-mutants.py --root .
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('eng/retired-surface.json').read_text(encoding='utf-8'))
+          required_paths = {
+              'UniversalToolchain/Directory.Build.targets',
+              'docs/write-modules/runtime-manifests.md',
+              'docs/runtime-manifest-format.md',
+              'docs/runtime-manifest-activation-model.md',
+          }
+          assert required_paths <= set(data['paths'])
+          assert len(data['currentTextPatterns']) == 4
+          PY
+          tree="$(git write-tree)"
+          echo "$tree" > "$RUNNER_TEMP/s15.tree"
+
+      - name: Canonical Linux build/test before mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./build.sh --skip-docs --skip-pack
+          git diff --exit-code
+          test "$(git write-tree)" = "$(cat "$RUNNER_TEMP/s15.tree")"
+
+      - name: Push one causal S15 commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_target="$(git ls-remote origin "refs/heads/${TARGET_BRANCH}" | awk '{print $1}')"
+          test "$remote_target" = "$EXPECTED_BASE_SHA"
+          tree="$(git write-tree)"
+          test "$tree" = "$(cat "$RUNNER_TEMP/s15.tree")"
+          export GIT_AUTHOR_NAME='github-actions[bot]'
+          export GIT_AUTHOR_EMAIL='41898282+github-actions[bot]@users.noreply.github.com'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          commit="$(printf '%s\n' 'arch(s15): lock retired architecture surfaces' | git commit-tree "$tree" -p "$EXPECTED_BASE_SHA")"
+          test "$(git rev-parse "${commit}^")" = "$EXPECTED_BASE_SHA"
+          git push origin "${commit}:refs/heads/${TARGET_BRANCH}"
+          pushed="$(git ls-remote origin "refs/heads/${TARGET_BRANCH}" | awk '{print $1}')"
+          test "$pushed" = "$commit"
+          echo "S15_COMMIT=$commit"
+          echo "S15_TREE=$tree"
