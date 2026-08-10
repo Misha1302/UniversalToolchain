@@ -1,0 +1,44 @@
+name: CompilationLab Source Export EB13
+
+on:
+  pull_request:
+    branches:
+      - migration/languageplan-single-runtime-20260807
+    paths:
+      - ".github/workflows/compilationlab-source-export-eb13.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    env:
+      EXPECTED_SOURCE_SHA: eb13f645a7f3f6ab65d77262429f69a6d74a9427
+      SOURCE_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Checkout scratch head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
+      - name: Verify source parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_HEAD_SHA"
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_SOURCE_SHA"
+      - name: Archive exact source revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          git archive --format=tar.gz --output="artifacts/wist2-${EXPECTED_SOURCE_SHA}.tar.gz" "$EXPECTED_SOURCE_SHA"
+          printf '%s\n' "$EXPECTED_SOURCE_SHA" > artifacts/SOURCE_SHA
+      - name: Upload exact source
+        uses: actions/upload-artifact@v4
+        with:
+          name: compilationlab-source-${{ env.EXPECTED_SOURCE_SHA }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 1
