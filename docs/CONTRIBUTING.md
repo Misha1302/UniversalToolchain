@@ -64,7 +64,7 @@ Contributor rules:
 - `LanguageRuntime` materializes the exact graph captured by `LanguagePlan`; materialization must not add features, change order or choose another backend.
 - Runtime component sources must match exact package provenance for materialized components.
 - Tooling-only planned contributions must not become runtime dependencies merely because they are present in the plan.
-- `UniversalToolchain.Dialects.Wist` is compatibility-only and non-packable; canonical Wist production projects must not depend on it.
+- `UniversalToolchain.Dialects.Integration` and `UniversalToolchain.Dialects.Wist` are retired S13 topology owners and must not be recreated or referenced; use typed Language SDK/runtime contracts instead.
 - Treat shipped example dialects as runnable references and keep their source/configuration semantics aligned with the canonical planner.
 - Add or update architecture guardrails when changing canonical owner boundaries.
 

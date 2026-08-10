@@ -1,13 +1,11 @@
 using BasicCore.Builtins;
 using BasicCore.Capabilities;
-using UniversalToolchain.Dialects.Integration;
 
 namespace NativeMathModule;
 
 [DialectOptimizerAlias("EGraphOptimization")]
 [DialectRuntimeExport("Optimizer", "EGraphOptimization")]
 [AutoRegisterService]
-[IntrinsicDescriptorProvider(typeof(ArithmeticIntrinsicDescriptorProvider))]
 [ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class EGraphOptimizerModule : IAirOptimizer
 {

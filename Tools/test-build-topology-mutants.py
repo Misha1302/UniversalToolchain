@@ -11,14 +11,6 @@ from collections.abc import Callable
 from pathlib import Path
 
 
-DIALECT_TEST_PROJECT = Path(
-    "UniversalToolchain/UniversalToolchain.Dialects.Tests/"
-    "UniversalToolchain.Dialects.Tests.csproj"
-)
-FRESH_PROCESS_HOST_PROJECT = Path(
-    "UniversalToolchain/UniversalToolchain.Dialects.Tests/FreshProcess/"
-    "RuntimeSharedAssemblyFreshProcessHost/RuntimeSharedAssemblyFreshProcessHost.csproj"
-)
 LANGUAGE_PACK_PROJECT = Path(
     "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/"
     "UniversalToolchain.Wist.LanguagePack.csproj"
@@ -199,18 +191,10 @@ def main() -> int:
     Mutation = tuple[str, Callable[[Path], None], str]
     mutations: tuple[Mutation, ...] = (
         (
-            "dialect-build-order-copy-local",
+            "emitter-build-order-copy-local",
             lambda path: mutate_project_reference(
-                path / DIALECT_TEST_PROJECT,
-                "RuntimeSharedAssemblyFreshProcessHost.csproj",
-            ),
-            "repository build-order ProjectReference",
-        ),
-        (
-            "fixture-build-order-copy-local",
-            lambda path: mutate_project_reference(
-                path / FRESH_PROCESS_HOST_PROJECT,
-                "CanonicalRuntimeFixture.csproj",
+                path / LANGUAGE_PACK_PROJECT,
+                "$(FeatureManifestEmitterProjectPath)",
             ),
             "repository build-order ProjectReference",
         ),

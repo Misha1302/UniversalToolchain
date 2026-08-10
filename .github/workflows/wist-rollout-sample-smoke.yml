@@ -6,7 +6,7 @@ on:
       - 'readme.md'
       - 'samples/Wist.RolloutScoring/**'
       - 'UniversalToolchain/UniversalToolchain.Wist/**'
-      - 'UniversalToolchain/UniversalToolchain.Dialects.Wist/**'
+      - 'UniversalToolchain/UniversalToolchain.Wist.LanguagePack/**'
       - 'UniversalToolchain/Dialects/examples/wist/pricing-restricted/**'
       - 'build.sh'
       - 'build.ps1'

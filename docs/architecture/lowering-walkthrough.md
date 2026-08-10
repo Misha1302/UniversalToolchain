@@ -38,7 +38,7 @@ Representative implementation owners:
 | Bytecode to AIR | `UniversalToolchain/AbstractIrConverters/BytecodeToAbstractIrConverterImpl.cs` |
 | native arithmetic specialization | `UniversalToolchain/NativeMathModule/NativeCILOptimizerModule.cs` |
 | CIL intrinsic lowering | `UniversalToolchain/BytecodeDynamicMethodsCompiler/Compilers/CilIntrinsicRegistry.cs` |
-| generic artifact/session boundary | `UniversalToolchain/UniversalToolchain.Dialects.Integration` |
+| generic artifact/session boundary | `UniversalToolchain/UniversalToolchain.Runtime` |
 
 Bytecode and AIR are separate semantic boundaries. Frontend modules do not emit `DynamicMethod` or backend-specific instructions directly.
 

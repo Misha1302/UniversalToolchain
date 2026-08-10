@@ -88,11 +88,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Dialects
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Dialects.Parsing", "UniversalToolchain.Dialects.Parsing\UniversalToolchain.Dialects.Parsing.csproj", "{8D62448A-840E-41ED-AF00-197D62514ABD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Dialects.Integration", "UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj", "{0D2A7558-31CE-465E-B714-B0FBF03F90B4}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Dialects.Frontend", "UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj", "{0FEE2AC0-C01F-42AA-9FC6-4F7C90B4DDA3}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Dialects.Wist", "UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj", "{523486E4-D53F-4147-AB0D-5B2A5ACE6468}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Dialects.ManifestEmitter", "UniversalToolchain.Dialects.ManifestEmitter\UniversalToolchain.Dialects.ManifestEmitter.csproj", "{9A7E394D-8F28-450C-99E1-D58C72F8D4A9}"
 EndProject
@@ -706,18 +702,6 @@ Global
 		{8D62448A-840E-41ED-AF00-197D62514ABD}.Release|x64.Build.0 = Release|Any CPU
 		{8D62448A-840E-41ED-AF00-197D62514ABD}.Release|x86.ActiveCfg = Release|Any CPU
 		{8D62448A-840E-41ED-AF00-197D62514ABD}.Release|x86.Build.0 = Release|Any CPU
-		{0D2A7558-31CE-465E-B714-B0FBF03F90B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0D2A7558-31CE-465E-B714-B0FBF03F90B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0D2A7558-31CE-465E-B714-B0FBF03F90B4}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{0D2A7558-31CE-465E-B714-B0FBF03F90B4}.Debug|x64.Build.0 = Debug|Any CPU
-		{0D2A7558-31CE-465E-B714-B0FBF03F90B4}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{0D2A7558-31CE-465E-B714-B0FBF03F90B4}.Debug|x86.Build.0 = Debug|Any CPU
-		{0D2A7558-31CE-465E-B714-B0FBF03F90B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0D2A7558-31CE-465E-B714-B0FBF03F90B4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0D2A7558-31CE-465E-B714-B0FBF03F90B4}.Release|x64.ActiveCfg = Release|Any CPU
-		{0D2A7558-31CE-465E-B714-B0FBF03F90B4}.Release|x64.Build.0 = Release|Any CPU
-		{0D2A7558-31CE-465E-B714-B0FBF03F90B4}.Release|x86.ActiveCfg = Release|Any CPU
-		{0D2A7558-31CE-465E-B714-B0FBF03F90B4}.Release|x86.Build.0 = Release|Any CPU
 		{0FEE2AC0-C01F-42AA-9FC6-4F7C90B4DDA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0FEE2AC0-C01F-42AA-9FC6-4F7C90B4DDA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0FEE2AC0-C01F-42AA-9FC6-4F7C90B4DDA3}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -730,18 +714,6 @@ Global
 		{0FEE2AC0-C01F-42AA-9FC6-4F7C90B4DDA3}.Release|x64.Build.0 = Release|Any CPU
 		{0FEE2AC0-C01F-42AA-9FC6-4F7C90B4DDA3}.Release|x86.ActiveCfg = Release|Any CPU
 		{0FEE2AC0-C01F-42AA-9FC6-4F7C90B4DDA3}.Release|x86.Build.0 = Release|Any CPU
-		{523486E4-D53F-4147-AB0D-5B2A5ACE6468}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{523486E4-D53F-4147-AB0D-5B2A5ACE6468}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{523486E4-D53F-4147-AB0D-5B2A5ACE6468}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{523486E4-D53F-4147-AB0D-5B2A5ACE6468}.Debug|x64.Build.0 = Debug|Any CPU
-		{523486E4-D53F-4147-AB0D-5B2A5ACE6468}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{523486E4-D53F-4147-AB0D-5B2A5ACE6468}.Debug|x86.Build.0 = Debug|Any CPU
-		{523486E4-D53F-4147-AB0D-5B2A5ACE6468}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{523486E4-D53F-4147-AB0D-5B2A5ACE6468}.Release|Any CPU.Build.0 = Release|Any CPU
-		{523486E4-D53F-4147-AB0D-5B2A5ACE6468}.Release|x64.ActiveCfg = Release|Any CPU
-		{523486E4-D53F-4147-AB0D-5B2A5ACE6468}.Release|x64.Build.0 = Release|Any CPU
-		{523486E4-D53F-4147-AB0D-5B2A5ACE6468}.Release|x86.ActiveCfg = Release|Any CPU
-		{523486E4-D53F-4147-AB0D-5B2A5ACE6468}.Release|x86.Build.0 = Release|Any CPU
 		{9A7E394D-8F28-450C-99E1-D58C72F8D4A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9A7E394D-8F28-450C-99E1-D58C72F8D4A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9A7E394D-8F28-450C-99E1-D58C72F8D4A9}.Debug|x64.ActiveCfg = Debug|Any CPU

@@ -3,14 +3,12 @@ using BasicCore.Builtins;
 using BasicCore.Capabilities;
 using BasicCore.Execution;
 using IntermediateRepresentationAbstractions;
-using UniversalToolchain.Dialects.Integration;
 
 namespace NativeMathModule;
 
 [DialectOptimizerAlias("NativeCilOptimization")]
 [DialectRuntimeExport("Optimizer", "NativeCilOptimization")]
 [AutoRegisterService]
-[IntrinsicDescriptorProvider(typeof(CoreIntrinsicDescriptorProvider))]
 [ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class NativeCilOptimizerModule : IAirOptimizer
 {

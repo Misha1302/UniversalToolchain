@@ -137,6 +137,43 @@ public sealed class WistMigrationGateTests
     }
 
     [Test]
+    public void LegacyRuntimeTopologyProjects_ArePhysicallyRetiredAndUnreferenced()
+    {
+        var root = FindRepositoryRoot();
+        string[] retiredProjects =
+        [
+            "UniversalToolchain/UniversalToolchain.Dialects.Integration",
+            "UniversalToolchain/UniversalToolchain.Dialects.Wist"
+        ];
+
+        var violations = new List<string>();
+        foreach (var relative in retiredProjects)
+        {
+            var absolute = Path.Combine(root, relative.Replace('/', Path.DirectorySeparatorChar));
+            if (Directory.Exists(absolute) || File.Exists(absolute + ".csproj"))
+                violations.Add($"Retired topology owner returned: {relative}");
+        }
+
+        string[] retiredReferenceFragments =
+        [
+            "UniversalToolchain.Dialects.Integration",
+            "UniversalToolchain.Dialects.Wist"
+        ];
+        foreach (var project in Directory.EnumerateFiles(Path.Combine(root, "UniversalToolchain"), "*.csproj", SearchOption.AllDirectories))
+        {
+            var text = File.ReadAllText(project);
+            foreach (var fragment in retiredReferenceFragments)
+            {
+                if (text.Contains(fragment, StringComparison.Ordinal))
+                    violations.Add($"ProjectReference/build edge still targets retired topology owner '{fragment}': {NormalizePath(Path.GetRelativePath(root, project))}");
+            }
+        }
+
+        Assert.That(violations, Is.Empty,
+            "S13 removes the reflection/runtime-profile compatibility topology instead of keeping it as a transitive dependency or build-order container.");
+    }
+
+    [Test]
     public void RemovedLegacySurface_CannotReturn()
     {
         var root = FindRepositoryRoot();

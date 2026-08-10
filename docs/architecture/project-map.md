@@ -3,7 +3,7 @@ title: Physical Project Map
 description: Map architectural roles to projects, key types and tests.
 audience: framework-contributor
 status: current
-lastVerifiedAgainst: planfuzz-phase0-phase1-integration
+lastVerifiedAgainst: s13-topology-cleanup
 ---
 
 # Physical project map
@@ -46,11 +46,11 @@ They are grouped in `UniversalToolchain/PlanFuzz.sln`; `build.sh` and `build.ps1
 | AST/Bytecode contracts | `BasicCore`, `UniversalToolchain` feature modules |
 | Bytecode to AIR | `AbstractIrConverters` |
 | AIR contracts and operations | `UniversalToolchain.Ir.Abstractions`, `UniversalIntermediateRepresentation` |
-| capabilities and selected runtime | `UniversalToolchain.Capabilities.*`, `UniversalToolchain.Dialects.*` |
+| capabilities and selected runtime | `UniversalToolchain.Capabilities.*`, `UniversalToolchain.LanguageSdk`, `UniversalToolchain.Runtime` |
 | reference execution | `BasicInterpreter` |
 | CIL execution | `BasicCilCompiler`, `BytecodeDynamicMethodsCompiler` |
 | SSA experiment | `UniversalToolchain.Ssa.*`, Wist SSA adapter/projects |
-| Wist dialect integration | `UniversalToolchain.Dialects.Wist` |
+| Wist typed runtime package | `UniversalToolchain.Wist.LanguagePack` |
 | public formula facade | `UniversalToolchain.Wist` |
 | CLI | `Wistc` |
 | product sample | `samples/Wist.RolloutScoring` |

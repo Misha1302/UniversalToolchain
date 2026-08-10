@@ -10,8 +10,6 @@ on:
       - "UniversalToolchain/Benchmarks/**"
       - "UniversalToolchain/UniversalToolchain.Wist/**/*.cs"
       - "UniversalToolchain/UniversalToolchain.Wist/**/*.csproj"
-      - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**/*.cs"
-      - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**/*.csproj"
       - "UniversalToolchain/UniversalToolchain.LanguageSdk/**/*.cs"
       - "UniversalToolchain/UniversalToolchain.LanguageSdk/**/*.csproj"
       - "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/**/*.cs"

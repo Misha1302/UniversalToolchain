@@ -85,15 +85,13 @@ Bytecode and AIR remain separate semantic boundaries. Interpreter/CIL parity is 
 - backend, security and intrinsic policy are translated to typed generic contracts before planning.
 - source identity remains provenance-bearing; semantic equivalence across different source names must not be inferred from `PlanHash` equality.
 
-## Compatibility/generic dialect infrastructure boundary
+## Retired compatibility topology boundary
 
-The repository still contains generic dialect-integration infrastructure such as runtime-manifest serialization/emission, `RuntimeProfileDefinition` and `ToolchainRuntimeHost` for compatibility, tooling or generic integration contracts.
+S13 physically removes the old `UniversalToolchain.Dialects.Integration` reflection/runtime-profile host and the non-packable `UniversalToolchain.Dialects.Wist` compatibility project. They are no longer available as transitive dependency containers, build-order helpers, runtime selectors or compatibility owners.
 
-These types are **not** the current Wist semantic planner or public execution host. Runtime manifests must not get a second chance to change a Wist `LanguagePlan`.
+Runtime-manifest **emission metadata** remains a separate tooling concern through `DialectRuntimeExportAttribute` and `UniversalToolchain.Dialects.ManifestEmitter`; it does not select Wist execution components. Canonical Wist selection remains `LanguageDefinition -> LanguageCompiler -> LanguagePlan -> LanguageRuntime`.
 
-`UniversalToolchain.Dialects.Wist` remains a non-packable compatibility-only project. Canonical Wist production projects are architecture-guarded from depending on it as a runtime/planning owner.
-
-The retired orchestration surface now spans both S11 and S12. S11 removed `DialectBuildPlan`, `SelectedRuntimePlan`, `SelectedRuntimePlanResolver`, `ToolchainCompositionWorkflow`, `WistDialectExecutionWorkflow`, `WistDialectExecutionHost` and `WistDialectPlanFactory`. S12 removes the independent BasicCore end-to-end owners `BasicCoreImpl` and `PreparedExecutionBuilder`. Architecture tests and the retired-surface manifest reject reintroduction of either planning/runtime path.
+The retired orchestration surface spans S11-S13: old dialect build/runtime planning, BasicCore end-to-end orchestration, runtime-profile/reflection host topology and compatibility Wist runtime owners are all guarded against reintroduction.
 
 ## Module/IR verification boundary
 
@@ -136,7 +134,7 @@ The study is bounded evidence for the exact UniversalToolchain boundaries and au
 - runtime component traits are package attestations, not hostile-extension proof;
 - typed metadata coverage is an engineering contract, not a formal proof of semantic completeness;
 - no hardened in-process sandbox is claimed;
-- generic runtime-profile/manifest/host compatibility infrastructure has not all been removed simply because Wist no longer uses it as its semantic owner;
+- runtime-manifest emission remains metadata tooling only; the generic runtime-profile/reflection host topology itself is retired;
 - S12 retires the old BasicCore end-to-end orchestration island; reusable BasicCore stage contracts remain while topology cleanup continues in S13;
 - release-package compatibility requires reviewed external baseline artifacts and is separate from ordinary CI.
 
