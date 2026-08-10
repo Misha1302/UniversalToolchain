@@ -60,9 +60,9 @@ jobs:
           import json
           from pathlib import Path
           data = json.loads(Path('eng/test-counts.json').read_text(encoding='utf-8'))
-          assert data['totalExpected'] == 1396, data
-          core = next(x for x in data['entries'] if x['label'] == 'Core')
-          assert core['expected'] == 528, core
+          assert data['totalPassed'] == 1396, data
+          core = next(x for x in data['main'] if x['label'] == 'Core')
+          assert core['expectedPassed'] == 528, core
           PY
 
       - name: Create one causal S12 commit
