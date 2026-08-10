@@ -22,12 +22,16 @@ EMITTER_PROJECT = Path(
 WIST_PROJECT = Path(
     "UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj"
 )
+WIST_ENGINE = Path("UniversalToolchain/UniversalToolchain.Wist/WistEngine.cs")
 DOTNET_WORKFLOW = Path(".github/workflows/dotnet-ci.yml")
+BENCHMARK_WORKFLOW = Path(".github/workflows/benchmark-smoke.yml")
 SUPPORT_FILES = (
     Path("build.sh"),
     Path("build.ps1"),
     Path("Tools/test-build-topology-runtime.py"),
+    WIST_ENGINE,
     DOTNET_WORKFLOW,
+    BENCHMARK_WORKFLOW,
 )
 
 
@@ -321,6 +325,24 @@ def main() -> int:
                 "$(MSBuildThisFileDirectory)..\\UniversalToolchain.Wist\\$(OutputPath)",
             ),
             "instead of guessing output layout",
+        ),
+        (
+            "wist-engine-reintroduces-provider-registry-binding",
+            lambda path: replace_once(
+                path / WIST_ENGINE,
+                "new ILanguageRouteComponentSource[] { package },",
+                "new LanguageRuntimeProviderRegistry().AddProvider(new WistLanguageRuntimeProvider()),",
+            ),
+            "WistEngine must not reintroduce provider-registry/manual runtime binding",
+        ),
+        (
+            "benchmark-runtime-trigger-removed",
+            lambda path: replace_once(
+                path / BENCHMARK_WORKFLOW,
+                '      - "UniversalToolchain/UniversalToolchain.Runtime/**/*.cs"\n',
+                "",
+            ),
+            "Benchmark Smoke must trigger for every generic runtime/planning-input owner path",
         ),
         (
             "powershell-package-gate-disabled",
