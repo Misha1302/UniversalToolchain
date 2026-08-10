@@ -54,179 +54,51 @@
     "docs/runtime-manifest-activation-model.md"
   ],
   "symbols": [
-    {
-      "name": "runtime-pack reference",
-      "pattern": "\\bLanguageRuntimePackReference\\b"
-    },
-    {
-      "name": "runtime-pack interface",
-      "pattern": "\\bILanguageRuntimePack\\b"
-    },
-    {
-      "name": "runtime-pack builder method",
-      "pattern": "\\bUseRuntimePack\\s*\\("
-    },
-    {
-      "name": "legacy dialect adapter",
-      "pattern": "\\bWistLegacyDialectAdapter\\b"
-    },
-    {
-      "name": "preset enum",
-      "pattern": "\\bWistPreset\\b"
-    },
-    {
-      "name": "backend enum",
-      "pattern": "\\bWistBackend\\b"
-    },
-    {
-      "name": "enum facade",
-      "pattern": "\\bEnumGenerator\\b"
-    },
-    {
-      "name": "legacy directive option",
-      "pattern": "\\bEnableLegacyDirectiveDefinitions\\b"
-    },
-    {
-      "name": "legacy contract profile",
-      "pattern": "\\bStrictLegacyCompatible\\b"
-    },
-    {
-      "name": "legacy bytecode option",
-      "pattern": "\\bVerifyLegacyBytecodeOperationNames\\b"
-    },
-    {
-      "name": "retired optimizer",
-      "pattern": "\\bLocalVariablesOptimizer(?:Module)?\\b"
-    },
-    {
-      "name": "second planner build plan",
-      "pattern": "\\bDialectBuildPlan\\b"
-    },
-    {
-      "name": "second planner runtime plan",
-      "pattern": "\\bSelectedRuntimePlan\\b"
-    },
-    {
-      "name": "second planner resolver",
-      "pattern": "\\bSelectedRuntimePlanResolver\\b"
-    },
-    {
-      "name": "second planner workflow",
-      "pattern": "\\bToolchainCompositionWorkflow\\b"
-    },
-    {
-      "name": "retired Wist execution workflow",
-      "pattern": "\\bWistDialectExecutionWorkflow\\b"
-    },
-    {
-      "name": "retired Wist execution host",
-      "pattern": "\\bWistDialectExecutionHost\\b"
-    },
-    {
-      "name": "retired Wist dialect plan factory",
-      "pattern": "\\bWistDialectPlanFactory\\b"
-    },
-    {
-      "name": "retired Wist configuration view",
-      "pattern": "\\bWistDialectExecutionConfiguration\\b"
-    },
-    {
-      "name": "retired CIL registration helper",
-      "pattern": "\\bWistCilBackendServiceCollectionExtensions\\b"
-    },
-    {
-      "name": "retired interpreter registration helper",
-      "pattern": "\\bWistInterpreterBackendServiceCollectionExtensions\\b"
-    },
-    {
-      "name": "legacy BasicCore orchestration facade",
-      "pattern": "\\bBasicCoreImpl\\b"
-    },
-    {
-      "name": "legacy prepared execution orchestrator",
-      "pattern": "\\bPreparedExecutionBuilder\\b"
-    },
-    {
-      "name": "retired generic runtime host",
-      "pattern": "\\bToolchainRuntimeHost\\b"
-    },
-    {
-      "name": "retired runtime component catalog",
-      "pattern": "\\bIRuntimeComponentCatalog\\b"
-    },
-    {
-      "name": "retired runtime profile definition",
-      "pattern": "\\bRuntimeProfileDefinition\\b"
-    },
-    {
-      "name": "retired intrinsic provider annotation",
-      "pattern": "\\bIntrinsicDescriptorProviderAttribute\\b"
-    },
-    {
-      "name": "retired runtime provider policy interface",
-      "pattern": "\\bIRuntimeProviderPolicyComponent\\b"
-    },
-    {
-      "name": "retired runtime provider policy component",
-      "pattern": "\\bRuntimeProviderPolicyComponent\\b"
-    },
-    {
-      "name": "retired capability catalog bridge",
-      "pattern": "\\bKnownCapabilityCatalogBuilder\\b"
-    },
-    {
-      "name": "retired runtime export annotation",
-      "pattern": "\\bDialectRuntimeExportAttribute\\b"
-    },
-    {
-      "name": "retired runtime alias annotation",
-      "pattern": "\\bDialectRuntimeAliasAttribute\\b"
-    },
-    {
-      "name": "retired dialect alias annotation base",
-      "pattern": "\\bDialectAliasAttributeBase\\b"
-    },
-    {
-      "name": "retired dialect module alias annotation",
-      "pattern": "\\bDialectModuleAliasAttribute\\b"
-    },
-    {
-      "name": "retired dialect optimizer alias annotation",
-      "pattern": "\\bDialectOptimizerAliasAttribute\\b"
-    },
-    {
-      "name": "retired dialect backend alias annotation",
-      "pattern": "\\bDialectBackendAliasAttribute\\b"
-    },
-    {
-      "name": "retired dialect backend declaration",
-      "pattern": "\\bDialectBackendDeclaration\\b"
-    },
-    {
-      "name": "retired backend registrar annotation",
-      "pattern": "\\bDialectBackendRegistrarTypeAttribute\\b"
-    },
-    {
-      "name": "retired arithmetic-mode compatibility annotation",
-      "pattern": "\\bArithmeticModeCompatibilityAttribute\\b"
-    }
+    {"name":"runtime-pack reference","pattern":"\\bLanguageRuntimePackReference\\b"},
+    {"name":"runtime-pack interface","pattern":"\\bILanguageRuntimePack\\b"},
+    {"name":"runtime-pack builder method","pattern":"\\bUseRuntimePack\\s*\\("},
+    {"name":"legacy dialect adapter","pattern":"\\bWistLegacyDialectAdapter\\b"},
+    {"name":"preset enum","pattern":"\\bWistPreset\\b"},
+    {"name":"backend enum","pattern":"\\bWistBackend\\b"},
+    {"name":"enum facade","pattern":"\\bEnumGenerator\\b"},
+    {"name":"legacy directive option","pattern":"\\bEnableLegacyDirectiveDefinitions\\b"},
+    {"name":"legacy contract profile","pattern":"\\bStrictLegacyCompatible\\b"},
+    {"name":"legacy bytecode option","pattern":"\\bVerifyLegacyBytecodeOperationNames\\b"},
+    {"name":"retired optimizer","pattern":"\\bLocalVariablesOptimizer(?:Module)?\\b"},
+    {"name":"second planner build plan","pattern":"\\bDialectBuildPlan\\b"},
+    {"name":"second planner runtime plan","pattern":"\\bSelectedRuntimePlan\\b"},
+    {"name":"second planner resolver","pattern":"\\bSelectedRuntimePlanResolver\\b"},
+    {"name":"second planner workflow","pattern":"\\bToolchainCompositionWorkflow\\b"},
+    {"name":"retired Wist execution workflow","pattern":"\\bWistDialectExecutionWorkflow\\b"},
+    {"name":"retired Wist execution host","pattern":"\\bWistDialectExecutionHost\\b"},
+    {"name":"retired Wist dialect plan factory","pattern":"\\bWistDialectPlanFactory\\b"},
+    {"name":"retired Wist configuration view","pattern":"\\bWistDialectExecutionConfiguration\\b"},
+    {"name":"retired CIL registration helper","pattern":"\\bWistCilBackendServiceCollectionExtensions\\b"},
+    {"name":"retired interpreter registration helper","pattern":"\\bWistInterpreterBackendServiceCollectionExtensions\\b"},
+    {"name":"legacy BasicCore orchestration facade","pattern":"\\bBasicCoreImpl\\b"},
+    {"name":"legacy prepared execution orchestrator","pattern":"\\bPreparedExecutionBuilder\\b"},
+    {"name":"retired generic runtime host","pattern":"\\bToolchainRuntimeHost\\b"},
+    {"name":"retired runtime component catalog","pattern":"\\bIRuntimeComponentCatalog\\b"},
+    {"name":"retired runtime profile definition","pattern":"\\bRuntimeProfileDefinition\\b"},
+    {"name":"retired intrinsic provider annotation","pattern":"\\bIntrinsicDescriptorProviderAttribute\\b"},
+    {"name":"retired runtime provider policy interface","pattern":"\\bIRuntimeProviderPolicyComponent\\b"},
+    {"name":"retired runtime provider policy component","pattern":"\\bRuntimeProviderPolicyComponent\\b"},
+    {"name":"retired capability catalog bridge","pattern":"\\bKnownCapabilityCatalogBuilder\\b"},
+    {"name":"retired runtime export annotation","pattern":"\\bDialectRuntimeExportAttribute\\b"},
+    {"name":"retired runtime alias annotation","pattern":"\\bDialectRuntimeAliasAttribute\\b"},
+    {"name":"retired dialect alias annotation base","pattern":"\\bDialectAliasAttributeBase\\b"},
+    {"name":"retired dialect module alias annotation","pattern":"\\bDialectModuleAliasAttribute\\b"},
+    {"name":"retired dialect optimizer alias annotation","pattern":"\\bDialectOptimizerAliasAttribute\\b"},
+    {"name":"retired dialect backend alias annotation","pattern":"\\bDialectBackendAliasAttribute\\b"},
+    {"name":"retired dialect backend declaration","pattern":"\\bDialectBackendDeclaration\\b"},
+    {"name":"retired backend registrar annotation","pattern":"\\bDialectBackendRegistrarTypeAttribute\\b"},
+    {"name":"retired arithmetic-mode compatibility annotation","pattern":"\\bArithmeticModeCompatibilityAttribute\\b"}
   ],
   "currentTextPatterns": [
-    {
-      "name": "retired dialect runtime-manifest emitter owner",
-      "pattern": "UniversalToolchain\\.Dialects\\.ManifestEmitter"
-    },
-    {
-      "name": "retired dialect runtime-manifest emit target",
-      "pattern": "\\bEmitDialectRuntimeManifest\\b"
-    },
-    {
-      "name": "retired referenced runtime-manifest copy target",
-      "pattern": "\\bCopyReferencedDialectRuntimeManifests\\b"
-    },
-    {
-      "name": "retired runtime-manifest packaging switch",
-      "pattern": "\\bIncludeRuntimeManifestsInPackage\\b"
-    }
+    {"name":"retired dialect runtime-manifest emitter owner","pattern":"UniversalToolchain\\.Dialects\\.ManifestEmitter"},
+    {"name":"retired dialect runtime-manifest emit target","pattern":"\\bEmitDialectRuntimeManifest\\b"},
+    {"name":"retired referenced runtime-manifest copy target","pattern":"\\bCopyReferencedDialectRuntimeManifests\\b"},
+    {"name":"retired runtime-manifest packaging switch","pattern":"\\bIncludeRuntimeManifestsInPackage\\b"},
+    {"name":"retired Wist output-directory provider target","pattern":"\\bGetBuiltWistOutputDirectory\\b"}
   ]
 }
