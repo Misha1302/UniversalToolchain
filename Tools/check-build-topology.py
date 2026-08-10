@@ -333,6 +333,16 @@ def require_canonical_gate_order(root: Path) -> None:
         r"^\s*python3\s+Tools/test-build-topology-runtime\.py\b",
         "build.sh runtime topology invocation",
     )
+    bash_retired = require_one(
+        bash,
+        r"^\s*python3\s+Tools/check-retired-surface\.py\b",
+        "build.sh retired surface checker invocation",
+    )
+    bash_retired_mutants = require_one(
+        bash,
+        r"^\s*python3\s+Tools/test-retired-surface-mutants\.py\b",
+        "build.sh retired surface mutant invocation",
+    )
     bash_restore = bash.index('"$dotnet_command" restore')
     bash_build = bash.index('"$dotnet_command" build "$solution"')
     bash_tests = bash.index("python3 Tools/run-test-contract.py")
@@ -357,6 +367,16 @@ def require_canonical_gate_order(root: Path) -> None:
         r'Invoke-CheckedNative\s+"python"\s+@\(\s*"Tools/test-build-topology-runtime\.py"',
         "build.ps1 runtime topology invocation",
     )
+    ps_retired = require_one(
+        powershell,
+        r'Invoke-CheckedNative\s+"python"\s+@\("Tools/check-retired-surface\.py"',
+        "build.ps1 retired surface checker invocation",
+    )
+    ps_retired_mutants = require_one(
+        powershell,
+        r'Invoke-CheckedNative\s+"python"\s+@\("Tools/test-retired-surface-mutants\.py"',
+        "build.ps1 retired surface mutant invocation",
+    )
     ps_restore = powershell.index("Invoke-CheckedNative $dotnet (New-RestoreArguments $solution)")
     ps_build = powershell.index('"build", $solution')
     ps_tests = powershell.index('"Tools/run-test-contract.py"')
@@ -367,6 +387,18 @@ def require_canonical_gate_order(root: Path) -> None:
 
     bash_pack = bash.index('if [[ "$skip_pack" == false ]]')
     ps_pack = powershell.index("if (-not $SkipPack)")
+    for description, position in (
+        ("build.sh retired surface checker", bash_retired),
+        ("build.sh retired surface mutants", bash_retired_mutants),
+    ):
+        if not bash_tests < position < bash_pack:
+            raise BuildTopologyError(f"{description} must run after the test contract and before packaging")
+    for description, position in (
+        ("build.ps1 retired surface checker", ps_retired),
+        ("build.ps1 retired surface mutants", ps_retired_mutants),
+    ):
+        if not ps_tests < position < ps_pack:
+            raise BuildTopologyError(f"{description} must run after the test contract and before packaging")
     release_invocations = (
         (
             "build.sh package metadata checker",

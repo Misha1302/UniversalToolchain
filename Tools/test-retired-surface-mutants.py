@@ -34,6 +34,10 @@ def main() -> int:
             "UniversalToolchain/UniversalToolchain.Dialects.Tests/FreshProcess/RuntimeSharedAssemblyFreshProcessHost",
             "UniversalToolchain/UniversalToolchain.Dialects.ManifestEmitter",
             "UniversalToolchain/UniversalToolchain.Dialects.Abstractions/DialectRuntimeExportAttribute.cs",
+            "UniversalToolchain/Directory.Build.targets",
+            "docs/write-modules/runtime-manifests.md",
+            "docs/runtime-manifest-format.md",
+            "docs/runtime-manifest-activation-model.md",
         ]):
             mutant = tmp / f"path-{index}"
             target = mutant / relative
@@ -55,6 +59,19 @@ def main() -> int:
             if run(checker, mutant, temp_registry) == 0:
                 raise RuntimeError(f"retired symbol mutant survived: {symbol}")
             print(f"SURVIVOR=0 mutant=retired-symbol-{index}")
+        for index, (relative, token) in enumerate([
+            (".github/workflows/returned.yml", "UniversalToolchain.Dialects.ManifestEmitter"),
+            ("build.sh", "EmitDialectRuntimeManifest"),
+            ("UniversalToolchain/Example/Returned.csproj", "CopyReferencedDialectRuntimeManifests"),
+            ("docs/returned.md", "IncludeRuntimeManifestsInPackage"),
+        ]):
+            mutant = tmp / f"text-{index}"
+            target = mutant / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(token + "\n", encoding="utf-8")
+            if run(checker, mutant, temp_registry) == 0:
+                raise RuntimeError(f"retired current-text mutant survived: {relative}: {token}")
+            print(f"SURVIVOR=0 mutant=retired-current-text-{index}")
     return 0
 
 
