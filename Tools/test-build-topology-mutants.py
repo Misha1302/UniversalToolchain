@@ -322,6 +322,42 @@ def main() -> int:
             "build.sh runtime topology invocation",
         ),
         (
+            "bash-retired-surface-check-disabled",
+            lambda path: replace_once(
+                path / "build.sh",
+                "Tools/check-retired-surface.py",
+                "Tools/check-retired-surface.disabled.py",
+            ),
+            "build.sh retired surface checker invocation",
+        ),
+        (
+            "bash-retired-surface-mutants-disabled",
+            lambda path: replace_once(
+                path / "build.sh",
+                "Tools/test-retired-surface-mutants.py",
+                "Tools/test-retired-surface-mutants.disabled.py",
+            ),
+            "build.sh retired surface mutant invocation",
+        ),
+        (
+            "powershell-retired-surface-check-disabled",
+            lambda path: replace_once(
+                path / "build.ps1",
+                "Tools/check-retired-surface.py",
+                "Tools/check-retired-surface.disabled.py",
+            ),
+            "build.ps1 retired surface checker invocation",
+        ),
+        (
+            "powershell-retired-surface-mutants-disabled",
+            lambda path: replace_once(
+                path / "build.ps1",
+                "Tools/test-retired-surface-mutants.py",
+                "Tools/test-retired-surface-mutants.disabled.py",
+            ),
+            "build.ps1 retired surface mutant invocation",
+        ),
+        (
             "windows-powershell-job-disabled",
             lambda path: replace_once(
                 path / DOTNET_WORKFLOW,

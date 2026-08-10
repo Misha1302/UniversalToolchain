@@ -47,7 +47,11 @@
     "UniversalToolchain/UniversalToolchain.Dialects.Abstractions/DialectModuleAliasAttribute.cs",
     "UniversalToolchain/UniversalToolchain.Dialects.Abstractions/DialectOptimizerAliasAttribute.cs",
     "UniversalToolchain/UniversalToolchain.Dialects.Abstractions/DialectBackendDeclaration.cs",
-    "UniversalToolchain/UniversalToolchain.Dialects.Abstractions/DialectBackendRegistrarTypeAttribute.cs"
+    "UniversalToolchain/UniversalToolchain.Dialects.Abstractions/DialectBackendRegistrarTypeAttribute.cs",
+    "UniversalToolchain/Directory.Build.targets",
+    "docs/write-modules/runtime-manifests.md",
+    "docs/runtime-manifest-format.md",
+    "docs/runtime-manifest-activation-model.md"
   ],
   "symbols": [
     {
@@ -205,6 +209,24 @@
     {
       "name": "retired arithmetic-mode compatibility annotation",
       "pattern": "\\bArithmeticModeCompatibilityAttribute\\b"
+    }
+  ],
+  "currentTextPatterns": [
+    {
+      "name": "retired dialect runtime-manifest emitter owner",
+      "pattern": "UniversalToolchain\\.Dialects\\.ManifestEmitter"
+    },
+    {
+      "name": "retired dialect runtime-manifest emit target",
+      "pattern": "\\bEmitDialectRuntimeManifest\\b"
+    },
+    {
+      "name": "retired referenced runtime-manifest copy target",
+      "pattern": "\\bCopyReferencedDialectRuntimeManifests\\b"
+    },
+    {
+      "name": "retired runtime-manifest packaging switch",
+      "pattern": "\\bIncludeRuntimeManifestsInPackage\\b"
     }
   ]
 }
