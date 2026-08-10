@@ -252,7 +252,7 @@ def main() -> int:
                 "ResolveLanguagePackBuildProviders",
                 "DisabledResolveLanguagePackBuildProviders",
             ),
-            "lacks ResolveLanguagePackBuildProviders",
+            "lacks ResolveLanguagePackProviders",
         ),
         (
             "emitter-project-redirected",
@@ -462,8 +462,8 @@ def main() -> int:
                 "wist-engine-replans-during-hot-run",
                 lambda path: replace_once(
                     path / WIST_ENGINE,
-                    "return _runtime.Run(request);",
-                    "_ = new LanguageCompiler(new LanguagePackageRegistry());\n        return _runtime.Run(request);",
+                    "var result = Runtime.Run(new LanguageExecutionRequest(code, _backend));",
+                    "_ = new LanguageCompiler(new LanguagePackageRegistry());\n        var result = Runtime.Run(new LanguageExecutionRequest(code, _backend));",
                 ),
             ),
             (
