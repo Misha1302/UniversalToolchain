@@ -1,0 +1,73 @@
+name: CompilationLab S13 Tree Export
+
+on:
+  pull_request:
+    branches:
+      - migration/languageplan-single-runtime-20260807
+    paths:
+      - ".github/workflows/compilationlab-s13-tree-export.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    env:
+      EXPECTED_BASE_SHA: 576e8ec1fab453eb5eb56c05a174a284d4ee53e7
+      PAYLOAD_BRANCH: compilationlab/s13-apply-20260810
+      EXPECTED_GZIP_SHA256: dea333e5f45783b6b32619a7d26979ddba29c5022bd070b743fc8ad4562e1926
+      EXPECTED_PATCH_SHA256: c4bc0d7162b280c063dbdb03f3076f73849ea80e62629b1b76a229baebd0507c
+      EXPECTED_CANDIDATE_TREE: fa6fca6ff0a67ba735cc862896beb6fe74010efc
+    steps:
+      - name: Checkout helper
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Materialize exact base and validated S13 tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.event.pull_request.base.sha }}" = "$EXPECTED_BASE_SHA"
+          git fetch origin "${PAYLOAD_BRANCH}:refs/remotes/origin/${PAYLOAD_BRANCH}"
+          : > "$RUNNER_TEMP/s13.patch.gz.b64"
+          for i in 00 01 02 03 04 05; do
+            git show "refs/remotes/origin/${PAYLOAD_BRANCH}:.compilationlab/s13.patch.part${i}" >> "$RUNNER_TEMP/s13.patch.gz.b64"
+          done
+          base64 --decode "$RUNNER_TEMP/s13.patch.gz.b64" > "$RUNNER_TEMP/s13.patch.gz"
+          echo "$EXPECTED_GZIP_SHA256  $RUNNER_TEMP/s13.patch.gz" | sha256sum -c -
+          gzip --decompress --stdout "$RUNNER_TEMP/s13.patch.gz" > "$RUNNER_TEMP/s13.patch"
+          echo "$EXPECTED_PATCH_SHA256  $RUNNER_TEMP/s13.patch" | sha256sum -c -
+
+          git checkout --detach "$EXPECTED_BASE_SHA"
+          base_tree="$(git rev-parse HEAD^{tree})"
+          printf 'BASE_SHA=%s\nBASE_TREE=%s\n' "$EXPECTED_BASE_SHA" "$base_tree" > "$RUNNER_TEMP/TREE_SHAS.txt"
+          tar --exclude=.git -czf "$RUNNER_TEMP/s13-base.tar.gz" .
+
+          git apply --check --binary "$RUNNER_TEMP/s13.patch"
+          git apply --index --binary "$RUNNER_TEMP/s13.patch"
+          git diff --cached --check
+          python3 Tools/check-build-topology.py
+          python3 Tools/check-retired-surface.py
+          python3 Tools/test-retired-surface-mutants.py
+          python3 Tools/test-build-topology-mutants.py
+          candidate_tree="$(git write-tree)"
+          test "$candidate_tree" = "$EXPECTED_CANDIDATE_TREE"
+          printf 'CANDIDATE_TREE=%s\n' "$candidate_tree" >> "$RUNNER_TEMP/TREE_SHAS.txt"
+          git diff --cached --name-status > "$RUNNER_TEMP/S13_NAME_STATUS.txt"
+          tar --exclude=.git -czf "$RUNNER_TEMP/s13-candidate.tar.gz" .
+          cat "$RUNNER_TEMP/TREE_SHAS.txt"
+
+      - name: Upload exact trees
+        uses: actions/upload-artifact@v4
+        with:
+          name: compilationlab-s13-exact-trees
+          path: |
+            ${{ runner.temp }}/TREE_SHAS.txt
+            ${{ runner.temp }}/S13_NAME_STATUS.txt
+            ${{ runner.temp }}/s13-base.tar.gz
+            ${{ runner.temp }}/s13-candidate.tar.gz
+          if-no-files-found: error
+          retention-days: 1
