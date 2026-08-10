@@ -30,7 +30,12 @@
     "UniversalToolchain/UniversalToolchain.Dialects.Wist",
     "UniversalToolchain/BasicCore/Contracts/IRuntimeProviderPolicyComponent.cs",
     "UniversalToolchain/BasicCore/Contracts/RuntimeProviderPolicyComponent.cs",
-    "UniversalToolchain/UniversalToolchain.Capabilities.Core/KnownCapabilityCatalogBuilder.cs"
+    "UniversalToolchain/UniversalToolchain.Capabilities.Core/KnownCapabilityCatalogBuilder.cs",
+    "UniversalToolchain/UniversalToolchain.Dialects.Tests/FreshProcess/HostOnlyContractFixture",
+    "UniversalToolchain/UniversalToolchain.Dialects.Tests/FreshProcess/HostileRuntimeFixture",
+    "UniversalToolchain/UniversalToolchain.Dialects.Tests/FreshProcess/CanonicalRuntimeFixture",
+    "UniversalToolchain/UniversalToolchain.Dialects.Tests/FreshProcess/UnregisteredDependencyRuntimeFixture",
+    "UniversalToolchain/UniversalToolchain.Dialects.Tests/FreshProcess/RuntimeSharedAssemblyFreshProcessHost"
   ],
   "symbols": [
     {

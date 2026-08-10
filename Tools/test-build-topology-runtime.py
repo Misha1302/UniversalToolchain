@@ -18,7 +18,7 @@ class RuntimeTopologyError(RuntimeError):
 
 
 DIALECT_TESTS = Path("UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj")
-FRESH_PROCESS_PROJECTS = (
+RETIRED_DIALECT_FRESH_PROCESS_PROJECTS = (
     Path("UniversalToolchain/UniversalToolchain.Dialects.Tests/FreshProcess/HostOnlyContractFixture"),
     Path("UniversalToolchain/UniversalToolchain.Dialects.Tests/FreshProcess/HostileRuntimeFixture"),
     Path("UniversalToolchain/UniversalToolchain.Dialects.Tests/FreshProcess/CanonicalRuntimeFixture"),
@@ -277,11 +277,13 @@ def require_absent_output(
     search_roots: tuple[Path, ...],
     pattern: str,
     case_name: str,
+    *,
+    configuration: str | None = None,
 ) -> None:
-    matches = matching_outputs(search_roots, pattern)
+    matches = matching_outputs(search_roots, pattern, configuration=configuration)
     if matches:
         raise RuntimeTopologyError(
-            f"unexpected {pattern} for {case_name}; LanguagePack must not rebuild/copy the facade: "
+            f"unexpected {pattern} for {case_name}: "
             + ", ".join(str(path) for path in matches)
         )
 
@@ -427,14 +429,28 @@ def main() -> int:
         verify_language_pack_design_time(args.dotnet, root, configuration)
 
         dialect_directory = (root / DIALECT_TESTS).parent
+        returned_fresh_process_projects = [
+            relative.as_posix()
+            for relative in RETIRED_DIALECT_FRESH_PROCESS_PROJECTS
+            if (root / relative).exists()
+        ]
+        if returned_fresh_process_projects:
+            raise RuntimeTopologyError(
+                "retired dialect fresh-process topology returned: "
+                + ", ".join(returned_fresh_process_projects)
+            )
         remove_configuration_outputs(dialect_directory, configuration)
-        for relative in FRESH_PROCESS_PROJECTS:
-            remove_configuration_outputs(root / relative, configuration)
         run_build(args.dotnet, root, DIALECT_TESTS, configuration, build_project_references=False)
         require_output(
-            (root / FRESH_PROCESS_PROJECTS[-1],),
+            (dialect_directory,),
+            "UniversalToolchain.Dialects.Tests.dll",
+            "dialect tests without project-reference rebuilds",
+            configuration=configuration,
+        )
+        require_absent_output(
+            (dialect_directory,),
             "UniversalToolchain.Dialects.FreshProcessHost.dll",
-            "dialect fresh-process host",
+            "retired dialect fresh-process host",
             configuration=configuration,
         )
 

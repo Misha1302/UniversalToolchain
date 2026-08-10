@@ -31,6 +31,7 @@ def main() -> int:
             "UniversalToolchain/BasicCore/Core/PreparedExecutionBuilder.cs",
             "UniversalToolchain/UniversalToolchain.Dialects.Integration",
             "UniversalToolchain/UniversalToolchain.Dialects.Wist",
+            "UniversalToolchain/UniversalToolchain.Dialects.Tests/FreshProcess/RuntimeSharedAssemblyFreshProcessHost",
         ]):
             mutant = tmp / f"path-{index}"
             target = mutant / relative
