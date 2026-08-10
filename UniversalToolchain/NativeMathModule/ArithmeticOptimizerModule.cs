@@ -2,11 +2,8 @@ using BasicCore.Builtins;
 using BasicCore.Capabilities;
 
 namespace NativeMathModule;
-
-[DialectOptimizerAlias("ArithmeticOptimization")]
-[DialectRuntimeExport("Optimizer", "ArithmeticOptimization")]
+[DialectComponentContract("Optimizer", "ArithmeticOptimization")]
 [AutoRegisterService]
-[ArithmeticModeCompatibility(ArithmeticMode.Native)]
 [UsedImplicitly]
 public class ArithmeticOptimizerModule : IAirOptimizer
 {

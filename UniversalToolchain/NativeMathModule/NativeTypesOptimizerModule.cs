@@ -1,9 +1,6 @@
 namespace NativeMathModule;
-
-[DialectOptimizerAlias("NativeTypesOptimization")]
-[DialectRuntimeExport("Optimizer", "NativeTypesOptimization")]
+[DialectComponentContract("Optimizer", "NativeTypesOptimization")]
 [AutoRegisterService]
-[ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class NativeTypesOptimizerModule : IAirOptimizer
 {
     public IAbstractIR Optimize(IAbstractIR current)

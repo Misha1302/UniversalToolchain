@@ -21,17 +21,11 @@ def _read_manifest(path: Path) -> dict:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise SurfaceError(f"cannot read package surface manifest '{path}': {exc}") from exc
-    if data.get("schemaVersion") != 3:
+    if data.get("schemaVersion") != 4:
         raise SurfaceError(f"unsupported package surface schemaVersion: {data.get('schemaVersion')!r}")
-    manifest_names = data.get("runtimeManifests")
-    manifest_hashes = data.get("runtimeManifestSha256")
-    if not isinstance(manifest_names, list) or not isinstance(manifest_hashes, dict):
-        raise SurfaceError("runtime manifest names and SHA-256 map are required")
-    if set(manifest_hashes) != set(manifest_names):
-        raise SurfaceError("runtimeManifestSha256 keys must exactly match runtimeManifests")
-    for name, digest in manifest_hashes.items():
-        if not isinstance(digest, str) or len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
-            raise SurfaceError(f"invalid runtime manifest SHA-256 for {name!r}: {digest!r}")
+    for retired_field in ("runtimeManifests", "runtimeManifestSha256"):
+        if retired_field in data:
+            raise SurfaceError(f"retired runtime-manifest field returned: {retired_field}")
     preset_ids = data.get("shippedPresetIds")
     preset_hashes = data.get("shippedPresetSha256")
     if not isinstance(preset_ids, list) or not isinstance(preset_hashes, dict):
@@ -115,16 +109,15 @@ def _validate_managed_pe(payload: bytes, owner: str) -> None:
         raise SurfaceError(f"{owner}: {exc}") from exc
 
 
-def _expected_paths(surface: dict) -> tuple[set[str], set[str], set[str], set[str]]:
+def _expected_paths(surface: dict) -> tuple[set[str], set[str], set[str]]:
     tfm = surface["targetFramework"]
     compile_paths = {f"ref/{tfm}/{name}" for name in surface["compileAssemblies"]}
     runtime_paths = {f"lib/{tfm}/{name}" for name in surface["runtimeAssemblies"]}
-    manifest_paths = {f"contentFiles/any/{tfm}/{name}" for name in surface["runtimeManifests"]}
     preset_paths = {
         f"contentFiles/any/{tfm}/Dialects/examples/wist/{preset}/dialect.wistdialect"
         for preset in surface["shippedPresetIds"]
     }
-    return compile_paths, runtime_paths, manifest_paths, preset_paths
+    return compile_paths, runtime_paths, preset_paths
 
 
 def validate_package(
@@ -134,7 +127,7 @@ def validate_package(
     compile_reference: Path | None = None,
 ) -> None:
     surface = _read_manifest(surface_manifest)
-    expected_compile, expected_runtime, expected_manifests, expected_presets = _expected_paths(surface)
+    expected_compile, expected_runtime, expected_presets = _expected_paths(surface)
     forbidden = tuple(surface.get("forbiddenAssemblyNameFragments", []))
 
     try:
@@ -147,13 +140,12 @@ def validate_package(
             compile_paths = {name for name in dll_paths if name.startswith("ref/")}
             runtime_paths = {name for name in dll_paths if name.startswith("lib/")}
             other_dlls = dll_paths - compile_paths - runtime_paths
-            actual_manifests = {name for name in all_names if name.endswith(".dialect.runtime.json")}
+            legacy_runtime_manifests = {name for name in all_names if name.endswith(".dialect.runtime.json")}
             actual_presets = {name for name in all_names if name.endswith("/dialect.wistdialect")}
 
             checks = [
                 ("compile assembly boundary", expected_compile, compile_paths),
                 ("runtime assembly closure", expected_runtime, runtime_paths),
-                ("runtime manifest closure", expected_manifests, actual_manifests),
                 ("shipped preset closure", expected_presets, actual_presets),
             ]
             for label, expected, actual in checks:
@@ -161,6 +153,10 @@ def validate_package(
                     missing = sorted(expected - actual)
                     unexpected = sorted(actual - expected)
                     raise SurfaceError(f"{label} mismatch; missing={missing}; unexpected={unexpected}")
+            if legacy_runtime_manifests:
+                raise SurfaceError(
+                    f"retired dialect runtime manifests returned: {sorted(legacy_runtime_manifests)}"
+                )
             if other_dlls:
                 raise SurfaceError(f"DLLs outside supported asset groups: {sorted(other_dlls)}")
             bad_names = sorted(name for name in dll_paths if any(fragment in PurePosixPath(name).name for fragment in forbidden))
@@ -201,41 +197,6 @@ def validate_package(
                         f"{path}: preset SHA-256 mismatch; expected {expected_digest}, actual {actual_digest}"
                     )
 
-            runtime_dll_names = {PurePosixPath(path).stem for path in expected_runtime}
-            expected_manifest_hashes = surface["runtimeManifestSha256"]
-            for path in sorted(expected_manifests):
-                payload = archive.read(path)
-                manifest_name = PurePosixPath(path).name
-                actual_digest = hashlib.sha256(payload).hexdigest()
-                expected_digest = expected_manifest_hashes[manifest_name]
-                if actual_digest != expected_digest:
-                    raise SurfaceError(
-                        f"{path}: manifest SHA-256 mismatch; expected {expected_digest}, actual {actual_digest}"
-                    )
-                try:
-                    document = json.loads(payload)
-                except json.JSONDecodeError as exc:
-                    raise SurfaceError(f"{path}: invalid JSON: {exc}") from exc
-                owner = document.get("assemblySimpleName")
-                expected_owner = PurePosixPath(path).name.removesuffix(".dialect.runtime.json")
-                if owner != expected_owner:
-                    raise SurfaceError(f"{path}: assemblySimpleName {owner!r} does not match file owner {expected_owner!r}")
-                if owner not in runtime_dll_names:
-                    raise SurfaceError(f"{path}: owner assembly '{owner}' is absent from runtime closure")
-                components = document.get("components")
-                if not isinstance(components, list) or not components:
-                    raise SurfaceError(f"{path}: components must be a non-empty list")
-                for component in components:
-                    aliases = component.get("aliases", [])
-                    canonical = component.get("canonicalAlias")
-                    if aliases != sorted(set(aliases)) or canonical in aliases:
-                        raise SurfaceError(f"{path}: aliases for {canonical!r} are not normalized")
-                    activation = component.get("activation", {}).get("activationType", {})
-                    assembly_name = activation.get("assemblySimpleName")
-                    if assembly_name not in runtime_dll_names:
-                        raise SurfaceError(
-                            f"{path}: activation assembly '{assembly_name}' is absent from runtime closure"
-                        )
     except (OSError, zipfile.BadZipFile, KeyError) as exc:
         raise SurfaceError(f"cannot validate package '{package}': {exc}") from exc
 

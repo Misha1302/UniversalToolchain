@@ -2,9 +2,7 @@ using BasicCore.Registration;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace WhitespacesModule;
-
-[DialectModuleAlias("Whitespaces")]
-[DialectRuntimeExport("FrontendModule", "Whitespaces")]
+[DialectComponentContract("FrontendModule", "Whitespaces")]
 [AutoRegisterService]
 public class WhitespaceModuleImpl : IFrontendCoreModule
 {

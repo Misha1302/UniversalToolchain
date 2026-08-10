@@ -104,7 +104,7 @@ Backend support is not universal.
 | Interpreter | executes supported intrinsic instructions through interpreter intrinsic execution |
 | CIL | compiles supported intrinsic instructions through the CIL intrinsic compiler/registry |
 
-A dialect exposing both backends should not enable optimizer output that only one backend can consume unless the selected runtime plan keeps that output backend-specific and guarded.
+A dialect exposing both backends should not enable optimizer output that only one backend can consume unless the canonical `LanguagePlan` keeps that output backend-specific and guarded.
 
 ## Optimizer interaction
 

@@ -1,9 +1,6 @@
 namespace ArithmeticModule.Module;
-
-[DialectModuleAlias("TextualAddition")]
-[DialectRuntimeExport("FrontendModule", "TextualAddition")]
+[DialectComponentContract("FrontendModule", "TextualAddition")]
 [AutoRegisterService]
-[ArithmeticModeCompatibility(ArithmeticMode.Universal)]
 public class TextualAdditionModuleImpl : IFrontendCoreModule
 {
     private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =

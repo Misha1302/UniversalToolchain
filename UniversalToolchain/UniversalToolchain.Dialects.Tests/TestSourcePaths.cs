@@ -4,13 +4,13 @@ internal static class TestSourcePaths
 {
     public static string ToolchainRoot => LocateAncestor(
         static path =>
-            File.Exists(Path.Combine(path, "Directory.Build.targets")) &&
+            File.Exists(Path.Combine(path, "Directory.Build.props")) &&
             Directory.Exists(Path.Combine(path, "Dialects", "examples", "wist")),
         "UniversalToolchain source root");
 
     public static string RepositoryRoot => LocateAncestor(
         static path =>
-            File.Exists(Path.Combine(path, "UniversalToolchain", "Directory.Build.targets")) &&
+            File.Exists(Path.Combine(path, "UniversalToolchain", "Directory.Build.props")) &&
             Directory.Exists(Path.Combine(path, "UniversalToolchain", "Dialects", "examples", "wist")),
         "repository source root");
 

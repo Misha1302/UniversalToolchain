@@ -3,9 +3,7 @@ using BasicCore.Capabilities;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace ConditionsModule.Optimizers;
-
-[DialectOptimizerAlias("ComparisonIntrinsicOptimization")]
-[DialectRuntimeExport("Optimizer", "ComparisonIntrinsicOptimization")]
+[DialectComponentContract("Optimizer", "ComparisonIntrinsicOptimization")]
 [AutoRegisterService]
 [UsedImplicitly]
 public class ComparisonIntrinsicOptimizerModule : IAirOptimizer

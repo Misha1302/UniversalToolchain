@@ -4,10 +4,8 @@ using UniversalToolchain.ModuleContracts;
 using ScopesModule.Contracts;
 
 namespace ScopesModule.Module;
-
-[DialectModuleAlias("Scopes")]
 [DialectCapabilityProvider(typeof(ScopesCapabilityProvider))]
-[DialectRuntimeExport("FrontendModule", "Scopes")]
+[DialectComponentContract("FrontendModule", "Scopes")]
 [AutoRegisterService]
 public class ScopesModuleImpl : IFrontendCoreModule, IModuleContractDescriptorProvider
 {

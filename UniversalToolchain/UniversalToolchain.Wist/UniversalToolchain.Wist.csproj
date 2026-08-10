@@ -23,7 +23,7 @@
         <DebugType>portable</DebugType>
         <NoWarn>$(NoWarn);NU5131</NoWarn>
         <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeCanonicalWistRuntimeClosureInPackage</TargetsForTfmSpecificBuildOutput>
-        <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeFacadeReferenceAssemblyInPackage;IncludeRuntimeManifestsInPackage</TargetsForTfmSpecificContentInPackage>
+        <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeFacadeReferenceAssemblyInPackage;IncludeFeatureMetadataInPackage</TargetsForTfmSpecificContentInPackage>
     </PropertyGroup>
 
     <ItemGroup>
@@ -100,9 +100,9 @@
         </ItemGroup>
     </Target>
 
-    <Target Name="IncludeRuntimeManifestsInPackage">
+    <Target Name="IncludeFeatureMetadataInPackage">
         <ItemGroup>
-            <TfmSpecificPackageFile Include="$(TargetDir)*.toolchain.feature.json;$(TargetDir)*.dialect.runtime.json">
+            <TfmSpecificPackageFile Include="$(TargetDir)*.toolchain.feature.json">
                 <PackagePath>contentFiles/any/$(TargetFramework)</PackagePath>
                 <BuildAction>Content</BuildAction>
                 <PackageCopyToOutput>true</PackageCopyToOutput>

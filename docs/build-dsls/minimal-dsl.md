@@ -126,7 +126,7 @@ You should end up with a dialect that exposes only the language features you sel
 
 ## What happened internally
 
-The dialect file is compiled into a build plan, resolved against runtime manifests and used to create a Wist execution host. Only the selected modules and backends are activated for that host.
+The dialect file is compiled directly into a typed `LanguageDefinition`. `LanguageCompiler` resolves one `LanguagePlan`, and `LanguageRuntime` activates exactly the selected modules and backend components.
 
 ## Common mistakes
 

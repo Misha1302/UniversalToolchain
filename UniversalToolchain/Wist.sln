@@ -90,8 +90,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Dialects
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Dialects.Frontend", "UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj", "{0FEE2AC0-C01F-42AA-9FC6-4F7C90B4DDA3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Dialects.ManifestEmitter", "UniversalToolchain.Dialects.ManifestEmitter\UniversalToolchain.Dialects.ManifestEmitter.csproj", "{9A7E394D-8F28-450C-99E1-D58C72F8D4A9}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Functions.Abstractions", "UniversalToolchain.Functions.Abstractions\UniversalToolchain.Functions.Abstractions.csproj", "{26237609-BF17-49C4-BF58-8B1334412565}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Capabilities.Abstractions", "UniversalToolchain.Capabilities.Abstractions\UniversalToolchain.Capabilities.Abstractions.csproj", "{D6CEBE93-0F36-45E4-9B73-D360FC697430}"
@@ -714,18 +712,6 @@ Global
 		{0FEE2AC0-C01F-42AA-9FC6-4F7C90B4DDA3}.Release|x64.Build.0 = Release|Any CPU
 		{0FEE2AC0-C01F-42AA-9FC6-4F7C90B4DDA3}.Release|x86.ActiveCfg = Release|Any CPU
 		{0FEE2AC0-C01F-42AA-9FC6-4F7C90B4DDA3}.Release|x86.Build.0 = Release|Any CPU
-		{9A7E394D-8F28-450C-99E1-D58C72F8D4A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9A7E394D-8F28-450C-99E1-D58C72F8D4A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9A7E394D-8F28-450C-99E1-D58C72F8D4A9}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{9A7E394D-8F28-450C-99E1-D58C72F8D4A9}.Debug|x64.Build.0 = Debug|Any CPU
-		{9A7E394D-8F28-450C-99E1-D58C72F8D4A9}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{9A7E394D-8F28-450C-99E1-D58C72F8D4A9}.Debug|x86.Build.0 = Debug|Any CPU
-		{9A7E394D-8F28-450C-99E1-D58C72F8D4A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9A7E394D-8F28-450C-99E1-D58C72F8D4A9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9A7E394D-8F28-450C-99E1-D58C72F8D4A9}.Release|x64.ActiveCfg = Release|Any CPU
-		{9A7E394D-8F28-450C-99E1-D58C72F8D4A9}.Release|x64.Build.0 = Release|Any CPU
-		{9A7E394D-8F28-450C-99E1-D58C72F8D4A9}.Release|x86.ActiveCfg = Release|Any CPU
-		{9A7E394D-8F28-450C-99E1-D58C72F8D4A9}.Release|x86.Build.0 = Release|Any CPU
 		{26237609-BF17-49C4-BF58-8B1334412565}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{26237609-BF17-49C4-BF58-8B1334412565}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26237609-BF17-49C4-BF58-8B1334412565}.Debug|x64.ActiveCfg = Debug|Any CPU

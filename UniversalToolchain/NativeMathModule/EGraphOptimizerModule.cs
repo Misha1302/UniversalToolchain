@@ -2,11 +2,8 @@ using BasicCore.Builtins;
 using BasicCore.Capabilities;
 
 namespace NativeMathModule;
-
-[DialectOptimizerAlias("EGraphOptimization")]
-[DialectRuntimeExport("Optimizer", "EGraphOptimization")]
+[DialectComponentContract("Optimizer", "EGraphOptimization")]
 [AutoRegisterService]
-[ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class EGraphOptimizerModule : IAirOptimizer
 {
     private static readonly IReadOnlyList<Type> _supportedArithmeticTypes =

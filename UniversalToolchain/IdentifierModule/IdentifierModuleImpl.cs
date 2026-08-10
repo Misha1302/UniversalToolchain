@@ -4,10 +4,8 @@ using UniversalToolchain.ModuleContracts;
 using IdentifierModule.Contracts;
 
 namespace IdentifierModule;
-
-[DialectModuleAlias("Identifier")]
 [DialectCapabilityProvider(typeof(IdentifierCapabilityProvider))]
-[DialectRuntimeExport("FrontendModule", "Identifier")]
+[DialectComponentContract("FrontendModule", "Identifier")]
 [AutoRegisterService]
 public class IdentifierModuleImpl : IFrontendCoreModule, IModuleContractDescriptorProvider
 {

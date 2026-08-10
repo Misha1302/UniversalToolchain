@@ -219,9 +219,6 @@ public sealed class WistMigrationGateTests
             "docs/internals/dependency-injection.md",
             "docs/CONTRIBUTING.md",
             "docs/write-modules/create-your-first-module.md",
-            "docs/write-modules/runtime-manifests.md",
-            "docs/runtime-manifest-activation-model.md",
-            "docs/runtime-manifest-format.md",
             "UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-grouped/README.md",
             "internal-docs/policies-and-reports/public-claim-ledger.md",
             "internal-docs/policies-and-reports/technical-debt.md"
@@ -234,7 +231,10 @@ public sealed class WistMigrationGateTests
             "source of truth for public Wist dialect execution is the manifest-backed runtime workflow",
             "Keep the canonical dialect path deterministic: dialect compilation, build-plan construction, manifest-backed runtime",
             "selected dialect is compiled into a build plan, resolved against runtime manifests",
-            "Wist runtime selection goes through dialect build plans, manifests and capabilities"
+            "Wist runtime selection goes through dialect build plans, manifests and capabilities",
+            "runtime-manifest emitter/serializer infrastructure",
+            "generated manifests for normal module authoring",
+            "runtime manifest deployed next to the backend assembly"
         ];
 
         foreach (var relativePath in canonicalDocs)
