@@ -1,0 +1,113 @@
+name: CompilationLab S13 Apply v3
+
+on:
+  pull_request:
+    branches:
+      - migration/languageplan-single-runtime-20260807
+    paths:
+      - ".github/workflows/compilationlab-s13-apply-v3.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    env:
+      EXPECTED_BASE_SHA: 576e8ec1fab453eb5eb56c05a174a284d4ee53e7
+      TARGET_BRANCH: migration/s13-topology-retirement-20260810
+      PAYLOAD_BRANCH: compilationlab/s13-apply-20260810
+      EXPECTED_GZIP_SHA256: dea333e5f45783b6b32619a7d26979ddba29c5022bd070b743fc8ad4562e1926
+      EXPECTED_PATCH_SHA256: c4bc0d7162b280c063dbdb03f3076f73849ea80e62629b1b76a229baebd0507c
+    steps:
+      - name: Checkout helper
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Reconstruct exact verified S13 payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.event.pull_request.base.sha }}" = "$EXPECTED_BASE_SHA"
+          remote_target="$(git ls-remote origin "refs/heads/${TARGET_BRANCH}" | awk '{print $1}')"
+          test "$remote_target" = "$EXPECTED_BASE_SHA"
+          git fetch origin "${PAYLOAD_BRANCH}:refs/remotes/origin/${PAYLOAD_BRANCH}"
+          : > "$RUNNER_TEMP/s13.patch.gz.b64"
+          for i in 00 01 02 03 04 05; do
+            git show "refs/remotes/origin/${PAYLOAD_BRANCH}:.compilationlab/s13.patch.part${i}" >> "$RUNNER_TEMP/s13.patch.gz.b64"
+          done
+          base64 --decode "$RUNNER_TEMP/s13.patch.gz.b64" > "$RUNNER_TEMP/s13.patch.gz"
+          echo "$EXPECTED_GZIP_SHA256  $RUNNER_TEMP/s13.patch.gz" | sha256sum -c -
+          gzip --decompress --stdout "$RUNNER_TEMP/s13.patch.gz" > "$RUNNER_TEMP/s13.patch"
+          echo "$EXPECTED_PATCH_SHA256  $RUNNER_TEMP/s13.patch" | sha256sum -c -
+
+      - name: Apply and validate exact S13 tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout --detach "$EXPECTED_BASE_SHA"
+          git apply --check --binary "$RUNNER_TEMP/s13.patch"
+          git apply --index --binary "$RUNNER_TEMP/s13.patch"
+          git diff --cached --check
+          test ! -d UniversalToolchain/UniversalToolchain.Dialects.Integration
+          test ! -d UniversalToolchain/UniversalToolchain.Dialects.Wist
+          python3 Tools/check-build-topology.py
+          python3 Tools/check-retired-surface.py
+          python3 Tools/test-retired-surface-mutants.py
+          python3 Tools/test-build-topology-mutants.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('eng/test-counts.json').read_text(encoding='utf-8'))
+          assert data['totalPassed'] == 1279, data
+          core = next(x for x in data['main'] if x['label'] == 'Core')
+          dialects = next(x for x in data['main'] if x['label'] == 'Dialects')
+          assert core['expectedPassed'] == 524, core
+          assert dialects['expectedPassed'] == 256, dialects
+          surface = json.loads(Path('eng/wist-package-surface.json').read_text(encoding='utf-8'))
+          text = json.dumps(surface)
+          for retired in ('UniversalToolchain.Dialects.Integration.dll',
+                          'UniversalToolchain.Dialects.Core.dll',
+                          'UniversalToolchain.Dialects.Parsing.dll'):
+              assert retired not in text, retired
+          PY
+
+      - name: Create exact causal commit object
+        shell: bash
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: |
+          set -euo pipefail
+          tree="$(git write-tree)"
+          commit="$(printf '%s\n' 'arch(s13): retire legacy dialect runtime topology' | git commit-tree "$tree" -p "$EXPECTED_BASE_SHA")"
+          test "$(git rev-parse "${commit}^")" = "$EXPECTED_BASE_SHA"
+          test "$(git rev-parse "${commit}^{tree}")" = "$tree"
+          echo "S13_COMMIT=$commit" >> "$GITHUB_ENV"
+          echo "S13_TREE=$tree" >> "$GITHUB_ENV"
+          echo "local S13 commit: $commit"
+          echo "local S13 tree: $tree"
+
+      - name: Push exact causal S13 commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_target="$(git ls-remote origin "refs/heads/${TARGET_BRANCH}" | awk '{print $1}')"
+          test "$remote_target" = "$EXPECTED_BASE_SHA"
+          git push origin "${S13_COMMIT}:refs/heads/${TARGET_BRANCH}"
+          pushed="$(git ls-remote origin "refs/heads/${TARGET_BRANCH}" | awk '{print $1}')"
+          test "$pushed" = "$S13_COMMIT"
+          echo "pushed S13 commit: $pushed"
+
+      - name: Report exact result
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "S13_BASE=$EXPECTED_BASE_SHA"
+          echo "S13_COMMIT=$S13_COMMIT"
+          echo "S13_TREE=$S13_TREE"
+          echo "S13_TARGET=$TARGET_BRANCH"
