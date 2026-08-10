@@ -1,12 +1,9 @@
 using UniversalToolchain.Capabilities.Abstractions;
 
 namespace NativeMathModule;
-
-[DialectModuleAlias("NativeTypes")]
 [DialectCapabilityProvider(typeof(NativeTypesCapabilityProvider))]
-[DialectRuntimeExport("FrontendModule", "NativeTypes")]
+[DialectComponentContract("FrontendModule", "NativeTypes")]
 [AutoRegisterService]
-[ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class NativeTypesModuleImpl : IFrontendCoreModule
 {
     public void InitLexer(ILexer lexer)

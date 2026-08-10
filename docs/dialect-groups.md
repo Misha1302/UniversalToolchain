@@ -79,8 +79,8 @@ A dialect cannot both request and exclude the same expanded module alias. If dep
 
 Dialect groups are not:
 
-- a runtime manifest;
-- a selected runtime plan;
+- runtime activation metadata;
+- a second runtime-selection plan;
 - a capability-policy language;
 - backend configuration;
 - the full generic Feature SDK.

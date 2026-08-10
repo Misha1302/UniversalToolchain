@@ -3,7 +3,6 @@ using System.Collections.Frozen;
 namespace ArithmeticModule.Visitors;
 
 [AutoRegisterService]
-[ArithmeticModeCompatibility(ArithmeticMode.Universal)]
 public class ArithmeticAstVisitor : IAstVisitor
 {
     private static readonly FrozenDictionary<string, string> _opToName = new Dictionary<string, string>

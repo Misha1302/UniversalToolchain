@@ -3,9 +3,7 @@ using BasicCore.Capabilities;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace ConditionsModule.Optimizers;
-
-[DialectOptimizerAlias("BooleanOptimization")]
-[DialectRuntimeExport("Optimizer", "BooleanOptimization")]
+[DialectComponentContract("Optimizer", "BooleanOptimization")]
 [AutoRegisterService]
 [UsedImplicitly]
 public class BooleanOptimizerModule : IAirOptimizer

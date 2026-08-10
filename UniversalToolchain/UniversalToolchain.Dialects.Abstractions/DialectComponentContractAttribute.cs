@@ -1,9 +1,9 @@
 namespace UniversalToolchain.Dialects.Abstractions;
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-public sealed class DialectRuntimeExportAttribute : Attribute
+public sealed class DialectComponentContractAttribute : Attribute
 {
-    public DialectRuntimeExportAttribute(
+    public DialectComponentContractAttribute(
         string componentKind,
         string canonicalAlias)
     {

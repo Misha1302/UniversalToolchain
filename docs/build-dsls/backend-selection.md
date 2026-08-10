@@ -36,7 +36,7 @@ A dialect file must explicitly enable the requested backend; otherwise planning 
 
 Use `interpreter` when startup simplicity and inspectable execution matter more than repeated-call throughput. Use `cil` when the same approved formula will be invoked repeatedly and typed compiled delegates are useful.
 
-Do not infer backend availability from loaded assemblies, runtime manifests or DI registrations. A backend is first-class only when its typed package contribution can be selected into a deterministic `LanguagePlan` and executed through the generic `LanguageRuntime` route.
+Do not infer backend availability from loaded assemblies, reflection metadata or DI registrations. A backend is first-class only when its typed package contribution can be selected into a deterministic `LanguagePlan` and executed through the generic `LanguageRuntime` route.
 
 ## Parity contract
 

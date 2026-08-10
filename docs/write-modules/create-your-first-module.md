@@ -31,7 +31,7 @@ module implementation
   -> LanguageRuntime
 ```
 
-Generated runtime-manifest metadata is not the Wist semantic-selection owner.
+There is no runtime-manifest discovery step in the canonical Wist path.
 
 ## Files involved
 
@@ -50,10 +50,8 @@ Generated runtime-manifest metadata is not the Wist semantic-selection owner.
 `TextualAdditionModuleImpl` owns the `plus` token, parser node creator and AST visitor:
 
 ```csharp
-[DialectModuleAlias("TextualAddition")]
-[DialectRuntimeExport("FrontendModule", "TextualAddition")]
+[DialectComponentContract("FrontendModule", "TextualAddition")]
 [AutoRegisterService]
-[ArithmeticModeCompatibility(ArithmeticMode.Universal)]
 public class TextualAdditionModuleImpl : IFrontendCoreModule
 {
     private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =
@@ -169,22 +167,16 @@ For a built-in feature, also keep architecture/package tests that prove:
 - dependency closure is owned by `LanguageCompiler`;
 - minimal plans do not materialize unrelated module assemblies.
 
-## Step 8. Do not use runtime manifests as Wist registration
+## Step 8. Use explicit component contracts and package registration
 
-The repository still has generic runtime-manifest emitter/serializer infrastructure. A module project may carry `DialectRuntimeExport` metadata or emit a manifest for compatibility/tooling scenarios.
+Runtime-manifest emission/discovery was retired. A module participates only through explicit typed ownership:
 
-That is **not** the current Wist registration procedure.
+- `DialectComponentContract` describes the module-contract identity used by verification;
+- the owning `ILanguageExtensionPackage` declares feature/contribution ids and dependencies;
+- the route-component source binds the planned contribution to an implementation;
+- `LanguageCompiler` closes dependencies and `LanguageRuntime` activates exactly the resulting plan.
 
-Do not solve a missing Wist alias by:
-
-- hand-writing `.dialect.runtime.json`;
-- enabling manifest emission and assuming the canonical planner will discover the module;
-- scanning assemblies for module attributes at runtime;
-- adding a second selected-runtime plan after `LanguageCompiler`.
-
-Fix the typed Wist LanguagePack/catalog registration instead.
-
-See [Runtime Manifests](/write-modules/runtime-manifests) for the retained manifest subsystem boundary.
+Do not solve a missing Wist alias by scanning assemblies, adding reflection annotations, writing `.dialect.runtime.json`, or constructing a second selected-runtime plan. Fix the typed Wist LanguagePack/catalog registration instead.
 
 ## Step 9. Run repository checks
 

@@ -2,9 +2,7 @@ using CommonExceptions;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace CommentsModule;
-
-[DialectModuleAlias("Comments")]
-[DialectRuntimeExport("FrontendModule", "Comments")]
+[DialectComponentContract("FrontendModule", "Comments")]
 [AutoRegisterService]
 public class CommentsModuleImpl : IFrontendCoreModule
 {

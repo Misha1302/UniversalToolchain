@@ -1,8 +1,6 @@
 namespace SafeMathFunctionsModule;
-
-[DialectModuleAlias("SafeMathFunctions")]
 [DialectCapabilityProvider(typeof(SafeMathFunctionsCapabilityProvider))]
-[DialectRuntimeExport("FrontendModule", "SafeMathFunctions")]
+[DialectComponentContract("FrontendModule", "SafeMathFunctions")]
 [AutoRegisterService]
 public sealed class SafeMathFunctionsModuleImpl : IFrontendCoreModule
 {

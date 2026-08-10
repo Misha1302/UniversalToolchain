@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "targetFramework": "net10.0",
   "compileAssemblies": [
     "UniversalToolchain.Wist.dll"
@@ -42,7 +42,6 @@
     "ScopesModule.dll",
     "SemicolonAsNewLineModule.dll",
     "SettableGettableModule.dll",
-    "System.Reflection.MetadataLoadContext.dll",
     "UniversalIntermediateRepresentation.dll",
     "UniversalToolchain.Air.Analysis.dll",
     "UniversalToolchain.Capabilities.Abstractions.dll",
@@ -70,27 +69,6 @@
     "VariablesRuntime.dll",
     "WhitespacesModule.dll"
   ],
-  "runtimeManifests": [
-    "ArithmeticModule.dialect.runtime.json",
-    "CSharpInteropModule.dialect.runtime.json",
-    "CommentsModule.dialect.runtime.json",
-    "ConditionsModule.dialect.runtime.json",
-    "EqualityModule.dialect.runtime.json",
-    "FunctionCallsModule.dialect.runtime.json",
-    "IdentifierModule.dialect.runtime.json",
-    "InternalPreprocessorLexemesModule.dialect.runtime.json",
-    "LabelsModule.dialect.runtime.json",
-    "LoopsModule.dialect.runtime.json",
-    "NativeMathModule.dialect.runtime.json",
-    "NumbersModule.dialect.runtime.json",
-    "ParametersSetterModule.dialect.runtime.json",
-    "SafeMathFunctionsModule.dialect.runtime.json",
-    "ScopesModule.dialect.runtime.json",
-    "SemicolonAsNewLineModule.dialect.runtime.json",
-    "UniversalToolchain.Ssa.Optimization.dialect.runtime.json",
-    "VariablesModule.dialect.runtime.json",
-    "WhitespacesModule.dialect.runtime.json"
-  ],
   "shippedPresetIds": [
     "composition-restricted",
     "full-default",
@@ -107,27 +85,6 @@
     "Benchmarks",
     "ManifestEmitter"
   ],
-  "runtimeManifestSha256": {
-    "ArithmeticModule.dialect.runtime.json": "b56b59443dfa845da1a64e9ad71fdbc448203006fe2e96f3f7c73d76521702a1",
-    "CSharpInteropModule.dialect.runtime.json": "a9b8a8fbce36cdf7153880bd2db3489f0eb2b036b2a48397cf738d25c7fe98e8",
-    "CommentsModule.dialect.runtime.json": "58868f789baf4b2cf845d9041c1bd7a173cdf55bfcae62a2768d48f58a18efca",
-    "ConditionsModule.dialect.runtime.json": "7677e338d66f187da63655608da96a4ffd2a1b17fe31f668f93b9612f1b62a29",
-    "EqualityModule.dialect.runtime.json": "4a9dfdc1768c4e3c6fe073eeac3f6869b9fad945a8894d5efe46a47d8d0ba51e",
-    "FunctionCallsModule.dialect.runtime.json": "1c81a7f66231206c0677ebc7fb8992f06f4aa166bffa0fb55b87574afc317843",
-    "IdentifierModule.dialect.runtime.json": "3495e63d55ed11b226146a4e67ce7432688b83811c22bab3b0292df3d8e36b3a",
-    "InternalPreprocessorLexemesModule.dialect.runtime.json": "3fd9f5351ab58b38b7da645321dbfa274e44d8ecec199ac18fa33d04242529de",
-    "LabelsModule.dialect.runtime.json": "e95134f69889c9279af8bcf66a160f9599e9c94e4642b6b5e094ce379fe2cedc",
-    "LoopsModule.dialect.runtime.json": "d782cb76de2e9e93e4e87be03403189a56950c3b8c362c5d806c8950f1ada0e2",
-    "NativeMathModule.dialect.runtime.json": "ad252317f4a867c9bbcbc8d76c8edbfb2c2e3e50cb8a49b845239e8652f92e8f",
-    "NumbersModule.dialect.runtime.json": "dc03e98c139a08ab52cdfb0714e5eb9391fe1c318fc262bf53ef098cc19a0ea3",
-    "ParametersSetterModule.dialect.runtime.json": "8f95c1ecfb2dc7ecc767e53dd9d541a9f778c25b7506101b5726bfe655dc1e57",
-    "SafeMathFunctionsModule.dialect.runtime.json": "d397980c444035bc8dc6a0a40e06888315ca09f75505ac1f6a04ff91eb924047",
-    "ScopesModule.dialect.runtime.json": "8f26334e1e795919e87b5640ea1bbc61df90b05aa7c035f1a660e1a9bfed8cda",
-    "SemicolonAsNewLineModule.dialect.runtime.json": "79b2543df8bcef92e39445d71d964a2c101a0692930c4eed92131bae66159fa0",
-    "UniversalToolchain.Ssa.Optimization.dialect.runtime.json": "c24a2930450df34dce63ba16615a89bd1fb108cff1a20d7e9656812b1ebda8f0",
-    "VariablesModule.dialect.runtime.json": "8d63c31a99b39ed2364bd4959558f9323c142804f0c76f267075e1ce67edc8f5",
-    "WhitespacesModule.dialect.runtime.json": "aeea3ac61821f85008b73289cceeccdb0b1ad64e2e3200f913e10387db33c253"
-  },
   "shippedPresetSha256": {
     "composition-restricted": "a4dd87a01fe84b36076586ff4fb1d935c5809383b62a92434f60ef480991ba4a",
     "full-default": "eeec291bf82e3872cb666f3bbedfc3bea75e879bad3089a4823830de47a351fe",

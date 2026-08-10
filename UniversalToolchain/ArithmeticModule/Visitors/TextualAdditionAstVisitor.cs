@@ -1,7 +1,6 @@
 namespace ArithmeticModule.Visitors;
 
 [AutoRegisterService]
-[ArithmeticModeCompatibility(ArithmeticMode.Universal)]
 public class TextualAdditionAstVisitor : IAstVisitor
 {
     private static readonly ExtensibleEnum<AstNodeTag> _nodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("TextualAddition");

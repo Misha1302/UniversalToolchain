@@ -23,9 +23,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Reference Include="System.Reflection.MetadataLoadContext"
-                   HintPath="$(MSBuildToolsPath)/System.Reflection.MetadataLoadContext.dll"
-                   Condition="Exists('$(MSBuildToolsPath)/System.Reflection.MetadataLoadContext.dll')" />
         <Compile Include="$(MSBuildThisFileDirectory)BuildSupport/JetBrainsAnnotations.cs"
                  Link="BuildSupport/JetBrainsAnnotations.cs"
                  Condition="Exists('$(MSBuildThisFileDirectory)BuildSupport/JetBrainsAnnotations.cs')" />

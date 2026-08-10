@@ -1,103 +1,65 @@
+---
+title: Writing Backends
+description: Add a backend through typed package contributions and the canonical language plan.
+---
+
 # Writing Backends
 
-A backend is not a closed built-in choice in Wist. It is a runtime component selected by a dialect file, resolved through the runtime catalog, and activated through a backend registrar declared in the backend manifest.
+A backend is a typed route contribution selected by `LanguageCompiler` and materialized by `LanguageRuntime`. It is not discovered from assemblies, DI registrations, attributes, or sidecar manifests.
 
-This page describes the contract for adding a third backend without modifying the core Wist runtime pipeline.
+## Canonical registration
 
-## Required shape
-
-A backend package needs three things:
-
-1. A backend declaration exported as a runtime component.
-2. A backend runtime registrar.
-3. A runtime manifest deployed next to the backend assembly or into another configured runtime artifact search root.
-
-The core pipeline must not learn a new enum value, switch case, or hardcoded backend name for the backend.
-
-## Backend declaration
-
-The declaration is metadata. It gives the backend a stable canonical id, optional aliases, and the registrar type that knows how to wire the backend into DI.
+For a reusable language package, declare the backend through `LanguagePackageBuilder` (or the equivalent explicit `ILanguageExtensionPackage` descriptor):
 
 ```csharp
-[DialectRuntimeExport("Backend", "my-backend")]
-[DialectRuntimeAlias("my")]
-[DialectBackendRegistrarType(typeof(MyBackendRuntimeRegistrar))]
-public sealed class MyBackendDeclaration : DialectBackendDeclaration
-{
-    public override DialectBackendId BackendId => new("my-backend");
-}
+var package = LanguagePackageBuilder.Create("Acme.Language", "1.0.0")
+    .AddBackend(
+        "optimized-cil",
+        "acme.backend.optimized-cil",
+        loweredArtifact,
+        static (artifact, context) => CompileOptimized(artifact, context),
+        LanguageRuntimeComponentTraits.DeterministicNoHostInterop)
+    .UseRouteRuntime("acme.runtime", "1.0.0")
+    .Build();
 ```
 
-The canonical alias in `DialectRuntimeExport` is the runtime backend id. Aliases are convenience names and must not become separate backend identities.
+The contribution id, package identity, input artifact contract and runtime traits are explicit data in the package descriptor. `LanguageCompiler` owns selection and ordering; `LanguageRuntime` binds the exact selected implementation from the supplied route-component sources.
 
-## Backend registrar
+## Wist backends
 
-The registrar is the activation point for a selected backend. It receives the backend-specific runtime configuration and registers the runtime services required by that backend.
+Built-in Wist backends are owned by `WistLanguageFeaturePackage` and its exact route-component catalog. A third-party backend must use its own package/contribution ids; it must not impersonate canonical `wist.*` contributions.
 
-```csharp
-public sealed class MyBackendRuntimeRegistrar : IDialectBackendRuntimeRegistrar
-{
-    public DialectBackendId BackendId => new("my-backend");
-
-    public IReadOnlyList<string> SupportedIntrinsics => [];
-
-    public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
-    {
-        // Register backend cil, executor, runtime wrappers, and backend-specific services here.
-    }
-}
-```
-
-Do not build a backend by recreating an end-to-end BasicCore pipeline. Backends should implement the backend-specific runtime/route contract and be selected through the language plan; shared frontend/lowering mechanics remain separate stage services.
-
-## Manifest emission
-
-Runtime manifests are emitted from assemblies that opt into manifest emission:
-
-```xml
-<PropertyGroup>
-    <EmitDialectRuntimeManifest>true</EmitDialectRuntimeManifest>
-</PropertyGroup>
-```
-
-The emitted `*.dialect.runtime.json` file must travel with the backend assembly. The runtime catalog reads manifests, builds deterministic alias maps, and resolves selected backend entries from dialect build plans.
+Do not build a backend by recreating an end-to-end BasicCore pipeline. Backends own backend-specific transformation/execution only; Source → Syntax/AST → Bytecode → AIR and optimizer routing remain plan-owned stages.
 
 ## Dialect selection
 
-A dialect file selects the backend by canonical id or alias:
+A dialect frontend may request a backend alias, but the frontend must translate that request into a typed `BackendId` before planning. Alias parsing is configuration work, not runtime discovery.
 
 ```text
 dialect my-dialect
-backend my-backend enable
+backend optimized-cil enable
 ```
 
-or:
-
-```text
-dialect my-dialect
-backend my enable
-```
-
-The runtime selection should still resolve to the canonical backend id `my-backend`.
+The resulting `LanguageDefinition` selects the typed backend; `LanguageCompiler` either produces one deterministic plan or fails closed.
 
 ## What must not be required
 
-Adding a third backend must not require any of the following:
+Adding a backend must not require:
 
 - adding a value to a central backend enum;
 - editing parser switches for a specific backend id;
-- adding `if backend == "cil"` / `if backend == "interpreter"` style branches;
-- registering every possible backend eagerly in the Wist service provider;
-- treating aliases as independent backend identities.
+- scanning loaded assemblies or metadata attributes;
+- emitting or shipping `.dialect.runtime.json` files;
+- registering every possible backend eagerly in a service provider;
+- constructing a second runtime/build plan after `LanguageCompiler`.
 
-## Diagnostics to expect
+## Acceptance
 
-If a selected backend is not present in the runtime catalog, composition should fail with a runtime resolution diagnostic similar to:
+Tests for an external backend should prove:
 
-```text
-R002 Runtime backend descriptor 'my-backend' was not registered.
-```
-
-If the manifest declares a registrar type that does not implement `IDialectBackendRuntimeRegistrar`, backend activation should fail fast with a clear error.
-
-If the registrar returns a backend id different from the manifest canonical alias, activation should fail. The manifest and registrar must describe the same backend identity.
+- a new external package/contribution id is accepted without generic SDK edits;
+- its route is present in the resulting `LanguagePlan`;
+- `LanguageRuntime` resolves exactly that package implementation;
+- missing/duplicate/tampered component sources fail closed;
+- attempts to reuse a canonical built-in contribution id are rejected;
+- reference and optimized backends preserve the public behavior contract where parity is required.

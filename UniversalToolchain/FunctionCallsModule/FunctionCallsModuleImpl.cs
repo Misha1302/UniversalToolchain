@@ -1,8 +1,6 @@
 namespace FunctionCallsModule;
-
-[DialectModuleAlias("FunctionCalls")]
 [DialectCapabilityProvider(typeof(FunctionCallsCapabilityProvider))]
-[DialectRuntimeExport("FrontendModule", "FunctionCalls")]
+[DialectComponentContract("FrontendModule", "FunctionCalls")]
 [AutoRegisterService]
 public sealed class FunctionCallsModuleImpl : IFrontendCoreModule
 {

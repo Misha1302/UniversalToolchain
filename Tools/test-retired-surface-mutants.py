@@ -32,6 +32,8 @@ def main() -> int:
             "UniversalToolchain/UniversalToolchain.Dialects.Integration",
             "UniversalToolchain/UniversalToolchain.Dialects.Wist",
             "UniversalToolchain/UniversalToolchain.Dialects.Tests/FreshProcess/RuntimeSharedAssemblyFreshProcessHost",
+            "UniversalToolchain/UniversalToolchain.Dialects.ManifestEmitter",
+            "UniversalToolchain/UniversalToolchain.Dialects.Abstractions/DialectRuntimeExportAttribute.cs",
         ]):
             mutant = tmp / f"path-{index}"
             target = mutant / relative
@@ -40,13 +42,19 @@ def main() -> int:
             if run(checker, mutant, temp_registry) == 0:
                 raise RuntimeError(f"retired path mutant survived: {relative}")
             print(f"SURVIVOR=0 mutant=retired-path-{index}")
-        mutant = tmp / "symbol"
-        source = mutant / "UniversalToolchain/Example/Returned.cs"
-        source.parent.mkdir(parents=True, exist_ok=True)
-        source.write_text("internal sealed class ToolchainRuntimeHost {}", encoding="utf-8")
-        if run(checker, mutant, temp_registry) == 0:
-            raise RuntimeError("retired symbol mutant survived")
-        print("SURVIVOR=0 mutant=retired-symbol")
+        for index, symbol in enumerate([
+            "ToolchainRuntimeHost",
+            "DialectRuntimeExportAttribute",
+            "DialectModuleAliasAttribute",
+            "DialectBackendDeclaration",
+        ]):
+            mutant = tmp / f"symbol-{index}"
+            source = mutant / "UniversalToolchain/Example/Returned.cs"
+            source.parent.mkdir(parents=True, exist_ok=True)
+            source.write_text(f"internal sealed class {symbol} {{}}", encoding="utf-8")
+            if run(checker, mutant, temp_registry) == 0:
+                raise RuntimeError(f"retired symbol mutant survived: {symbol}")
+            print(f"SURVIVOR=0 mutant=retired-symbol-{index}")
     return 0
 
 

@@ -89,7 +89,7 @@ Bytecode and AIR remain separate semantic boundaries. Interpreter/CIL parity is 
 
 S13 physically removes the old `UniversalToolchain.Dialects.Integration` reflection/runtime-profile host and the non-packable `UniversalToolchain.Dialects.Wist` compatibility project. They are no longer available as transitive dependency containers, build-order helpers, runtime selectors or compatibility owners.
 
-Runtime-manifest **emission metadata** remains a separate tooling concern through `DialectRuntimeExportAttribute` and `UniversalToolchain.Dialects.ManifestEmitter`; it does not select Wist execution components. Canonical Wist selection remains `LanguageDefinition -> LanguageCompiler -> LanguagePlan -> LanguageRuntime`.
+The old `.dialect.runtime.json` emitter/copy/package representation is retired. `DialectComponentContractAttribute` remains only as explicit module-verification identity; it is not discovery metadata. Canonical selection is `LanguageDefinition -> LanguageCompiler -> LanguagePlan -> LanguageRuntime`, with exact route-component sources supplied explicitly.
 
 The retired orchestration surface spans S11-S13: old dialect build/runtime planning, BasicCore end-to-end orchestration, runtime-profile/reflection host topology and compatibility Wist runtime owners are all guarded against reintroduction.
 
@@ -134,7 +134,7 @@ The study is bounded evidence for the exact UniversalToolchain boundaries and au
 - runtime component traits are package attestations, not hostile-extension proof;
 - typed metadata coverage is an engineering contract, not a formal proof of semantic completeness;
 - no hardened in-process sandbox is claimed;
-- runtime-manifest emission remains metadata tooling only; the generic runtime-profile/reflection host topology itself is retired;
+- legacy runtime-manifest emission/copy/package tooling is retired; component identity and activation are explicit typed contracts owned by the package/plan/runtime path;
 - S12 retires the old BasicCore end-to-end orchestration island; reusable BasicCore stage contracts remain while topology cleanup continues in S13;
 - release-package compatibility requires reviewed external baseline artifacts and is separate from ordinary CI.
 

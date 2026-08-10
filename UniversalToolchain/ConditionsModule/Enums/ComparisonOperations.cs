@@ -2,10 +2,8 @@ using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace ConditionsModule.Enums;
-
-[DialectModuleAlias("ComparisonConditions")]
 [DialectCapabilityProvider(typeof(ComparisonCapabilityProvider))]
-[DialectRuntimeExport("FrontendModule", "ComparisonConditions")]
+[DialectComponentContract("FrontendModule", "ComparisonConditions")]
 [AutoRegisterService]
 public class ComparisonOperations : IFrontendCoreModule
 {

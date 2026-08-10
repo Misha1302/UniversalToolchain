@@ -118,7 +118,7 @@ A backend should not own:
 - source syntax;
 - parser node selection;
 - dialect module composition;
-- feature availability decisions outside selected runtime plans;
+- feature availability decisions outside the canonical `LanguagePlan`;
 - optimizer-only semantics required for correctness.
 
 Backends may own:

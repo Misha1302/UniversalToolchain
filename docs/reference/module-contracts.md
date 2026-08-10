@@ -11,7 +11,7 @@ This page is the canonical public contract for Wist compiler-module authors. Rep
 
 ## Why this page exists
 
-UniversalToolchain is intentionally modular. A new feature can affect lexing, parsing, AST translation, bytecode, AIR, runtime manifests, optimizers and backends. Hidden assumptions in any of those layers can silently change language behavior.
+UniversalToolchain is intentionally modular. A new feature can affect lexing, parsing, AST translation, bytecode, AIR, component contracts, optimizers and backends. Hidden assumptions in any of those layers can silently change language behavior.
 
 A module is not complete when one example runs. It is complete when its syntax ownership, dialect selection, runtime behavior and backend support are explicit and tested.
 

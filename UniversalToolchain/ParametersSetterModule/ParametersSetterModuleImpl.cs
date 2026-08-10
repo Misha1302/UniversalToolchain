@@ -6,8 +6,7 @@ namespace ParametersSetterModule;
 /// <summary>
 ///     Exports external parameter binding support into dialect composition.
 /// </summary>
-[DialectModuleAlias("ParametersSetter")]
-[DialectRuntimeExport("FrontendModule", "ParametersSetter")]
+[DialectComponentContract("FrontendModule", "ParametersSetter")]
 [AutoRegisterService]
 public sealed class ParametersSetterModuleImpl : IFrontendCoreModule
 {

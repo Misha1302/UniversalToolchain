@@ -5,11 +5,8 @@ using BasicCore.Execution;
 using IntermediateRepresentationAbstractions;
 
 namespace NativeMathModule;
-
-[DialectOptimizerAlias("NativeCilOptimization")]
-[DialectRuntimeExport("Optimizer", "NativeCilOptimization")]
+[DialectComponentContract("Optimizer", "NativeCilOptimization")]
 [AutoRegisterService]
-[ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class NativeCilOptimizerModule : IAirOptimizer
 {
     // Maps constants to typed load-constant intrinsics for backends that support them.

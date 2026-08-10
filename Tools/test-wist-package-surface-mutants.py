@@ -51,7 +51,6 @@ def main() -> int:
     tfm = manifest["targetFramework"]
     first_runtime = f"lib/{tfm}/{manifest['runtimeAssemblies'][0]}"
     arithmetic = f"lib/{tfm}/ArithmeticModule.dll"
-    first_runtime_manifest = f"contentFiles/any/{tfm}/{manifest['runtimeManifests'][0]}"
     first_preset = f"contentFiles/any/{tfm}/Dialects/examples/wist/{manifest['shippedPresetIds'][0]}/dialect.wistdialect"
     replacement_preset = f"contentFiles/any/{tfm}/Dialects/examples/wist/{manifest['shippedPresetIds'][1]}/dialect.wistdialect"
     with zipfile.ZipFile(package) as canonical_archive:
@@ -69,12 +68,10 @@ def main() -> int:
             return "keep", payload
         return "extras", [(f"lib/{tfm}/Unexpected.Runtime.dll", b"MZ")]
 
-    def alias_drift(name: str, payload: bytes):
-        if name == first_runtime_manifest:
-            document = json.loads(payload)
-            document["components"][0]["aliases"] = ["seeded-mutant-alias"]
-            return "keep", json.dumps(document).encode()
-        return ("keep", payload) if name else ("extras", [])
+    def legacy_runtime_manifest(name: str, payload: bytes):
+        if name:
+            return "keep", payload
+        return "extras", [(f"contentFiles/any/{tfm}/Seeded.dialect.runtime.json", b"{}")]
 
 
     def identity_swap(name: str, payload: bytes):
@@ -87,7 +84,7 @@ def main() -> int:
         "zero-byte-managed-assembly": zero,
         "missing-required-runtime-assembly": missing,
         "unexpected-runtime-assembly": unexpected,
-        "manifest-alias-drift": alias_drift,
+        "legacy-runtime-manifest-returned": legacy_runtime_manifest,
         "managed-assembly-identity-swap": identity_swap,
         "preset-semantic-swap": preset_swap,
     }

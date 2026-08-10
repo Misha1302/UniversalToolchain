@@ -4,9 +4,9 @@ This document defines the backend architecture expectations for UniversalToolcha
 
 ## Backend purpose
 
-A backend is an execution strategy selected by a dialect runtime plan.
+A backend is an execution strategy selected into the canonical `LanguagePlan`.
 
-A backend must not decide which language features exist. Feature availability is selected earlier by dialect composition and runtime manifests.
+A backend must not decide which language features exist. Feature availability is selected earlier by typed `LanguageDefinition`/package contributions and resolved by `LanguageCompiler`.
 
 ## Current backend roles
 
@@ -128,7 +128,7 @@ Every backend should have documentation explaining:
 - what semantic level it consumes;
 - what optimizations it expects;
 - which intrinsics it supports;
-- how it is selected by dialect/runtime manifests;
+- which typed package contribution owns it and how it is selected into `LanguagePlan`;
 - how parity with the reference path is tested.
 
 ## Execution-bound native pointer wrapper parity note

@@ -4,10 +4,8 @@ using UniversalToolchain.ModuleContracts;
 using VariablesModule.Contracts;
 
 namespace VariablesModule;
-
-[DialectModuleAlias("Variables")]
 [DialectCapabilityProvider(typeof(VariablesCapabilityProvider))]
-[DialectRuntimeExport("FrontendModule", "Variables")]
+[DialectComponentContract("FrontendModule", "Variables")]
 [AutoRegisterService]
 public class VariablesModuleImpl : IFrontendCoreModule, IModuleContractDescriptorProvider
 {

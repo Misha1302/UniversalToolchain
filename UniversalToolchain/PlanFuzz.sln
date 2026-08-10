@@ -89,8 +89,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Dialects
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Dialects.Frontend", "UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj", "{AFDD6D15-957E-4141-A5C8-ECD3EDFAEEF8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Dialects.ManifestEmitter", "UniversalToolchain.Dialects.ManifestEmitter\UniversalToolchain.Dialects.ManifestEmitter.csproj", "{DB0CC801-EB1B-4DB4-9F0E-B9710C828513}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SettableGettableModule", "SettableGettableModule\SettableGettableModule.csproj", "{93542DD0-3239-4E3D-A8C8-ACFFAFB251BA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssemblyFinder", "AssemblyFinder\AssemblyFinder.csproj", "{E0D0A9AA-1E63-4C14-8061-4E6B9BB85E9A}"
@@ -675,18 +673,6 @@ Global
 		{AFDD6D15-957E-4141-A5C8-ECD3EDFAEEF8}.Release|x64.Build.0 = Release|Any CPU
 		{AFDD6D15-957E-4141-A5C8-ECD3EDFAEEF8}.Release|x86.ActiveCfg = Release|Any CPU
 		{AFDD6D15-957E-4141-A5C8-ECD3EDFAEEF8}.Release|x86.Build.0 = Release|Any CPU
-		{DB0CC801-EB1B-4DB4-9F0E-B9710C828513}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DB0CC801-EB1B-4DB4-9F0E-B9710C828513}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DB0CC801-EB1B-4DB4-9F0E-B9710C828513}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{DB0CC801-EB1B-4DB4-9F0E-B9710C828513}.Debug|x64.Build.0 = Debug|Any CPU
-		{DB0CC801-EB1B-4DB4-9F0E-B9710C828513}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{DB0CC801-EB1B-4DB4-9F0E-B9710C828513}.Debug|x86.Build.0 = Debug|Any CPU
-		{DB0CC801-EB1B-4DB4-9F0E-B9710C828513}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DB0CC801-EB1B-4DB4-9F0E-B9710C828513}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DB0CC801-EB1B-4DB4-9F0E-B9710C828513}.Release|x64.ActiveCfg = Release|Any CPU
-		{DB0CC801-EB1B-4DB4-9F0E-B9710C828513}.Release|x64.Build.0 = Release|Any CPU
-		{DB0CC801-EB1B-4DB4-9F0E-B9710C828513}.Release|x86.ActiveCfg = Release|Any CPU
-		{DB0CC801-EB1B-4DB4-9F0E-B9710C828513}.Release|x86.Build.0 = Release|Any CPU
 		{93542DD0-3239-4E3D-A8C8-ACFFAFB251BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{93542DD0-3239-4E3D-A8C8-ACFFAFB251BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{93542DD0-3239-4E3D-A8C8-ACFFAFB251BA}.Debug|x64.ActiveCfg = Debug|Any CPU

@@ -147,7 +147,7 @@ A backend should not need to rediscover language syntax or guess whether a featu
 ```text
 dialect definition
 -> build plan
--> selected runtime plan
+-> canonical LanguagePlan
 -> runtime configuration
 -> bytecode/AIR/backend input
 ```
