@@ -33,8 +33,8 @@ For the public Wist facade, `WistEngine.Create` performs steps 1–5 once and ke
 - `UniversalToolchain.Wist.LanguagePack` translates Wist configuration into generic language contracts and supplies Wist implementations for already-planned contributions.
 - `UniversalToolchain.Wist` is the public facade over the canonical plan/runtime path.
 
-S13 removes the former `UniversalToolchain.Dialects.Integration` runtime/profile host and `UniversalToolchain.Dialects.Wist` compatibility project entirely. Runtime-manifest emission may remain as metadata tooling, but it is not a runtime-selection authority.
+S13 removes the former `UniversalToolchain.Dialects.Integration` runtime/profile host and `UniversalToolchain.Dialects.Wist` compatibility project entirely. S14 retires runtime-manifest emission, packaging and activation as runtime architecture. Surviving `.toolchain.feature.json` feature metadata is tooling/package metadata only; it is not an activation or composition authority.
 
 ## What is intentionally retired
 
-The S11 architecture does not use `DialectBuildPlan`, `SelectedRuntimePlan`, `SelectedRuntimePlanResolver`, `ToolchainCompositionWorkflow`, `WistDialectExecutionWorkflow`, `WistDialectExecutionHost` or `WistDialectPlanFactory` as production owners. Permanent architecture tests reject reintroduction of these retired paths/symbols.
+The final architecture does not use `DialectBuildPlan`, `SelectedRuntimePlan`, `SelectedRuntimePlanResolver`, `ToolchainCompositionWorkflow`, `WistDialectExecutionWorkflow`, `WistDialectExecutionHost` or `WistDialectPlanFactory` as production owners. Permanent architecture tests reject reintroduction of these retired paths/symbols.
