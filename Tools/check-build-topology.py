@@ -444,6 +444,54 @@ def require_windows_powershell_gate(root: Path) -> None:
     require_one(text, pattern, "Windows canonical PowerShell CI job")
 
 
+def require_wist_engine_exact_runtime_binding(root: Path) -> None:
+    engine = root / "UniversalToolchain" / "UniversalToolchain.Wist" / "WistEngine.cs"
+    if not engine.is_file():
+        raise BuildTopologyError(f"WistEngine source does not exist: {engine}")
+    text = engine.read_text(encoding="utf-8-sig")
+    forbidden = [
+        token
+        for token in ("LanguageRuntimeProviderRegistry", "WistLanguageRuntimeProvider")
+        if token in text
+    ]
+    if forbidden:
+        raise BuildTopologyError(
+            "WistEngine must not reintroduce provider-registry/manual runtime binding: "
+            + ", ".join(forbidden)
+        )
+    required = (
+        "new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package))",
+        "new ILanguageRouteComponentSource[] { package }",
+    )
+    missing = [marker for marker in required if marker not in text]
+    if missing:
+        raise BuildTopologyError(
+            "WistEngine must materialize the compiled LanguagePlan through the exact planned package component source; missing: "
+            + ", ".join(missing)
+        )
+
+
+def require_benchmark_smoke_trigger_scope(root: Path) -> None:
+    workflow = root / ".github" / "workflows" / "benchmark-smoke.yml"
+    if not workflow.is_file():
+        raise BuildTopologyError(f"Benchmark Smoke workflow does not exist: {workflow}")
+    text = workflow.read_text(encoding="utf-8-sig")
+    required_paths = (
+        "UniversalToolchain/UniversalToolchain.Runtime/**/*.cs",
+        "UniversalToolchain/UniversalToolchain.Runtime/**/*.csproj",
+        "UniversalToolchain/UniversalToolchain.FeatureSdk/**/*.cs",
+        "UniversalToolchain/UniversalToolchain.FeatureSdk/**/*.csproj",
+        "UniversalToolchain/UniversalToolchain.Language.Abstractions/**/*.cs",
+        "UniversalToolchain/UniversalToolchain.Language.Abstractions/**/*.csproj",
+    )
+    missing = [path for path in required_paths if f'      - "{path}"' not in text]
+    if missing:
+        raise BuildTopologyError(
+            "Benchmark Smoke must trigger for every generic runtime/planning-input owner path; missing: "
+            + ", ".join(missing)
+        )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Validate IDE-safe project references and canonical build topology gates."
@@ -457,6 +505,8 @@ def main() -> int:
         require_language_pack_provider_contract(root)
         require_canonical_gate_order(root)
         require_windows_powershell_gate(root)
+        require_wist_engine_exact_runtime_binding(root)
+        require_benchmark_smoke_trigger_scope(root)
     except (BuildTopologyError, OSError, ValueError) as exc:
         print(f"BUILD_TOPOLOGY=FAIL: {exc}", file=sys.stderr)
         return 1
