@@ -161,6 +161,14 @@ var frontend = LanguagePackageBuilder.Create("Consumer.Frontend", "1")
         static (source, _) => int.Parse(source),
         traits))
     .Build();
+var optimizer = LanguagePackageBuilder.Create("Consumer.Optimizer", "1")
+    .AddFeature("consumer.optimizer", feature => feature.AddPass(
+        "consumer.optimize",
+        LanguageSlots.Optimizers,
+        syntax,
+        static (value, _) => value + 1,
+        traits))
+    .Build();
 var execution = LanguagePackageBuilder.Create("Consumer.Execution", "1")
     .AddBackend(
         backend.Value,
@@ -172,18 +180,22 @@ var execution = LanguagePackageBuilder.Create("Consumer.Execution", "1")
     .Build();
 var registry = new UniversalToolchain.FeatureSdk.LanguagePackageRegistry()
     .AddPackage(frontend)
+    .AddPackage(optimizer)
     .AddPackage(execution);
 var plan = new LanguageCompiler(registry).Compile(
     LanguageDefinitionBuilder.Create("Consumer.Language", "1")
         .UseFeature("consumer.frontend")
+        .UseFeature("consumer.optimizer")
         .EnableBackend(backend)
         .UseRuntimeProvider("consumer.runtime", "1")
         .Build()).GetRequiredPlan();
-using var runtime = LanguageRuntime.Create(plan, new ILanguageRouteComponentSource[] { frontend, execution });
+using var runtime = LanguageRuntime.Create(
+    plan,
+    new ILanguageRouteComponentSource[] { frontend, optimizer, execution });
 var value = runtime.Run(new LanguageExecutionRequest("41", backend)).Value;
-if (!Equals(value, 42))
-    throw new InvalidOperationException($"Expected 42, got {value}.");
-Console.WriteLine("cross-package-consumer: 42");
+if (!Equals(value, 43))
+    throw new InvalidOperationException($"Expected 43 from external frontend + optimizer + backend, got {value}.");
+Console.WriteLine("cross-package-consumer: 43");
 ''',
             encoding="utf-8",
         )
