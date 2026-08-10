@@ -1,0 +1,82 @@
+name: CompilationLab S12 Apply
+
+on:
+  push:
+    branches:
+      - compilationlab/s12-apply-20260810
+    paths:
+      - ".github/workflows/compilationlab-s12-apply.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    env:
+      EXPECTED_BASE_SHA: eb13f645a7f3f6ab65d77262429f69a6d74a9427
+      TARGET_BRANCH: migration/s12-basiccore-retirement-20260810
+      EXPECTED_GZIP_SHA256: 691ccc403dce756a3702d1b7810ddd751c7ea0356949f8e8b8593809056b324a
+      EXPECTED_PATCH_SHA256: 8ce97c7ff5e81adf5b08ef1304b4c902a3518961aa29f8361d73018c72c6aaf9
+    steps:
+      - name: Checkout helper payload
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify and reconstruct exact patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_target="$(git ls-remote origin "refs/heads/${TARGET_BRANCH}" | awk '{print $1}')"
+          test "$remote_target" = "$EXPECTED_BASE_SHA"
+          cat .compilationlab/s12.patch.part00 \
+              .compilationlab/s12.patch.part01 \
+              .compilationlab/s12.patch.part02 \
+              .compilationlab/s12.patch.part03 \
+              .compilationlab/s12.patch.part04 \
+            > "$RUNNER_TEMP/s12.patch.gz.b64"
+          base64 --decode "$RUNNER_TEMP/s12.patch.gz.b64" > "$RUNNER_TEMP/s12.patch.gz"
+          echo "$EXPECTED_GZIP_SHA256  $RUNNER_TEMP/s12.patch.gz" | sha256sum -c -
+          gzip --decompress --stdout "$RUNNER_TEMP/s12.patch.gz" > "$RUNNER_TEMP/s12.patch"
+          echo "$EXPECTED_PATCH_SHA256  $RUNNER_TEMP/s12.patch" | sha256sum -c -
+
+      - name: Apply S12 to exact base
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout --detach "$EXPECTED_BASE_SHA"
+          git apply --check --binary "$RUNNER_TEMP/s12.patch"
+          git apply --index --binary "$RUNNER_TEMP/s12.patch"
+          git diff --cached --check
+          test ! -e UniversalToolchain/BasicCore/Core/BasicCoreImpl.cs
+          test ! -e UniversalToolchain/BasicCore/Core/PreparedExecutionBuilder.cs
+          python3 Tools/check-retired-surface.py
+          python3 Tools/test-retired-surface-mutants.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('eng/test-counts.json').read_text(encoding='utf-8'))
+          assert data['totalExpected'] == 1396, data
+          core = next(x for x in data['entries'] if x['label'] == 'Core')
+          assert core['expected'] == 528, core
+          PY
+
+      - name: Create one causal S12 commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "arch(s12): retire BasicCore end-to-end orchestrator"
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_BASE_SHA"
+          git push origin "HEAD:refs/heads/${TARGET_BRANCH}"
+          echo "S12_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Report exact result
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "S12_BASE=$EXPECTED_BASE_SHA"
+          echo "S12_COMMIT=$S12_COMMIT"
+          echo "S12_TARGET=$TARGET_BRANCH"
