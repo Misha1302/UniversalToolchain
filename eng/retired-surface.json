@@ -23,7 +23,9 @@
     "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistInterpreterBackendServiceCollectionExtensions.cs",
     "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistDialectExecutionConfiguration.cs",
     "docs/architecture/legacy-deprecation-gate.md",
-    "docs/migration/WIST_LEGACY_MIGRATION_RU.md"
+    "docs/migration/WIST_LEGACY_MIGRATION_RU.md",
+    "UniversalToolchain/BasicCore/Core/BasicCoreImpl.cs",
+    "UniversalToolchain/BasicCore/Core/PreparedExecutionBuilder.cs"
   ],
   "symbols": [
     {
@@ -109,6 +111,14 @@
     {
       "name": "retired interpreter registration helper",
       "pattern": "\\bWistInterpreterBackendServiceCollectionExtensions\\b"
+    },
+    {
+      "name": "legacy BasicCore orchestration facade",
+      "pattern": "\\bBasicCoreImpl\\b"
+    },
+    {
+      "name": "legacy prepared execution orchestrator",
+      "pattern": "\\bPreparedExecutionBuilder\\b"
     }
   ]
 }

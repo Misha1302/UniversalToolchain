@@ -40,23 +40,20 @@ Keep `LanguagePlan` as the sole selected Wist semantic graph. Keep generic compa
 
 ## BasicCore stage boundaries
 
-### Problem
+### Current state
 
-`BasicCoreImpl` still carries abstraction leakage around pipeline stage boundaries and extension contracts. Its physical retirement is intentionally deferred to migration stage S12 rather than folded into S11.
+S12 physically retires `BasicCoreImpl` and `PreparedExecutionBuilder`. Their orchestration duties are not moved into a replacement coordinator: canonical execution is owned by `LanguageRuntime` and exact plan-owned artifact route components, while BasicCore retains only reusable stage contracts/mechanics.
 
-### Current risk
+### Remaining risk
 
-Framework-level code can accumulate dialect/module assumptions and become harder to reuse for non-Wist DSLs.
-
-### Desired direction
-
-Clarify stage contracts and make extension points explicit rather than convention-only, then remove/replace the remaining S12 owner without reopening S11 runtime selection.
+S13 still needs to remove topology-only compatibility contracts and project edges that no longer have a live owner. A future helper could also regress into a second end-to-end coordinator if architecture guards are weakened.
 
 ### Exit criteria
 
-- Frontend, bytecode, AIR, optimization, and backend responsibilities are documented and test-protected.
-- New modules do not need hidden knowledge of internal stage coupling.
-- `BasicCoreImpl` retirement follows the S12 contract and preserves the already-established single-plan Wist path.
+- Frontend, bytecode, AIR, optimization, backend and runtime ownership remain explicit and test-protected.
+- Retired BasicCore orchestrator symbols/paths cannot reappear.
+- No BasicCore production file combines the full lexer/parser/lowering/compiler/executor ownership set.
+- Remaining generic compatibility contracts either have an explicit owner/use case or are deleted during S13.
 
 ## Intrinsic governance
 

@@ -89,13 +89,13 @@ public sealed class HardcodeBoundaryGuardrailTests
     }
 
     [Test]
-    public void PreparedExecutionBuilder_ShouldDecodeIntrinsicsBeforeRuntimePlanning()
+    public void CanonicalWistRuntime_ShouldNotUseLegacyRawCSharpIntrinsicName()
     {
         var root = FindRepositoryRoot();
-        var builder = Path.Combine(root, "UniversalToolchain", "BasicCore", "Core", "PreparedExecutionBuilder.cs");
+        var files = ProductionFiles(root, "UniversalToolchain/UniversalToolchain.Wist.LanguagePack");
 
-        AssertNoPatterns(root, [builder], ["\"call C#\""],
-            "Runtime provider extraction must operate on BuiltinIntrinsicSymbols.Core.CallCSharp after legacy decoding, not raw intrinsic display strings.");
+        AssertNoPatterns(root, files, ["\"call C#\""],
+            "Canonical Wist runtime stages must consume typed intrinsic identities, not legacy display strings.");
     }
 
 
@@ -143,15 +143,17 @@ public sealed class HardcodeBoundaryGuardrailTests
     }
 
     [Test]
-    public void PreparedExecutionBuilder_ShouldUseCompositionOwnedRuntimeProviderPolicy()
+    public void CanonicalRuntime_ShouldNotInferRuntimeProvidersFromOptimizedAir()
     {
         var root = FindRepositoryRoot();
-        var builder = Path.Combine(root, "UniversalToolchain", "BasicCore", "Core", "PreparedExecutionBuilder.cs");
-        var content = File.ReadAllText(builder);
+        var files = new[]
+        {
+            "UniversalToolchain/UniversalToolchain.Runtime",
+            "UniversalToolchain/UniversalToolchain.Wist.LanguagePack"
+        }.SelectMany(directory => ProductionFiles(root, directory)).ToList();
 
-        Assert.That(content, Does.Contain("IRuntimeProviderPolicyComponent"));
-        Assert.That(content, Does.Not.Contain("ExtractAllowedRuntimeProviderTypes"),
-            "Runtime provider allowlist must come from selected backend/runtime composition, not from scanning AIR after optimization.");
+        AssertNoPatterns(root, files, ["ExtractAllowedRuntimeProviderTypes", "IRuntimeProviderPolicyComponent"],
+            "Canonical runtime binding must come from the exact LanguagePlan/runtime provider, never from scanning optimized AIR.");
     }
 
     private static IReadOnlyList<string> ProductionFiles(string root, string relativeDirectory)

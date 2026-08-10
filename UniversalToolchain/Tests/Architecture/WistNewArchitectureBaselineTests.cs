@@ -75,7 +75,7 @@ public sealed class WistNewArchitectureBaselineTests
     }
 
     [Test]
-    public void S11_ArchitectureInventory_EnforcesStageAwareOwnerRetirement()
+    public void S12_ArchitectureInventory_EnforcesStageAwareOwnerRetirement()
     {
         using var inventory = ReadMigrationJson("LEGACY_ARCHITECTURE_INVENTORY.json");
         var owners = inventory.RootElement.GetProperty("owners").EnumerateArray().ToArray();
@@ -88,12 +88,12 @@ public sealed class WistNewArchitectureBaselineTests
             var deletionStage = owner.GetProperty("deletionStage").GetString()!;
             var definition = owner.GetProperty("definition").GetString()!;
             var definitionPath = Path.Combine(root, definition.Replace('/', Path.DirectorySeparatorChar));
-            var shouldBeRetired = deletionStage == "S11";
+            var shouldBeRetired = deletionStage is "S11" or "S12";
 
             if (shouldBeRetired)
             {
                 if (File.Exists(definitionPath))
-                    failures.Add($"S11-retired production definition returned for {symbol}: {definition}");
+                    failures.Add($"S12-retired production definition returned for {symbol}: {definition}");
             }
             else
             {
@@ -111,7 +111,7 @@ public sealed class WistNewArchitectureBaselineTests
                 var relativePath = callsite.GetString()!;
                 var callsitePath = Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar));
                 if (File.Exists(callsitePath) && File.ReadAllText(callsitePath).Contains(symbol, StringComparison.Ordinal))
-                    failures.Add($"S11-retired production callsite still references {symbol}: {relativePath}");
+                    failures.Add($"S12-retired production callsite still references {symbol}: {relativePath}");
             }
         }
 
@@ -121,7 +121,7 @@ public sealed class WistNewArchitectureBaselineTests
             Assert.That(owners.Select(static owner => owner.GetProperty("symbol").GetString()).Distinct(StringComparer.Ordinal).Count(),
                 Is.EqualTo(owners.Length));
             Assert.That(failures, Is.Empty,
-                "The historical S00 inventory must be interpreted by each owner's deletionStage; S11 must not retire S12 owners early.");
+                "The historical S00 inventory must be interpreted by each owner's deletionStage; S12 must retire S11/S12 owners while preserving later-stage owners.");
         });
     }
 
