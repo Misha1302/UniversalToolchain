@@ -23,6 +23,7 @@ WIST_PROJECT = Path(
     "UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj"
 )
 WIST_ENGINE = Path("UniversalToolchain/UniversalToolchain.Wist/WistEngine.cs")
+LANGUAGE_RUNTIME = Path("UniversalToolchain/UniversalToolchain.Runtime/LanguageRuntime.cs")
 DOTNET_WORKFLOW = Path(".github/workflows/dotnet-ci.yml")
 BENCHMARK_WORKFLOW = Path(".github/workflows/benchmark-smoke.yml")
 SUPPORT_FILES = (
@@ -30,6 +31,7 @@ SUPPORT_FILES = (
     Path("build.ps1"),
     Path("Tools/test-build-topology-runtime.py"),
     WIST_ENGINE,
+    LANGUAGE_RUNTIME,
     DOTNET_WORKFLOW,
     BENCHMARK_WORKFLOW,
 )
@@ -72,6 +74,17 @@ def require_wist_runtime_reference_materialization_parity(root: Path) -> None:
     powershell = texts["build.ps1"]
     if "Split-Path -Parent $wistReferenceAssemblyPath" in powershell:
         raise AssertionError("build.ps1 must not treat the ordinary Wist bin directory as the trusted package reference closure")
+
+
+def require_no_runtime_replanning(root: Path) -> None:
+    engine = (root / WIST_ENGINE).read_text(encoding="utf-8-sig")
+    runtime = (root / LANGUAGE_RUNTIME).read_text(encoding="utf-8-sig")
+    if engine.count("new LanguageCompiler(") != 1:
+        raise AssertionError("WistEngine must construct the canonical LanguageCompiler exactly once during engine creation")
+    if engine.count("LanguageRuntime.Create(") != 1:
+        raise AssertionError("WistEngine must materialize LanguageRuntime exactly once during engine creation")
+    if "LanguageCompiler" in runtime or "LanguagePackageRegistry" in runtime:
+        raise AssertionError("LanguageRuntime execution/materialization layer must not reintroduce planning or package resolution")
 
 
 def copy_inputs(source: Path, destination: Path) -> None:
@@ -200,6 +213,7 @@ def fixture(root: Path, checker: Path) -> tuple[tempfile.TemporaryDirectory[str]
     copy_inputs(root, path)
     run_checker(checker, path)
     require_wist_runtime_reference_materialization_parity(path)
+    require_no_runtime_replanning(path)
     return temporary, path
 
 
@@ -216,6 +230,7 @@ def main() -> int:
 
     try:
         require_wist_runtime_reference_materialization_parity(root)
+        require_no_runtime_replanning(root)
     except (AssertionError, OSError) as exc:
         print(f"BUILD_TOPOLOGY_MUTANTS=FAIL: {exc}", file=sys.stderr)
         return 1
@@ -443,6 +458,22 @@ def main() -> int:
                     'Join-Path $root "UniversalToolchain/UniversalToolchain.Wist/bin/$Configuration/net10.0"',
                 ),
             ),
+            (
+                "wist-engine-replans-during-hot-run",
+                lambda path: replace_once(
+                    path / WIST_ENGINE,
+                    "return _runtime.Run(request);",
+                    "_ = new LanguageCompiler(new LanguagePackageRegistry());\n        return _runtime.Run(request);",
+                ),
+            ),
+            (
+                "language-runtime-reintroduces-planner",
+                lambda path: replace_once(
+                    path / LANGUAGE_RUNTIME,
+                    "public LanguagePlan Plan => _plan;",
+                    "private LanguageCompiler? _replanner;\n\n    public LanguagePlan Plan => _plan;",
+                ),
+            ),
         )
         for name, mutate in parity_mutations:
             temporary, path = fixture(root, checker)
@@ -450,10 +481,11 @@ def main() -> int:
                 mutate(path)
                 try:
                     require_wist_runtime_reference_materialization_parity(path)
+                    require_no_runtime_replanning(path)
                 except AssertionError:
                     print(f"SURVIVOR=0 mutant={name}")
                 else:
-                    raise AssertionError(f"build entrypoint parity mutant survived: {name}")
+                    raise AssertionError(f"topology/replanning mutant survived: {name}")
     except (AssertionError, OSError) as exc:
         print(f"BUILD_TOPOLOGY_MUTANTS=FAIL: {exc}", file=sys.stderr)
         return 1
