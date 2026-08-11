@@ -36,6 +36,18 @@ public sealed class WistEngineOptions
     /// </summary>
     public WistOptimizationOptions Optimization { get; set; } = new();
 
+    /// <summary>
+    /// Controls source text retained by durable <see cref="WistProgramMetadata"/>.
+    /// Full preserves the alpha compatibility behavior; use HashAndIdentity or None for sensitive formulas.
+    /// </summary>
+    public WistSourceRetentionPolicy SourceRetention { get; set; } = WistSourceRetentionPolicy.Full;
+
+    /// <summary>
+    /// Controls whether expected-failure results expose raw developer exception information.
+    /// Safe is the production default and does not expose exception objects.
+    /// </summary>
+    public WistDiagnosticExposure DiagnosticExposure { get; set; } = WistDiagnosticExposure.Safe;
+
     internal WistVerificationPolicy VerificationPolicy { get; set; } = WistVerificationPolicy.P3Always;
 
     public static WistEngineOptions FromPresetId(string presetId) => new()
