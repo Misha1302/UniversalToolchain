@@ -32,9 +32,9 @@ jobs:
             const statusContext = 'ci/aggregate';
             const contract = JSON.parse(fs.readFileSync('eng/ci-required-workflows.json', 'utf8'));
             const acceptableConclusions = new Set(contract.allowedConclusions);
-            const requiredWorkflows = new Set(
-              contract.requiredForCodeAcceptance.map(entry => entry.name),
-            );
+            const requiredWorkflows = new Set([
+              ...contract.requiredForCodeAcceptance.map(entry => entry.name),
+            ]);
             if (acceptableConclusions.size !== 1 || !acceptableConclusions.has('success')) {
               core.setFailed('Canonical CI contract must allow only success for required workflows.');
               return;
