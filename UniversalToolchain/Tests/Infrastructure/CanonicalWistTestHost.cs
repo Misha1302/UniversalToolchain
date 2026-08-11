@@ -9,7 +9,7 @@ namespace Tests.Infrastructure;
 internal sealed class CanonicalWistTestHost : IDisposable
 {
     private readonly WistLanguageFeaturePackage _package;
-    private readonly LanguageRuntime _runtime;
+    private readonly LanguageBuildRuntime _runtime;
 
     public CanonicalWistTestHost()
         : this(WistLanguageDefinitions.Create(WistLanguageDefinitions.FullDefaultId), [])
