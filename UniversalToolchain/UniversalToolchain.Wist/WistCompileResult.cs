@@ -1,54 +1,45 @@
 namespace UniversalToolchain.Wist;
 
 /// <summary>
-///     Represents a non-throwing typed Wist compilation result.
+///     Represents a non-throwing typed Wist compilation result for expected failures.
 /// </summary>
 public sealed class WistCompileResult<TDelegate>
     where TDelegate : Delegate
 {
     private WistCompileResult(
         WistProgram<TDelegate>? program,
+        WistFailureKind? failureKind,
         IReadOnlyList<WistDiagnostic> diagnostics,
         Exception? exception,
         WistOptimizationReport optimizationReport)
     {
         Program = program;
+        FailureKind = failureKind;
         Diagnostics = diagnostics;
         Exception = exception;
         OptimizationReport = optimizationReport ?? throw new ArgumentNullException(nameof(optimizationReport));
     }
 
-    /// <summary>
-    ///     Gets whether compilation succeeded.
-    /// </summary>
     public bool IsSuccess => Program != null;
-
-    /// <summary>
-    ///     Gets the compiled program when compilation succeeded.
-    /// </summary>
     public WistProgram<TDelegate>? Program { get; }
-
-    /// <summary>
-    ///     Gets stable structured diagnostics produced by compilation.
-    /// </summary>
+    public WistFailureKind? FailureKind { get; }
     public IReadOnlyList<WistDiagnostic> Diagnostics { get; }
 
     /// <summary>
-    ///     Gets the captured exception for unexpected-fault investigation.
+    /// Gets the captured expected-failure exception only when developer diagnostic exposure was requested.
+    /// Internal and infrastructure faults are not converted into TryCompile results.
     /// </summary>
     public Exception? Exception { get; }
 
-    /// <summary>
-    /// Gets the observed optimization-route report, including reports captured before a failure.
-    /// </summary>
     public WistOptimizationReport OptimizationReport { get; }
 
     internal static WistCompileResult<TDelegate> Success(WistProgram<TDelegate> program) =>
-        new(program, Array.Empty<WistDiagnostic>(), null, program.Metadata.OptimizationReport);
+        new(program, null, Array.Empty<WistDiagnostic>(), null, program.Metadata.OptimizationReport);
 
     internal static WistCompileResult<TDelegate> Failure(
-        Exception exception,
+        WistFailureKind failureKind,
+        Exception? exception,
         IReadOnlyList<WistDiagnostic> diagnostics,
         WistOptimizationReport optimizationReport) =>
-        new(null, diagnostics, exception, optimizationReport);
+        new(null, failureKind, diagnostics, exception, optimizationReport);
 }
