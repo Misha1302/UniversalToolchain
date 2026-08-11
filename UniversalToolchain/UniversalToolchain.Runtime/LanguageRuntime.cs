@@ -60,6 +60,7 @@ public sealed class LanguageRuntime : IDisposable, IAsyncDisposable
                 primaryException,
                 cleanupExceptions,
                 "Language build runtime construction failed and runtime cleanup also failed.");
+            throw;
         }
     }
 
