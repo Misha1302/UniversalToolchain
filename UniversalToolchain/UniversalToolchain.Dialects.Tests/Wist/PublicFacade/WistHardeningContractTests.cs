@@ -1,0 +1,137 @@
+using UniversalToolchain.Wist;
+
+namespace UniversalToolchain.Dialects.Tests.Wist.PublicFacade;
+
+[TestFixture]
+public sealed class WistHardeningContractTests
+{
+    [Test]
+    public void TryCompile_InvalidFormula_IsUserInputAndSafeByDefault()
+    {
+        using var engine = WistEngine.CreateRestrictedArithmetic();
+
+        var result = engine.TryCompile<Func<double, double>>("price *", "price");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.FailureKind, Is.EqualTo(WistFailureKind.UserInput));
+            Assert.That(result.Exception, Is.Null);
+            Assert.That(result.Diagnostics, Is.Not.Empty);
+        });
+    }
+
+    [Test]
+    public void TryCompile_DeveloperDiagnostics_ExposeExpectedException()
+    {
+        using var engine = WistEngine.Create(new WistEngineOptions
+        {
+            DiagnosticExposure = WistDiagnosticExposure.Developer
+        });
+
+        var result = engine.TryCompile<Func<double, double>>("price *", "price");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.FailureKind, Is.EqualTo(WistFailureKind.UserInput));
+            Assert.That(result.Exception, Is.Not.Null);
+        });
+    }
+
+    [Test]
+    public void Validate_ResourceLimit_IsPolicyFailure()
+    {
+        using var engine = WistEngine.Create(new WistEngineOptions
+        {
+            ResourceLimits = new WistResourceLimits { MaxSourceLength = 3 }
+        });
+
+        var result = engine.Validate("1 + 2");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.FailureKind, Is.EqualTo(WistFailureKind.Policy));
+            Assert.That(result.Exception, Is.Null);
+        });
+    }
+
+    [Test]
+    public void ArbitraryInvariantFailure_IsInternalAndCannotBecomeValidationFailure()
+    {
+        var exception = new InvalidOperationException("artificial invariant failure");
+        var kind = WistFailureClassifier.Classify(exception);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(kind, Is.EqualTo(WistFailureKind.Internal));
+            Assert.That(WistFailureClassifier.IsStructuredResultFailure(kind), Is.False);
+        });
+    }
+
+    [Test]
+    public void SourceRetention_HashAndIdentity_DropsRawSourceButKeepsIdentity()
+    {
+        const string source = "price * 2";
+        using var engine = WistEngine.Create(new WistEngineOptions
+        {
+            SourceRetention = WistSourceRetentionPolicy.HashAndIdentity
+        });
+
+        var program = engine.Compile<Func<double, double>>(source, "price");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(program.Metadata.SourceRetention, Is.EqualTo(WistSourceRetentionPolicy.HashAndIdentity));
+            Assert.That(program.Metadata.SourceText, Is.Null);
+            Assert.That(program.Metadata.SourceSha256, Has.Length.EqualTo(64));
+            Assert.That(program.Metadata.SourceLength, Is.EqualTo(source.Length));
+        });
+    }
+
+    [Test]
+    public void SourceRetention_None_DropsRawSourceAndHash()
+    {
+        const string source = "price * 2";
+        using var engine = WistEngine.Create(new WistEngineOptions
+        {
+            SourceRetention = WistSourceRetentionPolicy.None
+        });
+
+        var program = engine.Compile<Func<double, double>>(source, "price");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(program.Metadata.SourceRetention, Is.EqualTo(WistSourceRetentionPolicy.None));
+            Assert.That(program.Metadata.SourceText, Is.Null);
+            Assert.That(program.Metadata.SourceSha256, Is.Null);
+            Assert.That(program.Metadata.SourceLength, Is.EqualTo(source.Length));
+        });
+    }
+
+    [Test]
+    public void SameEngine_OverlappingOperations_AreExplicitlyRejected()
+    {
+        var gate = new WistOperationConcurrencyGate();
+        using var first = gate.Enter();
+
+        var exception = Assert.Throws<InvalidOperationException>(() => gate.Enter());
+
+        Assert.That(exception!.Message, Does.Contain("Concurrent operations on one WistEngine instance are not supported"));
+    }
+
+    [Test]
+    public void SeparateEngines_AreTheSafeConcurrencyUnit()
+    {
+        using var first = WistEngine.CreateRestrictedArithmetic();
+        using var second = WistEngine.CreateRestrictedArithmetic();
+
+        var results = Task.WhenAll(
+            Task.Run(() => first.Evaluate<double>("1 + 2")),
+            Task.Run(() => second.Evaluate<double>("2 + 3")))
+            .GetAwaiter()
+            .GetResult();
+
+        Assert.That(results, Is.EqualTo(new[] { 3.0d, 5.0d }));
+    }
+}
