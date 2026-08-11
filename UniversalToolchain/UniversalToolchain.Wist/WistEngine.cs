@@ -11,6 +11,7 @@ namespace UniversalToolchain.Wist;
 /// <summary>
 /// Public Wist facade over one canonical LanguagePlan and exact LanguageBuildRuntime.
 /// Planning occurs only during Create; hot operations reuse the same plan/runtime.
+/// One instance intentionally rejects overlapping public operations; use separate engines for concurrency.
 /// </summary>
 public sealed class WistEngine : IDisposable
 {
@@ -19,6 +20,8 @@ public sealed class WistEngine : IDisposable
     private readonly BackendId _backend;
     private readonly WistEngineOptions _options;
     private readonly WistResourceLimits _resourceLimits;
+    private readonly RuntimeLifetimeGate _lifetime = new();
+    private readonly WistOperationConcurrencyGate _concurrency = new();
 
     private WistEngine(
         LanguageBuildRuntime runtime,
@@ -36,8 +39,17 @@ public sealed class WistEngine : IDisposable
 
     public void Dispose()
     {
-        var runtime = Interlocked.Exchange(ref _runtime, null);
-        runtime?.Dispose();
+        if (!_lifetime.BeginDispose())
+            return;
+        try
+        {
+            var runtime = Interlocked.Exchange(ref _runtime, null);
+            runtime?.Dispose();
+        }
+        finally
+        {
+            _lifetime.CompleteDispose();
+        }
     }
 
     public static WistEngine CreateRestrictedArithmetic() =>
@@ -93,7 +105,7 @@ public sealed class WistEngine : IDisposable
 
     public T Evaluate<T>(string code)
     {
-        ThrowIfDisposed();
+        using var operation = EnterOperation();
         EnsureSourceWithinLimits(code);
         var result = Runtime.Run(new LanguageExecutionRequest(code, _backend));
         return WistResultConverter.ConvertTo<T>(result.Value);
@@ -107,7 +119,7 @@ public sealed class WistEngine : IDisposable
 
     public T Evaluate<T>(string code, IReadOnlyDictionary<string, object?> arguments)
     {
-        ThrowIfDisposed();
+        using var operation = EnterOperation();
         EnsureSourceWithinLimits(code);
         arguments = arguments.ArgNotNull();
         EnsureParameterCountWithinLimits(arguments.Count);
@@ -118,7 +130,7 @@ public sealed class WistEngine : IDisposable
 
     public WistValidationResult Validate(string code)
     {
-        ThrowIfDisposed();
+        using var operation = EnterOperation();
         try
         {
             EnsureSourceWithinLimits(code);
@@ -141,7 +153,7 @@ public sealed class WistEngine : IDisposable
 
     public WistValidationResult Validate(string code, object sampleArguments)
     {
-        ThrowIfDisposed();
+        using var operation = EnterOperation();
         try
         {
             EnsureSourceWithinLimits(code);
@@ -169,14 +181,14 @@ public sealed class WistEngine : IDisposable
     public WistProgram<TDelegate> Compile<TDelegate>(string formula, params string[] parameterNames)
         where TDelegate : Delegate
     {
-        ThrowIfDisposed();
+        using var operation = EnterOperation();
         return CompileCore<TDelegate>(formula, parameterNames);
     }
 
     public WistCompileResult<TDelegate> TryCompile<TDelegate>(string formula, params string[] parameterNames)
         where TDelegate : Delegate
     {
-        ThrowIfDisposed();
+        using var operation = EnterOperation();
         try
         {
             return WistCompileResult<TDelegate>.Success(CompileCore<TDelegate>(formula, parameterNames));
@@ -194,9 +206,7 @@ public sealed class WistEngine : IDisposable
         }
     }
 
-    private WistProgram<TDelegate> CompileCore<TDelegate>(
-        string formula,
-        string[] parameterNames)
+    private WistProgram<TDelegate> CompileCore<TDelegate>(string formula, string[] parameterNames)
         where TDelegate : Delegate
     {
         EnsureSourceWithinLimits(formula);
@@ -251,10 +261,7 @@ public sealed class WistEngine : IDisposable
         };
     }
 
-    private static LanguageDefinition FromDialectFile(
-        WistDialectSource.File file,
-        string backend,
-        WistFacadeSsaPolicy policy)
+    private static LanguageDefinition FromDialectFile(WistDialectSource.File file, string backend, WistFacadeSsaPolicy policy)
     {
         var path = Path.GetFullPath(file.Path);
         return WistFacadeLanguageDefinitionFactory.FromDialectText(
@@ -264,8 +271,7 @@ public sealed class WistEngine : IDisposable
             policy);
     }
 
-    private IReadOnlyDictionary<string, object?> NormalizeArguments(
-        IReadOnlyDictionary<string, object?> arguments)
+    private IReadOnlyDictionary<string, object?> NormalizeArguments(IReadOnlyDictionary<string, object?> arguments)
     {
         var normalized = new Dictionary<string, object?>(arguments.Count, StringComparer.Ordinal);
         foreach (var argument in arguments)
@@ -273,8 +279,7 @@ public sealed class WistEngine : IDisposable
         return normalized;
     }
 
-    private IReadOnlyList<LanguageBuildBinding> CreateBuildBindings(
-        IReadOnlyDictionary<string, object?> arguments)
+    private IReadOnlyList<LanguageBuildBinding> CreateBuildBindings(IReadOnlyDictionary<string, object?> arguments)
     {
         var bindings = new List<LanguageBuildBinding>(arguments.Count);
         foreach (var argument in arguments)
@@ -329,6 +334,21 @@ public sealed class WistEngine : IDisposable
                     ? report.Trace.Select(static entry =>
                         new WistSsaTraceEntry(entry.Stage, entry.Message, entry.InstructionCount))
                     : []));
+    }
+
+    private IDisposable EnterOperation()
+    {
+        var lifetime = _lifetime.EnterOperation(this);
+        try
+        {
+            var concurrency = _concurrency.Enter();
+            return new CompositeOperationLease(concurrency, lifetime);
+        }
+        catch
+        {
+            lifetime.Dispose();
+            throw;
+        }
     }
 
     private Exception? ExposeExpectedException(Exception exception) =>
@@ -403,6 +423,15 @@ public sealed class WistEngine : IDisposable
         Volatile.Read(ref _runtime)
         ?? throw new ObjectDisposedException(nameof(WistEngine));
 
-    private void ThrowIfDisposed() =>
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _runtime) is null, this);
+    private sealed class CompositeOperationLease(IDisposable concurrency, IDisposable lifetime) : IDisposable
+    {
+        private IDisposable? _concurrency = concurrency;
+        private IDisposable? _lifetime = lifetime;
+
+        public void Dispose()
+        {
+            Interlocked.Exchange(ref _concurrency, null)?.Dispose();
+            Interlocked.Exchange(ref _lifetime, null)?.Dispose();
+        }
+    }
 }
