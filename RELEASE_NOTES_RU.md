@@ -36,7 +36,7 @@
 
 ## Проверка
 
-Exact test manifest текущей ветки: **1,276 тестов**. Canonical build/test gate обязан подтвердить 0 failed и 0 skipped на exact candidate revision; provider-backed run IDs фиксируются в migration PR, а не подменяются более старым локальным результатом.
+Exact test manifest текущей ветки: **1,289 тестов**. Увеличение на 13 тестов соответствует targeted architecture/production hardening regressions: 8 Wist facade failure/privacy/concurrency tests и 5 runtime construction/capability tests. Canonical build/test gate обязан подтвердить 0 failed и 0 skipped на exact candidate revision; provider-backed run IDs фиксируются в migration PR, а не подменяются более старым локальным результатом.
 
 Fresh-process SafeMath receipts подтверждают `DIALECT_INSPECT=PASS`, Interpreter/CIL result `255`, одинаковую CLR value category, negative dialect rejection, hostile preload rejection и отсутствие незарегистрированного default-context fallback.
 
