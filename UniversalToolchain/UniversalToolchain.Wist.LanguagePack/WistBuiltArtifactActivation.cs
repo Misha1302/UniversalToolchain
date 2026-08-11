@@ -57,7 +57,7 @@ internal static class WistBuiltArtifactActivation
     private static readonly BackendId InterpreterBackend = new("interpreter");
 
     public static IWistDurableProgram Materialize(
-        LanguageRuntime runtime,
+        LanguageBuildRuntime runtime,
         LanguageArtifactBuildResult result)
     {
         ArgumentNullException.ThrowIfNull(runtime);
@@ -77,7 +77,7 @@ internal static class WistBuiltArtifactActivation
     }
 
     public static WistSsaReportSnapshot? GetSsaReport(
-        LanguageRuntime runtime,
+        LanguageBuildRuntime runtime,
         LanguageArtifactBuildResult result)
     {
         ArgumentNullException.ThrowIfNull(runtime);
