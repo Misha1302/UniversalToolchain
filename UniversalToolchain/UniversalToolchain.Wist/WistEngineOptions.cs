@@ -44,9 +44,11 @@ public sealed class WistEngineOptions
 
     /// <summary>
     /// Controls whether expected-failure results expose raw developer exception information.
-    /// Safe is the production default and does not expose exception objects.
+    /// Developer preserves the alpha compatibility behavior. Production consumers handling untrusted
+    /// formulas should opt into Safe, which omits exception objects from structured expected-failure results.
+    /// Internal and infrastructure faults are fail-fast in either mode.
     /// </summary>
-    public WistDiagnosticExposure DiagnosticExposure { get; set; } = WistDiagnosticExposure.Safe;
+    public WistDiagnosticExposure DiagnosticExposure { get; set; } = WistDiagnosticExposure.Developer;
 
     internal WistVerificationPolicy VerificationPolicy { get; set; } = WistVerificationPolicy.P3Always;
 
