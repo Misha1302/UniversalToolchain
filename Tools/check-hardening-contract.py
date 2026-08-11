@@ -39,8 +39,8 @@ def main() -> int:
     require(failure, "combined.AddRange(cleanupExceptions);", "cleanup failures must be retained separately after primary")
 
     expected_guard = "if (!WistFailureClassifier.IsStructuredResultFailure(kind))\n                throw;"
-    if engine.count(expected_guard) != 2:
-        raise AssertionError("Validate and TryCompile must both fail fast for infrastructure/internal faults")
+    if engine.count(expected_guard) != 3:
+        raise AssertionError("both Validate overloads and TryCompile must fail fast for infrastructure/internal faults")
     require(classifier, "_ => WistFailureKind.Internal", "unclassified framework exceptions must fail closed as Internal")
     require(classifier, "kind is WistFailureKind.UserInput or WistFailureKind.Policy or WistFailureKind.Unsupported", "only expected failure classes may become structured results")
 
