@@ -1,6 +1,6 @@
 using System.Reflection;
-using ExceptionsManager;
 using CommonExceptions;
+using ExceptionsManager;
 using UniversalToolchain.Ssa.Optimization;
 
 namespace UniversalToolchain.Wist;
@@ -8,16 +8,26 @@ namespace UniversalToolchain.Wist;
 internal static class WistDiagnosticFactory
 {
     private const string DefaultSourceName = "<input>";
+    private const int SafeMessageLimit = 512;
 
     public static IReadOnlyList<WistDiagnostic> FromException(
         Exception exception,
         string operationStage,
+        string sourceName = DefaultSourceName) =>
+        FromException(exception, operationStage, WistDiagnosticExposure.Developer, sourceName);
+
+    public static IReadOnlyList<WistDiagnostic> FromException(
+        Exception exception,
+        string operationStage,
+        WistDiagnosticExposure exposure,
         string sourceName = DefaultSourceName)
     {
         exception = exception.ArgNotNull();
+        if (!Enum.IsDefined(exposure))
+            throw new ArgumentOutOfRangeException(nameof(exposure), exposure, "Unknown Wist diagnostic exposure.");
 
         if (exception is SsaRouteException ssaRouteException)
-            return FromSsaRouteException(ssaRouteException, sourceName);
+            return FromSsaRouteException(ssaRouteException, exposure, sourceName);
 
         var wistException = exception as WistException;
         var stage = wistException?.Stage ?? operationStage;
@@ -30,8 +40,6 @@ internal static class WistDiagnosticFactory
                 Math.Max(0, location.Column))
             : null;
 
-        var hints = CreateHints(exception);
-
         return
         [
             new WistDiagnostic(
@@ -39,14 +47,15 @@ internal static class WistDiagnosticFactory
                 WistDiagnosticSeverity.Error,
                 stage,
                 sourceName,
-                exception.Message,
+                FormatMessage(exception.Message, exposure),
                 span,
-                hints)
+                CreateHints(exception))
         ];
     }
 
     private static IReadOnlyList<WistDiagnostic> FromSsaRouteException(
         SsaRouteException exception,
+        WistDiagnosticExposure exposure,
         string sourceName)
     {
         var routeDiagnostics = exception.Diagnostics.Count == 0
@@ -59,7 +68,7 @@ internal static class WistDiagnosticFactory
                 WistDiagnosticSeverity.Error,
                 ResolveSsaDiagnosticStage(diagnostic.Stage),
                 sourceName,
-                $"{diagnostic.Code}: {diagnostic.Message}",
+                FormatMessage($"{diagnostic.Code}: {diagnostic.Message}", exposure),
                 Span: null,
                 Hints:
                 [
@@ -67,6 +76,17 @@ internal static class WistDiagnosticFactory
                         "Use SSA Prefer for controlled fallback, or simplify the expression and inspect the attached optimization report before retrying Require/Debug.")
                 ]))
             .ToArray();
+    }
+
+    private static string FormatMessage(string message, WistDiagnosticExposure exposure)
+    {
+        if (exposure == WistDiagnosticExposure.Developer)
+            return message;
+
+        var singleLine = message.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        return singleLine.Length <= SafeMessageLimit
+            ? singleLine
+            : string.Concat(singleLine.AsSpan(0, SafeMessageLimit), "…");
     }
 
     private static string ResolveSsaDiagnosticStage(string? stage) =>
@@ -83,10 +103,8 @@ internal static class WistDiagnosticFactory
     {
         if (exception is WistResourceLimitException resourceLimitException)
             return resourceLimitException.DiagnosticCode;
-
         if (exception is AmbiguousMatchException)
             return WistDiagnosticCodes.AmbiguousResolution;
-
         if (exception is TypeLoadException)
             return WistDiagnosticCodes.TypeResolutionFailure;
 
