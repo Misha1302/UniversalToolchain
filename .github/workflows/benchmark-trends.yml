@@ -1,0 +1,90 @@
+name: Benchmark Trends
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      BENCHMARK_PROJECT: UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+
+      - name: Prepare optional repository-local feed
+        run: mkdir -p UniversalToolchain/packages
+
+      - name: Restore and build benchmark project
+        run: |
+          dotnet restore "$BENCHMARK_PROJECT" -p:NuGetAudit=false
+          dotnet build "$BENCHMARK_PROJECT" -c Release --no-restore -p:NuGetAudit=false
+
+      - name: Capture environment identity
+        run: |
+          mkdir -p artifacts/benchmark-trends
+          {
+            echo "commit=${GITHUB_SHA}"
+            echo "runner_os=${RUNNER_OS}"
+            echo "runner_arch=${RUNNER_ARCH}"
+            echo "image_os=${ImageOS:-unknown}"
+            echo "image_version=${ImageVersion:-unknown}"
+            dotnet --info
+          } > artifacts/benchmark-trends/environment.txt
+
+      - name: Planning and runtime creation
+        run: >
+          dotnet run -c Release --no-build --project "$BENCHMARK_PROJECT" --
+          --job short
+          --filter "*MigrationArchitectureBoundaryBenchmarks*"
+
+      - name: Compilation
+        run: >
+          dotnet run -c Release --no-build --project "$BENCHMARK_PROJECT" --
+          --job short
+          --filter "*FormulaCompilationBenchmarks*"
+
+      - name: Evaluate convenience path
+        run: >
+          dotnet run -c Release --no-build --project "$BENCHMARK_PROJECT" --
+          --job short
+          --filter "*FormulaConvenienceBenchmarks*"
+
+      - name: Prepared hot invocation
+        run: >
+          dotnet run -c Release --no-build --project "$BENCHMARK_PROJECT" --
+          --job short
+          --filter "*FormulaHotPathBenchmarks*"
+
+      - name: Preserve benchmark evidence
+        if: always()
+        run: |
+          if [ -d BenchmarkDotNet.Artifacts ]; then
+            cp -a BenchmarkDotNet.Artifacts artifacts/benchmark-trends/
+          fi
+          find artifacts/benchmark-trends -type f -print0 | sort -z | xargs -0 sha256sum > artifacts/benchmark-trends/SHA256SUMS
+
+      - name: Upload benchmark trend artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-trends-${{ github.sha }}
+          path: artifacts/benchmark-trends
+          if-no-files-found: error
+          retention-days: 30
+
+# This workflow deliberately has no percentage regression gate. GitHub-hosted runner
+# timing is evidence for trend inspection only; ordinary CI keeps deterministic build,
+# benchmark discovery/self-test and architecture-boundary invariants.
