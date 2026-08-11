@@ -6,9 +6,12 @@ namespace UniversalToolchain.Dialects.Tests.Wist.PublicFacade;
 public sealed class WistHardeningContractTests
 {
     [Test]
-    public void TryCompile_InvalidFormula_IsUserInputAndSafeByDefault()
+    public void TryCompile_InvalidFormula_SafeModeIsUserInputWithoutExceptionObject()
     {
-        using var engine = WistEngine.CreateRestrictedArithmetic();
+        using var engine = WistEngine.Create(new WistEngineOptions
+        {
+            DiagnosticExposure = WistDiagnosticExposure.Safe
+        });
 
         var result = engine.TryCompile<Func<double, double>>("price *", "price");
 
@@ -39,10 +42,11 @@ public sealed class WistHardeningContractTests
     }
 
     [Test]
-    public void Validate_ResourceLimit_IsPolicyFailure()
+    public void Validate_ResourceLimit_SafeModeIsPolicyFailure()
     {
         using var engine = WistEngine.Create(new WistEngineOptions
         {
+            DiagnosticExposure = WistDiagnosticExposure.Safe,
             ResourceLimits = new WistResourceLimits { MaxSourceLength = 3 }
         });
 
