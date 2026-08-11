@@ -27,30 +27,21 @@ The documentation guard requires this table to mirror the repository's current e
 |---|---:|---:|---:|
 | `Tests` | 524 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
-| `UniversalToolchain.Dialects.Tests` | 253 | 0 | 0 |
-| `UniversalToolchain.LanguageSdk.Tests` | 156 | 0 | 0 |
+| `UniversalToolchain.Dialects.Tests` | 261 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Tests` | 161 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,276** | **0** | **0** |
+| **Total** | **1,289** | **0** | **0** |
 
-The exact manifest belongs to `eng/test-counts.json`. `.NET CI` run `31049607823` completed the canonical entrypoint for the pinned commit. Because the entrypoint enforces the manifest associated with its own revision, a stale or partial test total cannot satisfy that gate.
+The exact manifest belongs to `eng/test-counts.json`. The hardening delta is 13 targeted tests: eight Wist facade failure/privacy/concurrency regressions and five runtime construction/capability regressions. `.NET CI` run `31049607823` completed the canonical entrypoint for the pinned commit; that historical receipt still corresponds to its own earlier manifest. A current revision is green only when its own exact manifest is verified.
 
 ## Workflow set
 
-Aggregate run `31049607752` completed successfully for commit `99d9c81aadf3b335524b5bd1e77533612cc2ed93`. The required push runs were:
+Aggregate run `31049607752` completed successfully for commit `99d9c81aadf3b335524b5bd1e77533612cc2ed93`; that historical receipt used the workflow contract of that revision.
 
-| Workflow | Run | Result |
-|---|---:|---|
-| Docs Check | `31049609290` | success |
-| Published Wist package smoke | `31049608876` | success |
-| Documentation deployment | `31049608971` | success |
-| Contract Experiment | `31049608582` | success |
-| Wist Rollout Sample Smoke | `31049608089` | success |
-| Benchmark Smoke | `31049608154` | success |
-| UniversalToolchain validation | `31049608038` | success |
-| .NET CI | `31049607823` | success |
+For current revisions, `eng/ci-required-workflows.json` is the canonical machine-readable owner for code-acceptance workflows and allowed conclusions. `.github/workflows/ci-aggregate.yml` consumes that owner instead of maintaining a second list. Required workflows are fail-closed: only `success` is accepted; missing, skipped, neutral, cancelled, timed-out and failed required runs do not pass. Documentation correctness is owned by `Docs Check`; `Deploy documentation to GitHub Pages` is explicitly non-blocking for code acceptance because deployment is a publication step rather than a correctness prerequisite.
 
-`ci/aggregate` waits for the complete required workflow set and fails when a required workflow is missing, active beyond the deadline or completes with a non-acceptable conclusion.
+The current owner is itself checked by `CI contract check` and negative mutants, including removal of a required workflow and fail-open `skipped` acceptance.
 
 ## Production-boundary contract study
 
@@ -95,7 +86,7 @@ npm run docs:build
 python3 .github/scripts/run-markdown-bash-blocks.py
 ```
 
-The documentation-only remediation following this snapshot adds a release-state contract so root/package README, first-contact install pages, published-package smoke and the active stability document cannot drift independently.
+Current documentation also carries the typed runtime-capability, Wist failure-taxonomy, source-retention and same-engine concurrency contracts introduced by the hardening work.
 
 ## Package/release boundary
 
