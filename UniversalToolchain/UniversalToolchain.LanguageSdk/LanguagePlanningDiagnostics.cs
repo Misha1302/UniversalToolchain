@@ -1,3 +1,5 @@
+using UniversalToolchain.Language.Abstractions;
+
 namespace UniversalToolchain.LanguageSdk;
 
 internal static class LanguagePlanningDiagnostics
