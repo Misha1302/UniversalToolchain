@@ -3,21 +3,20 @@ using UniversalToolchain.LanguageSdk;
 
 namespace UniversalToolchain.Runtime;
 
+/// <summary>
+/// Materializes and executes one immutable <see cref="LanguagePlan"/>.
+/// Artifact construction is exposed only by <see cref="LanguageBuildRuntime"/>.
+/// </summary>
 public sealed class LanguageRuntime : IDisposable, IAsyncDisposable
 {
     private readonly LanguagePlan _plan;
     private readonly ILanguageRuntimeSession _session;
-    private readonly ILanguageArtifactBuildSession? _buildSession;
     private readonly RuntimeLifetimeGate _lifetime = new();
 
-    private LanguageRuntime(
-        LanguagePlan plan,
-        ILanguageRuntimeSession session,
-        ILanguageArtifactBuildSession? buildSession)
+    private LanguageRuntime(LanguagePlan plan, ILanguageRuntimeSession session)
     {
         _plan = plan;
         _session = session;
-        _buildSession = buildSession;
     }
 
     public LanguagePlan Plan => _plan;
@@ -34,7 +33,11 @@ public sealed class LanguageRuntime : IDisposable, IAsyncDisposable
         return Create(plan, providers.GetRequiredProvider(plan.RuntimeProvider), options);
     }
 
-    public static LanguageRuntime Create(
+    /// <summary>
+    /// Creates a runtime with the typed artifact-build capability because exact route component
+    /// registrations are available from the supplied package sources.
+    /// </summary>
+    public static LanguageBuildRuntime Create(
         LanguagePlan plan,
         IEnumerable<ILanguageRouteComponentSource> componentSources,
         LanguageRuntimeOptions? options = null)
@@ -44,11 +47,20 @@ public sealed class LanguageRuntime : IDisposable, IAsyncDisposable
         options ??= new LanguageRuntimeOptions();
         var registry = LanguageRouteRuntimeAssembler.CreateRegistry(plan, componentSources);
         var provider = LanguageRouteRuntimeAssembler.CreateProvider(plan, registry);
-        return CreateCore(
-            plan,
-            provider,
-            options,
-            () => new LanguageArtifactBuildPipeline(plan, options, registry));
+        var runtime = CreateCore(plan, provider, options);
+        try
+        {
+            var buildSession = new LanguageArtifactBuildPipeline(plan, options, registry);
+            return new LanguageBuildRuntime(runtime, buildSession);
+        }
+        catch (Exception primaryException)
+        {
+            var cleanupExceptions = RuntimeConstructionFailure.DisposeSynchronouslyCollect(runtime);
+            RuntimeConstructionFailure.Rethrow(
+                primaryException,
+                cleanupExceptions,
+                "Language build runtime construction failed and runtime cleanup also failed.");
+        }
     }
 
     public static LanguageRuntime Create(
@@ -57,14 +69,13 @@ public sealed class LanguageRuntime : IDisposable, IAsyncDisposable
         LanguageRuntimeOptions? options = null)
     {
         options ??= new LanguageRuntimeOptions();
-        return CreateCore(plan, provider, options, null);
+        return CreateCore(plan, provider, options);
     }
 
     private static LanguageRuntime CreateCore(
         LanguagePlan plan,
         ILanguageRuntimeProvider provider,
-        LanguageRuntimeOptions options,
-        Func<ILanguageArtifactBuildSession?>? buildSessionFactory)
+        LanguageRuntimeOptions options)
     {
         ArgumentNullException.ThrowIfNull(plan);
         ArgumentNullException.ThrowIfNull(provider);
@@ -111,17 +122,7 @@ public sealed class LanguageRuntime : IDisposable, IAsyncDisposable
         }
         policyValidator?.ValidatePolicy(plan, plan.Definition.RuntimePolicy, options);
 
-        var session = provider.CreateSession(plan, options);
-        try
-        {
-            var buildSession = buildSessionFactory?.Invoke();
-            return new LanguageRuntime(plan, session, buildSession);
-        }
-        catch
-        {
-            session.Dispose();
-            throw;
-        }
+        return new LanguageRuntime(plan, provider.CreateSession(plan, options));
     }
 
     public LanguageExecutionResult Run(LanguageExecutionRequest request)
@@ -130,35 +131,6 @@ public sealed class LanguageRuntime : IDisposable, IAsyncDisposable
         using var operation = _lifetime.EnterOperation(this);
         ValidateOperationInput(request.Input, request.Backend, request.Arguments.Count);
         return _session.Run(request);
-    }
-
-    public LanguageArtifactBuildResult Build(LanguageArtifactBuildRequest request)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-        using var operation = _lifetime.EnterOperation(this);
-        var buildSession = _buildSession ?? throw new NotSupportedException(
-            "Build-only artifact construction requires LanguageRuntime.Create(plan, componentSources, options) so exact route registrations remain available without discovery.");
-        ValidateOperationInput(request.Input, request.Backend, request.Bindings.Count);
-        return buildSession.Build(request);
-    }
-
-    public LanguageExecutionResult ExecuteBuilt(LanguageArtifactBuildResult artifact)
-    {
-        ArgumentNullException.ThrowIfNull(artifact);
-        using var operation = _lifetime.EnterOperation(this);
-        var buildSession = _buildSession ?? throw new NotSupportedException(
-            "This language runtime was not created with an artifact build session.");
-        return buildSession.ExecuteBuilt(artifact);
-    }
-
-    public T GetBuiltArtifactValue<T>(LanguageArtifactBuildResult artifact, LanguageArtifactKind<T> expectedKind)
-    {
-        ArgumentNullException.ThrowIfNull(artifact);
-        ArgumentNullException.ThrowIfNull(expectedKind);
-        using var operation = _lifetime.EnterOperation(this);
-        var buildSession = _buildSession ?? throw new NotSupportedException(
-            "This language runtime was not created with an artifact build session.");
-        return buildSession.GetBuiltArtifactValue(artifact, expectedKind);
     }
 
     private void ValidateOperationInput(LanguageArtifact input, BackendId backend, int parameterCount)
@@ -183,25 +155,7 @@ public sealed class LanguageRuntime : IDisposable, IAsyncDisposable
             return;
         try
         {
-            List<Exception>? errors = null;
-            try
-            {
-                (_buildSession as IDisposable)?.Dispose();
-            }
-            catch (Exception exception)
-            {
-                (errors ??= []).Add(exception);
-            }
-            try
-            {
-                _session.Dispose();
-            }
-            catch (Exception exception)
-            {
-                (errors ??= []).Add(exception);
-            }
-            if (errors is { Count: > 0 })
-                throw new AggregateException("One or more language runtime owners failed to dispose.", errors);
+            _session.Dispose();
         }
         finally
         {
@@ -215,28 +169,7 @@ public sealed class LanguageRuntime : IDisposable, IAsyncDisposable
             return;
         try
         {
-            List<Exception>? errors = null;
-            try
-            {
-                if (_buildSession is IAsyncDisposable asyncBuildSession)
-                    await asyncBuildSession.DisposeAsync().ConfigureAwait(false);
-                else
-                    (_buildSession as IDisposable)?.Dispose();
-            }
-            catch (Exception exception)
-            {
-                (errors ??= []).Add(exception);
-            }
-            try
-            {
-                await _session.DisposeAsync().ConfigureAwait(false);
-            }
-            catch (Exception exception)
-            {
-                (errors ??= []).Add(exception);
-            }
-            if (errors is { Count: > 0 })
-                throw new AggregateException("One or more language runtime owners failed to dispose.", errors);
+            await _session.DisposeAsync().ConfigureAwait(false);
         }
         finally
         {
