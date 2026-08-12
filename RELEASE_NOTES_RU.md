@@ -26,14 +26,14 @@
 | `UniversalToolchain.FeatureSdk` | `0.3.0-alpha.4` |
 | `UniversalToolchain.LanguageSdk` | `0.3.0-alpha.5` |
 | `UniversalToolchain.Runtime` | `0.3.0-alpha.5` |
-| `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Testing` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Templates` | `0.3.0-alpha.4` |
+| `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Testing` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Templates` | `0.3.0-alpha.5` |
 | `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.6` |
 | `UniversalToolchain.Wist` | `0.1.0-alpha.7` |
 <!-- package-matrix:end -->
 
-Новые версии зарезервированы потому, что соответствующие package payloads изменились относительно merge #332. Повторное использование прежних alpha identities для иного payload не допускается. Это versioning metadata для candidate build, а не публикация.
+Новые версии зарезервированы потому, что соответствующие package payloads изменились относительно merge #332. Для `LanguageAuthoring`/`Testing` меняется generated dependency metadata из-за нового `Runtime`, а template package содержит новые candidate package references. Повторное использование прежних alpha identities для иного payload не допускается. Это versioning metadata для candidate build, а не публикация.
 
 ## Проверка
 
