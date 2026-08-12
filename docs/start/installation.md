@@ -3,7 +3,7 @@ title: Installation
 description: Install the published Wist package or prepare the current repository source safely.
 audience: wist-application-developer
 status: current
-lastVerifiedAgainst: wist-release-state-2026-08-06
+lastVerifiedAgainst: wist-release-state-2026-08-12
 ---
 
 # Installation
@@ -51,10 +51,10 @@ Published UniversalToolchain.Wist 0.1.0-alpha.1 smoke passed.
 ## Current source candidate
 
 <!-- wist-source-candidate:begin -->
-The current source project defines `UniversalToolchain.Wist` `0.1.0-alpha.6`. This candidate is **not published on NuGet.org**. The repository does not present `./artifacts/packages` as a public feed: that directory exists only after the baseline-bearing maintainer packaging gate succeeds.
+The current source project defines `UniversalToolchain.Wist` `0.1.0-alpha.7`. This candidate is **not published on NuGet.org**. The repository does not present `./artifacts/packages` as a public feed: that directory exists only after the baseline-bearing maintainer packaging gate succeeds.
 <!-- wist-source-candidate:end -->
 
-To evaluate the current implementation, clone the repository and build/run it as source. Do not change the published install command to `0.1.0-alpha.6` unless you were given a reviewed feed containing that exact package.
+To evaluate the current implementation, clone the repository and build/run it as source. Do not change the published install command to `0.1.0-alpha.7` unless you were given a reviewed feed containing that exact package.
 
 ## Minimal package smoke test
 
