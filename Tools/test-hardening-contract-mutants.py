@@ -14,6 +14,7 @@ FILES = (
     Path("UniversalToolchain/UniversalToolchain.Runtime/RuntimeConstructionFailure.cs"),
     Path("UniversalToolchain/UniversalToolchain.Wist/WistEngine.cs"),
     Path("UniversalToolchain/UniversalToolchain.Wist/WistFailureClassifier.cs"),
+    Path("UniversalToolchain/UniversalToolchain.Wist/WistUserInputException.cs"),
 )
 
 
@@ -87,6 +88,15 @@ def main() -> int:
             "_ => WistFailureKind.UserInput",
         )
         expect_rejected(checker, internal_as_user, "internal fault converted to user input")
+
+        broad_argument = Path(temporary) / "broad-argument-as-user"
+        shutil.copytree(baseline, broad_argument)
+        replace_once(
+            broad_argument / "UniversalToolchain/UniversalToolchain.Wist/WistFailureClassifier.cs",
+            "WistUserInputException => WistFailureKind.UserInput",
+            "ArgumentException => WistFailureKind.UserInput",
+        )
+        expect_rejected(checker, broad_argument, "arbitrary argument fault converted to user input")
 
         swallowed_guard = Path(temporary) / "swallowed-internal"
         shutil.copytree(baseline, swallowed_guard)
