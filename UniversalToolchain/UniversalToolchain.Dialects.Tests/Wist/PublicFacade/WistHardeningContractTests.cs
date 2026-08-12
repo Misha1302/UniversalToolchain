@@ -63,13 +63,24 @@ public sealed class WistHardeningContractTests
     [Test]
     public void ArbitraryInvariantFailure_IsInternalAndCannotBecomeValidationFailure()
     {
-        var exception = new InvalidOperationException("artificial invariant failure");
-        var kind = WistFailureClassifier.Classify(exception);
+        Exception[] untypedFrameworkFaults =
+        [
+            new InvalidOperationException("artificial invariant failure"),
+            new ArgumentException("artificial framework argument failure")
+        ];
 
         Assert.Multiple(() =>
         {
-            Assert.That(kind, Is.EqualTo(WistFailureKind.Internal));
-            Assert.That(WistFailureClassifier.IsStructuredResultFailure(kind), Is.False);
+            foreach (var exception in untypedFrameworkFaults)
+            {
+                var kind = WistFailureClassifier.Classify(exception);
+                Assert.That(kind, Is.EqualTo(WistFailureKind.Internal), exception.GetType().Name);
+                Assert.That(WistFailureClassifier.IsStructuredResultFailure(kind), Is.False, exception.GetType().Name);
+            }
+
+            Assert.That(
+                WistFailureClassifier.Classify(new WistUserInputException("typed facade input failure")),
+                Is.EqualTo(WistFailureKind.UserInput));
         });
     }
 
