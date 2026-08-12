@@ -14,7 +14,7 @@ internal static class WistFailureClassifier
         {
             WistResourceLimitException => WistFailureKind.Policy,
             WistDialectFeatureException => WistFailureKind.UserInput,
-            LexerException or ParserException or BindingException or TypeSystemException or ImportException => WistFailureKind.UserInput,
+            LexerException or ParserException or TypeSystemException or ImportException => WistFailureKind.UserInput,
             ArgumentException or AmbiguousMatchException or TypeLoadException => WistFailureKind.UserInput,
             SsaRouteException => WistFailureKind.Unsupported,
             FileLoadException or FileNotFoundException or IOException or UnauthorizedAccessException =>
