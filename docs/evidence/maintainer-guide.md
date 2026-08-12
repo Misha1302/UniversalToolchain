@@ -3,7 +3,7 @@ title: Maintainer and Release Guide
 description: Keep public documentation, package evidence, manifests and clean artifacts synchronized.
 audience: maintainer-release-engineer
 status: current
-lastVerifiedAgainst: wist-release-state-2026-08-06
+lastVerifiedAgainst: wist-release-state-2026-08-12
 ---
 
 # Maintainer and release guide
@@ -120,20 +120,20 @@ Reviews, proposals and talks must not appear in the public source tree merely be
 
 ## Package version synchronization
 
-The generic SDK/template family is `0.3.0-alpha.4`; `UniversalToolchain.Wist.LanguagePack` is `0.3.0-alpha.5`; the Wist facade source candidate is `0.1.0-alpha.6`.
+The unchanged public package identities remain at `0.3.0-alpha.4`. The architecture/production-hardening payloads use `UniversalToolchain.LanguageSdk` and `UniversalToolchain.Runtime` `0.3.0-alpha.5`, `UniversalToolchain.Wist.LanguagePack` `0.3.0-alpha.6`, and `UniversalToolchain.Wist` `0.1.0-alpha.7`. These are source-candidate identities, not a publication statement.
 
 <!-- package-matrix:begin -->
 | Package ID | Version |
 |---|---|
 | `UniversalToolchain.Language.Abstractions` | `0.3.0-alpha.4` |
 | `UniversalToolchain.FeatureSdk` | `0.3.0-alpha.4` |
-| `UniversalToolchain.LanguageSdk` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Runtime` | `0.3.0-alpha.4` |
+| `UniversalToolchain.LanguageSdk` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Runtime` | `0.3.0-alpha.5` |
 | `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.4` |
 | `UniversalToolchain.Testing` | `0.3.0-alpha.4` |
 | `UniversalToolchain.Templates` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.5` |
-| `UniversalToolchain.Wist` | `0.1.0-alpha.6` |
+| `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.6` |
+| `UniversalToolchain.Wist` | `0.1.0-alpha.7` |
 <!-- package-matrix:end -->
 
 For generic package migrations, follow [Package Versioning and Migrations](/language-authoring/versioning-and-migrations).
