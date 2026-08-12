@@ -34,7 +34,7 @@ Use this path when you want an installable package without cloning the repositor
 ### Current source candidate
 
 <!-- wist-source-candidate:begin -->
-This source tree defines `UniversalToolchain.Wist` `0.1.0-alpha.6`. That candidate is **not published on NuGet.org**. Do not replace the published command above with `0.1.0-alpha.6` unless you have a reviewed package feed containing that exact artifact.
+This source tree defines `UniversalToolchain.Wist` `0.1.0-alpha.7`. That candidate is **not published on NuGet.org**. Do not replace the published command above with `0.1.0-alpha.7` unless you have a reviewed package feed containing that exact artifact.
 <!-- wist-source-candidate:end -->
 
 To evaluate the current repository implementation, clone the repository and use the source build/sample path below. Release packaging is a separate baseline-bearing maintainer gate.
@@ -152,7 +152,7 @@ Do not use the current alpha when:
 | Capability | Status |
 |---|---|
 | Published NuGet package | `UniversalToolchain.Wist` `0.1.0-alpha.1`, clean-room smoke verified |
-| Current source candidate | `UniversalToolchain.Wist` `0.1.0-alpha.6`, not published on NuGet.org |
+| Current source candidate | `UniversalToolchain.Wist` `0.1.0-alpha.7`, not published on NuGet.org |
 | `WistEngine` facade | available |
 | Restricted arithmetic preset | `CreateRestrictedArithmetic()` |
 | Broad native preview preset | `CreateFullNative()` with explicit host assembly allowlist |
@@ -208,7 +208,7 @@ Technical material:
 - [Installation and clean-room smoke](docs/start/installation.md)
 - [Wist facade API reference](docs/reference/wist-facade-api.md)
 - [Use-case recipes](docs/start/use-case-recipes.md)
-- [Wist `0.1.0-alpha.6` candidate stability contract](docs/evidence/wist-stability-v0.1.0-alpha.6.md)
+- [Wist `0.1.0-alpha.7` candidate stability contract](docs/evidence/wist-stability-v0.1.0-alpha.7.md)
 - [External Language Authoring quickstart](docs/language-authoring/quickstart.md)
 - [Architecture and project map](docs/architecture/project-map.md)
 
