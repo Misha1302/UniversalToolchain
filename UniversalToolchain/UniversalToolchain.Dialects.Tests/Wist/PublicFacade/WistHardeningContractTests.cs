@@ -76,7 +76,7 @@ public sealed class WistHardeningContractTests
     [Test]
     public void SourceRetention_HashAndIdentity_DropsRawSourceButKeepsIdentity()
     {
-        const string source = "price * 2";
+        const string source = "price * 2.0";
         using var engine = WistEngine.Create(new WistEngineOptions
         {
             SourceRetention = WistSourceRetentionPolicy.HashAndIdentity
@@ -96,7 +96,7 @@ public sealed class WistHardeningContractTests
     [Test]
     public void SourceRetention_None_DropsRawSourceAndHash()
     {
-        const string source = "price * 2";
+        const string source = "price * 2.0";
         using var engine = WistEngine.Create(new WistEngineOptions
         {
             SourceRetention = WistSourceRetentionPolicy.None
