@@ -57,13 +57,13 @@ Parallel graph traversal and shared compilation are the default. `--jobs`, `--se
 |---|---:|---:|---:|
 | `Tests` | 524 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
-| `UniversalToolchain.Dialects.Tests` | 261 | 0 | 0 |
+| `UniversalToolchain.Dialects.Tests` | 262 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 161 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,289** | **0** | **0** |
+| **Total** | **1,290** | **0** | **0** |
 
-The hardening delta is 13 targeted tests: eight Wist facade failure/privacy/concurrency regressions and five runtime construction/capability regressions. The exact manifest is owned by `eng/test-counts.json`; provider-backed exact-head results are recorded against their commit/run identities rather than inferred from an older local TRX snapshot.
+The hardening delta is 14 targeted tests: nine Wist facade failure/privacy/concurrency regressions and five runtime construction/capability regressions. The exact manifest is owned by `eng/test-counts.json`; provider-backed exact-head results are recorded against their commit/run identities rather than inferred from an older local TRX snapshot.
 
 ## Production-boundary contract experiment
 
