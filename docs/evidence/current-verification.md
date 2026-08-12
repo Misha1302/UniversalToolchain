@@ -90,25 +90,25 @@ Current documentation also carries the typed runtime-capability, Wist failure-ta
 
 ## Package/release boundary
 
-The deterministic runtime-boundary package matrix contains seven SDK/template packages at `0.3.0-alpha.4`, `UniversalToolchain.Wist.LanguagePack` at `0.3.0-alpha.5`, and the `UniversalToolchain.Wist` source candidate at `0.1.0-alpha.6`.
+The current source tree carries new unpublished identities for the package payloads changed by architecture/production hardening. The matrix below intentionally mirrors current project identities even though the workflow receipts elsewhere on this page remain pinned historical evidence.
 
 <!-- package-matrix:begin -->
 | Package ID | Version |
 |---|---|
 | `UniversalToolchain.Language.Abstractions` | `0.3.0-alpha.4` |
 | `UniversalToolchain.FeatureSdk` | `0.3.0-alpha.4` |
-| `UniversalToolchain.LanguageSdk` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Runtime` | `0.3.0-alpha.4` |
+| `UniversalToolchain.LanguageSdk` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Runtime` | `0.3.0-alpha.5` |
 | `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.4` |
 | `UniversalToolchain.Testing` | `0.3.0-alpha.4` |
 | `UniversalToolchain.Templates` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.5` |
-| `UniversalToolchain.Wist` | `0.1.0-alpha.6` |
+| `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.6` |
+| `UniversalToolchain.Wist` | `0.1.0-alpha.7` |
 <!-- package-matrix:end -->
 
-The published-package smoke is a different boundary: it installs `0.1.0-alpha.1` from NuGet.org in a clean temporary project. `0.1.0-alpha.6` was not published by the candidate verification work.
+The published-package smoke is a different boundary: it installs `0.1.0-alpha.1` from NuGet.org in a clean temporary project. `0.1.0-alpha.7` is a source candidate and is not published by this hardening work.
 
-The local baseline-aware package gate was replayed against the exact `f13ad1310856e5618e1c3042c447ca543e0f3125` source archive and its deterministic reviewed package bundle. It passed version/content provenance for 9/9 package identities, embedded metadata and active-document synchronization, exact Wist API delta classification, package-surface checks, clean Wist/template/cross-package consumers and detached release-integrity mutation checks.
+The historical baseline-aware package replay for the pinned evidence snapshot used the exact `f13ad1310856e5618e1c3042c447ca543e0f3125` source archive and its deterministic reviewed package bundle. That historical replay passed version/content provenance, embedded metadata, API delta, package-surface, clean-consumer and integrity checks for its own package identities. The current hardening candidate requires and must record its own full baseline-bearing package verification before integration readiness can be claimed.
 
 ## PlanFuzz evidence boundary
 
