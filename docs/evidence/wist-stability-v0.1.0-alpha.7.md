@@ -40,12 +40,17 @@ The source tree defines these unpublished candidate identities:
 
 | Package | Source candidate |
 |---|---|
-| `UniversalToolchain.Wist` | `0.1.0-alpha.7` |
-| `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.6` |
-| `UniversalToolchain.Runtime` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Language.Abstractions` | `0.3.0-alpha.4` |
+| `UniversalToolchain.FeatureSdk` | `0.3.0-alpha.4` |
 | `UniversalToolchain.LanguageSdk` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Runtime` | `0.3.0-alpha.5` |
+| `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Testing` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Templates` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.6` |
+| `UniversalToolchain.Wist` | `0.1.0-alpha.7` |
 
-These version changes reserve new identities for changed package payloads. They do **not** publish or promote any package.
+These version changes reserve new identities for changed package payloads, including generated dependency metadata and the `ut-language` template's package references. They do **not** publish or promote any package.
 
 ## Public compatibility notes
 
