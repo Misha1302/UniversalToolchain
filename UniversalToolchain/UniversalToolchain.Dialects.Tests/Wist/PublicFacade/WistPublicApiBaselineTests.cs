@@ -17,6 +17,11 @@ public sealed class WistPublicApiBaselineTests
             .ToArray();
         var actual = Snapshot(typeof(WistEngine).Assembly).ToArray();
 
+        var repositoryRoot = Directory.GetParent(Directory.GetParent(Path.GetDirectoryName(baselinePath)!)!.FullName)!.FullName;
+        var evidenceDirectory = Path.Combine(repositoryRoot, "artifacts", "package-review");
+        Directory.CreateDirectory(evidenceDirectory);
+        File.WriteAllLines(Path.Combine(evidenceDirectory, "wist-public-api-current.txt"), actual);
+
         Assert.That(actual, Is.EqualTo(expected),
             "The supported Wist facade changed. Review the compatibility impact and update PublicAPI.Shipped.txt intentionally.");
     }
