@@ -1,3 +1,4 @@
+using CommonExceptions;
 using UniversalToolchain.Wist;
 
 namespace UniversalToolchain.Dialects.Tests.Wist.PublicFacade;
@@ -80,6 +81,10 @@ public sealed class WistHardeningContractTests
 
             Assert.That(
                 WistFailureClassifier.Classify(new WistUserInputException("typed facade input failure")),
+                Is.EqualTo(WistFailureKind.UserInput));
+            Assert.That(
+                WistFailureClassifier.Classify(
+                    new InvalidOperationException("legacy binder family", new BindingException("typed binding failure"))),
                 Is.EqualTo(WistFailureKind.UserInput));
         });
     }
