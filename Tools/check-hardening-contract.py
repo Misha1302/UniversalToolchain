@@ -26,6 +26,7 @@ def main() -> int:
     failure = (root / "UniversalToolchain/UniversalToolchain.Runtime/RuntimeConstructionFailure.cs").read_text(encoding="utf-8-sig")
     engine = (root / "UniversalToolchain/UniversalToolchain.Wist/WistEngine.cs").read_text(encoding="utf-8-sig")
     classifier = (root / "UniversalToolchain/UniversalToolchain.Wist/WistFailureClassifier.cs").read_text(encoding="utf-8-sig")
+    user_input = (root / "UniversalToolchain/UniversalToolchain.Wist/WistUserInputException.cs").read_text(encoding="utf-8-sig")
 
     forbid(runtime, "public LanguageArtifactBuildResult Build(", "execution-only LanguageRuntime must not expose Build")
     forbid(runtime, "public LanguageExecutionResult ExecuteBuilt(", "execution-only LanguageRuntime must not expose ExecuteBuilt")
@@ -42,7 +43,11 @@ def main() -> int:
     if engine.count(expected_guard) != 3:
         raise AssertionError("both Validate overloads and TryCompile must fail fast for infrastructure/internal faults")
     require(classifier, "_ => WistFailureKind.Internal", "unclassified framework exceptions must fail closed as Internal")
+    require(classifier, "WistUserInputException => WistFailureKind.UserInput", "only facade-owned argument validation may be classified as user input")
+    forbid(classifier, "ArgumentException => WistFailureKind.UserInput", "arbitrary ArgumentException must not be classified as user input")
+    forbid(classifier, "ArgumentException or", "arbitrary ArgumentException must not participate in a user-input pattern")
     require(classifier, "kind is WistFailureKind.UserInput or WistFailureKind.Policy or WistFailureKind.Unsupported", "only expected failure classes may become structured results")
+    require(user_input, "internal sealed class WistUserInputException : ArgumentException", "facade user-input failure must stay internal and preserve the ArgumentException family")
 
     print("HARDENING_CONTRACT=PASS")
     return 0
