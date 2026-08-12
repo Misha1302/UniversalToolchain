@@ -43,6 +43,23 @@ public sealed class WistHardeningContractTests
     }
 
     [Test]
+    public void TryCompile_UnknownIdentifier_IsTypedUserInputWithoutChangingLegacyExceptionFamily()
+    {
+        using var engine = WistEngine.CreateRestrictedArithmetic();
+
+        var result = engine.TryCompile<Func<double>>("missing + 1.0");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.FailureKind, Is.EqualTo(WistFailureKind.UserInput));
+            Assert.That(result.Exception, Is.TypeOf<InvalidOperationException>());
+            Assert.That(result.Exception!.InnerException, Is.TypeOf<BindingException>());
+            Assert.That(result.Diagnostics, Is.Not.Empty);
+        });
+    }
+
+    [Test]
     public void Validate_ResourceLimit_SafeModeIsPolicyFailure()
     {
         using var engine = WistEngine.Create(new WistEngineOptions
