@@ -3,12 +3,12 @@ title: Wist Facade API
 description: Supported public entry points, result types, options and ownership rules for UniversalToolchain.Wist.
 audience: wist-application-developer
 status: current-alpha-reference
-lastVerifiedAgainst: hardening-pr-360-2026-08-11
+lastVerifiedAgainst: hardening-pr-360-2026-08-12
 ---
 
 # Wist facade API
 
-This page describes the supported compile-time facade exposed by `UniversalToolchain.Wist`. The current source candidate is `0.1.0-alpha.6`; the version currently verified from NuGet.org is listed in [Installation](/start/installation).
+This page describes the supported compile-time facade exposed by `UniversalToolchain.Wist`. The current source candidate is `0.1.0-alpha.7`; the version currently verified from NuGet.org is listed in [Installation](/start/installation).
 
 The authoritative exported surface is `UniversalToolchain/UniversalToolchain.Wist/PublicAPI.Shipped.txt`. Runtime implementation assemblies are not public compatibility contracts.
 
