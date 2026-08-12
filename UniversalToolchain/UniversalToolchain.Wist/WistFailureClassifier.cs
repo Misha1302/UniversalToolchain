@@ -13,9 +13,10 @@ internal static class WistFailureClassifier
         return exception switch
         {
             WistResourceLimitException => WistFailureKind.Policy,
+            WistUserInputException => WistFailureKind.UserInput,
             WistDialectFeatureException => WistFailureKind.UserInput,
             LexerException or ParserException or TypeSystemException or ImportException => WistFailureKind.UserInput,
-            ArgumentException or AmbiguousMatchException or TypeLoadException => WistFailureKind.UserInput,
+            AmbiguousMatchException or TypeLoadException => WistFailureKind.UserInput,
             SsaRouteException => WistFailureKind.Unsupported,
             FileLoadException or FileNotFoundException or IOException or UnauthorizedAccessException =>
                 WistFailureKind.Infrastructure,
