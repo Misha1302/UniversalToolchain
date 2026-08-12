@@ -2,7 +2,7 @@
 
 ## Environment and authority
 
-- Record refreshed: 2026-08-11.
+- Record refreshed: 2026-08-12.
 - Target CI environment: GitHub Actions Ubuntu 24.04, Linux x64.
 - SDK policy: `UniversalToolchain/global.json` with .NET 10 feature-band roll-forward.
 - Ordinary integration command: `./build.sh --skip-docs --skip-pack`.
@@ -118,20 +118,20 @@ Historical aggregate receipts remain evidence for the exact revisions that produ
 
 ## Package and release boundary
 
-The deterministic shared-contract boundary candidate contains nine package identities. Strict content provenance showed that every package payload changed relative to the reviewed `f13ad131` candidate, so all affected versions were advanced rather than reused.
+The current architecture/production-hardening candidate contains nine public package identities. Payload-bearing packages changed relative to merge #332 and therefore receive new monotonic prerelease identities instead of reusing the previous payload identity.
 
 <!-- package-matrix:begin -->
 | Package ID | Version |
 |---|---|
 | `UniversalToolchain.Language.Abstractions` | `0.3.0-alpha.4` |
 | `UniversalToolchain.FeatureSdk` | `0.3.0-alpha.4` |
-| `UniversalToolchain.LanguageSdk` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Runtime` | `0.3.0-alpha.4` |
+| `UniversalToolchain.LanguageSdk` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Runtime` | `0.3.0-alpha.5` |
 | `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.4` |
 | `UniversalToolchain.Testing` | `0.3.0-alpha.4` |
 | `UniversalToolchain.Templates` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.5` |
-| `UniversalToolchain.Wist` | `0.1.0-alpha.6` |
+| `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.6` |
+| `UniversalToolchain.Wist` | `0.1.0-alpha.7` |
 <!-- package-matrix:end -->
 
 The baseline-aware package gate verifies:
