@@ -15,6 +15,8 @@ FILES = (
     Path("UniversalToolchain/UniversalToolchain.Wist/WistEngine.cs"),
     Path("UniversalToolchain/UniversalToolchain.Wist/WistFailureClassifier.cs"),
     Path("UniversalToolchain/UniversalToolchain.Wist/WistUserInputException.cs"),
+    Path("UniversalToolchain/VariablesModule/VariablesBindingRule.cs"),
+    Path("UniversalToolchain/CommonExceptions/StageExceptions.cs"),
 )
 
 
@@ -97,6 +99,24 @@ def main() -> int:
             "ArgumentException => WistFailureKind.UserInput",
         )
         expect_rejected(checker, broad_argument, "arbitrary argument fault converted to user input")
+
+        broad_invalid_operation = Path(temporary) / "broad-invalid-operation-as-user"
+        shutil.copytree(baseline, broad_invalid_operation)
+        replace_once(
+            broad_invalid_operation / "UniversalToolchain/UniversalToolchain.Wist/WistFailureClassifier.cs",
+            "if (Contains<BindingException>(exception))",
+            "if (exception is InvalidOperationException)",
+        )
+        expect_rejected(checker, broad_invalid_operation, "arbitrary invalid-operation fault converted to user input")
+
+        missing_binding_marker = Path(temporary) / "missing-binding-marker"
+        shutil.copytree(baseline, missing_binding_marker)
+        replace_once(
+            missing_binding_marker / "UniversalToolchain/VariablesModule/VariablesBindingRule.cs",
+            "new(message, new BindingException(message))",
+            "new(message)",
+        )
+        expect_rejected(checker, missing_binding_marker, "typed binding marker removed")
 
         swallowed_guard = Path(temporary) / "swallowed-internal"
         shutil.copytree(baseline, swallowed_guard)
