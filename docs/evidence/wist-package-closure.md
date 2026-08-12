@@ -1,3 +1,10 @@
+---
+title: Wist package runtime closure evidence
+description: Physical UniversalToolchain.Wist runtime closure classification for architecture hardening.
+navigation: hidden
+status: Internal maintainer evidence for architecture and package-boundary review.
+---
+
 # Wist package runtime closure evidence
 
 > Scope: physical `lib/net10.0` runtime closure of `UniversalToolchain.Wist` after migration #332. This is evidence for architecture/production hardening; it is not a proposal to split packages.
