@@ -118,7 +118,7 @@ Historical aggregate receipts remain evidence for the exact revisions that produ
 
 ## Package and release boundary
 
-The current architecture/production-hardening candidate contains nine public package identities. Payload-bearing packages changed relative to merge #332 and therefore receive new monotonic prerelease identities instead of reusing the previous payload identity.
+The current architecture/production-hardening candidate contains nine public package identities. Payload-bearing packages changed relative to merge #332 and therefore receive new monotonic prerelease identities instead of reusing the previous payload identity. Dependency metadata and template package references are treated as package payload, not ignored as incidental text.
 
 <!-- package-matrix:begin -->
 | Package ID | Version |
@@ -127,9 +127,9 @@ The current architecture/production-hardening candidate contains nine public pac
 | `UniversalToolchain.FeatureSdk` | `0.3.0-alpha.4` |
 | `UniversalToolchain.LanguageSdk` | `0.3.0-alpha.5` |
 | `UniversalToolchain.Runtime` | `0.3.0-alpha.5` |
-| `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Testing` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Templates` | `0.3.0-alpha.4` |
+| `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Testing` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Templates` | `0.3.0-alpha.5` |
 | `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.6` |
 | `UniversalToolchain.Wist` | `0.1.0-alpha.7` |
 <!-- package-matrix:end -->
