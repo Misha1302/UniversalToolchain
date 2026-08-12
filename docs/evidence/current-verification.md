@@ -90,7 +90,7 @@ Current documentation also carries the typed runtime-capability, Wist failure-ta
 
 ## Package/release boundary
 
-The current source tree carries new unpublished identities for the package payloads changed by architecture/production hardening. The matrix below intentionally mirrors current project identities even though the workflow receipts elsewhere on this page remain pinned historical evidence.
+The current source tree carries new unpublished identities for the package payloads changed by architecture/production hardening. Generated dependency metadata and template package references are treated as package payload. The matrix below intentionally mirrors current project identities even though the workflow receipts elsewhere on this page remain pinned historical evidence.
 
 <!-- package-matrix:begin -->
 | Package ID | Version |
@@ -99,9 +99,9 @@ The current source tree carries new unpublished identities for the package paylo
 | `UniversalToolchain.FeatureSdk` | `0.3.0-alpha.4` |
 | `UniversalToolchain.LanguageSdk` | `0.3.0-alpha.5` |
 | `UniversalToolchain.Runtime` | `0.3.0-alpha.5` |
-| `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Testing` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Templates` | `0.3.0-alpha.4` |
+| `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Testing` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Templates` | `0.3.0-alpha.5` |
 | `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.6` |
 | `UniversalToolchain.Wist` | `0.1.0-alpha.7` |
 <!-- package-matrix:end -->
