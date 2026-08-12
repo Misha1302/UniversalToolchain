@@ -20,10 +20,10 @@ admin / config / LLM suggestion
 
 ## Install
 
-This README describes `UniversalToolchain.Wist` `0.1.0-alpha.6`. Install that exact artifact from a reviewed package feed:
+This README describes the reviewed source candidate `UniversalToolchain.Wist` `0.1.0-alpha.7`. That candidate is not published by this hardening change. Install that exact artifact only from a reviewed package feed containing the candidate:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.6
+dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.7 --source <reviewed-feed>
 ```
 
 For current NuGet.org availability, source-build evaluation and clean-room checks, follow the [package installation guide](https://misha1302.github.io/Wist2/start/installation). Do not assume a repository-local package output directory exists in an external consumer project.
