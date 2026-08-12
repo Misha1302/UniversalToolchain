@@ -64,7 +64,7 @@ internal sealed class VariablesBindingRule : IAstBindingRule
         if (context.TryGetExternal(node.Text, out var external))
             return new BoundExternalReference(node, external);
 
-        throw new BindingException(
+        throw new TypeSystemException(
             $"Unknown identifier '{node.Text}'. Variables must be declared with 'let' or supplied as an explicit external binding.");
     }
 
@@ -75,18 +75,18 @@ internal sealed class VariablesBindingRule : IAstBindingRule
 
         var typeName = node.Children.LastOrDefault()?.Text?.Trim();
         if (string.IsNullOrWhiteSpace(typeName))
-            throw new BindingException($"Variable '{node.Text}' declares an empty type name.");
+            throw new TypeSystemException($"Variable '{node.Text}' declares an empty type name.");
 
         if (typeName.Contains(',', StringComparison.Ordinal))
         {
-            throw new BindingException(
+            throw new TypeSystemException(
                 $"Assembly-qualified declared type '{typeName}' is not allowed. Use a supported primitive type name.");
         }
 
         if (AllowedDeclaredTypes.TryGetValue(typeName, out var resolvedType))
             return resolvedType;
 
-        throw new BindingException(
+        throw new TypeSystemException(
             $"Unknown declared type '{typeName}' for variable '{node.Text}'. Only the deterministic primitive type catalog is allowed.");
     }
 }
