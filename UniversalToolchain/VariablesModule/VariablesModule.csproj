@@ -20,7 +20,8 @@
         <ProjectReference Include="..\SettableGettableModule\SettableGettableModule.csproj"/>
         <ProjectReference Include="..\UniversalIntermediateRepresentation\UniversalIntermediateRepresentation.csproj"/>
         <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
-<ProjectReference Include="..\UniversalToolchain.ModuleContracts\UniversalToolchain.ModuleContracts.csproj"/>
+        <ProjectReference Include="..\CommonExceptions\CommonExceptions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.ModuleContracts\UniversalToolchain.ModuleContracts.csproj"/>
     </ItemGroup>
 
 </Project>
