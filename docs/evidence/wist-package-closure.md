@@ -11,13 +11,17 @@ status: Internal maintainer evidence for architecture and package-boundary revie
 
 ## Evidence source
 
+The measured baseline used for classification is the package produced by the canonical LanguagePlan migration candidate that became #332:
+
 - Package: `UniversalToolchain.Wist.0.1.0-alpha.6.nupkg`.
 - Package SHA-256: `0c7fdc2d9a42259f4e3c63d76b32d2be204ff5284bbb61157d64001521f83aeb`.
 - Package size: `829087` bytes.
 - Observed runtime DLL count: **63**.
-- Evidence artifact: successful baseline-bearing `Package Compatibility Review` from the canonical LanguagePlan migration candidate that became #332.
-- Current `UniversalToolchain.Wist.csproj` and `UniversalToolchain.Wist.LanguagePack.csproj` have the same Git blob identities as that successful candidate.
-- The hardening branch adds an explicit `VariablesModule -> CommonExceptions` project reference; `CommonExceptions.dll` was already present in this physical closure, so this does not add a new runtime assembly.
+- Evidence artifact: successful baseline-bearing `Package Compatibility Review` for that candidate.
+
+The architecture/production-hardening branch advances package versions because package payloads changed. It does **not** introduce a new package split or a second runtime-closure owner. The `GetWistLanguagePackRuntimeClosure` target and the facade/LanguagePack ProjectReference topology remain the physical-closure mechanism. The branch adds an explicit `VariablesModule -> CommonExceptions` project reference; `CommonExceptions.dll` was already present in the measured 63-DLL closure, so that edge does not add a new assembly identity.
+
+Therefore the table below is a measured classification baseline, not a claim that the final `0.1.0-alpha.7` bytes are identical to `alpha.6`. The final candidate must reproduce the expected package-surface set through the full baseline-bearing package gate before integration readiness is claimed.
 
 ## Classification model
 
@@ -27,8 +31,8 @@ The requested labels describe the **semantic owner** of an assembly. Physical in
 - `restricted-only` — implementation selected only by the restricted function-call/SafeMath shipped preset.
 - `native/full-only` — implementation owned by full-language or native feature families.
 - `SSA-only` — semantic implementation owned by SSA; still physically present today because the facade/LanguagePack directly reference SSA route types.
-- `tooling-only` — build-time tooling, not a runtime DLL. `UniversalToolchain.FeatureManifestEmitter.dll` is in this class and is intentionally absent from the package runtime surface.
-- `accidental/legacy transitive` — no live package/runtime owner found. **None identified in the 63-DLL alpha.6 surface.**
+- `tooling-only` — build-time tooling, not a runtime DLL. `UniversalToolchain.FeatureManifestEmitter.dll` is in this class and is intentionally absent from the measured package runtime surface.
+- `accidental/legacy transitive` — no live package/runtime owner found. **None identified in the measured 63-DLL alpha.6 surface.**
 
 ## Runtime assemblies
 
@@ -49,7 +53,7 @@ The requested labels describe the **semantic owner** of an assembly. Physical in
 | `BytecodeDynamicMethodsCompiler.dll` | `always required` | 36352 |  |
 | `CSharpInteropModule.dll` | `native/full-only` | 16896 | Selected only by the two full presets. |
 | `CommentsModule.dll` | `always required` | 10240 |  |
-| `CommonExceptions.dll` | `always required` | 7168 |  |
+| `CommonExceptions.dll` | `always required` | 7168 | Already present before the explicit VariablesModule edge. |
 | `ConditionsModule.dll` | `always required` | 42496 |  |
 | `DotnetHelper.dll` | `always required` | 9216 |  |
 | `DynamicMethodWrapper.dll` | `always required` | 6656 |  |
@@ -100,7 +104,7 @@ The requested labels describe the **semantic owner** of an assembly. Physical in
 
 ## Decision
 
-**No package graph change in this hardening change.**
+**No package graph split in this hardening change.** Package versions are advanced because payloads changed, but the physical dependency topology is not split into preset-specific packages.
 
 The strongest alternative was preset-specific package splitting or removing semantic-only DLLs from the facade package. That would reduce some consumer payload, but the current `Wist.LanguagePack` is a single public feature package whose catalog statically owns all supported implementation types, while the facade has direct SSA route dependencies. Removing DLLs without first changing those ownership/reference boundaries would create load/runtime holes or a second packaging/planning topology. That is a larger architecture change than this hardening work and would conflict with the goal of narrowing existing contracts rather than adding orchestration layers.
 
