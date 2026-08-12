@@ -120,7 +120,7 @@ Reviews, proposals and talks must not appear in the public source tree merely be
 
 ## Package version synchronization
 
-The unchanged public package identities remain at `0.3.0-alpha.4`. The architecture/production-hardening payloads use `UniversalToolchain.LanguageSdk` and `UniversalToolchain.Runtime` `0.3.0-alpha.5`, `UniversalToolchain.Wist.LanguagePack` `0.3.0-alpha.6`, and `UniversalToolchain.Wist` `0.1.0-alpha.7`. These are source-candidate identities, not a publication statement.
+`UniversalToolchain.Language.Abstractions` and `UniversalToolchain.FeatureSdk` remain `0.3.0-alpha.4`. The architecture/production-hardening payload set uses `UniversalToolchain.LanguageSdk`, `UniversalToolchain.Runtime`, `UniversalToolchain.LanguageAuthoring`, `UniversalToolchain.Testing` and `UniversalToolchain.Templates` `0.3.0-alpha.5`, `UniversalToolchain.Wist.LanguagePack` `0.3.0-alpha.6`, and `UniversalToolchain.Wist` `0.1.0-alpha.7`. These are source-candidate identities, not a publication statement.
 
 <!-- package-matrix:begin -->
 | Package ID | Version |
@@ -129,9 +129,9 @@ The unchanged public package identities remain at `0.3.0-alpha.4`. The architect
 | `UniversalToolchain.FeatureSdk` | `0.3.0-alpha.4` |
 | `UniversalToolchain.LanguageSdk` | `0.3.0-alpha.5` |
 | `UniversalToolchain.Runtime` | `0.3.0-alpha.5` |
-| `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Testing` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Templates` | `0.3.0-alpha.4` |
+| `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Testing` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Templates` | `0.3.0-alpha.5` |
 | `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.6` |
 | `UniversalToolchain.Wist` | `0.1.0-alpha.7` |
 <!-- package-matrix:end -->
