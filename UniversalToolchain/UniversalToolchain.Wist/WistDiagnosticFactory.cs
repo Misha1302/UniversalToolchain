@@ -16,7 +16,7 @@ internal static class WistDiagnosticFactory
         string sourceName = DefaultSourceName) =>
         FromException(exception, operationStage, WistDiagnosticExposure.Developer, sourceName);
 
-    public static IReadOnlyList<WistDiagnostic> FromException(
+    internal static IReadOnlyList<WistDiagnostic> FromException(
         Exception exception,
         string operationStage,
         WistDiagnosticExposure exposure,
