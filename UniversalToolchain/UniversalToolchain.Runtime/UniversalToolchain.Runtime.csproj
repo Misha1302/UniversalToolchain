@@ -6,7 +6,7 @@
     <LangVersion>14</LangVersion>
     <IsPackable>true</IsPackable>
     <PackageId>UniversalToolchain.Runtime</PackageId>
-    <Version>0.3.0-alpha.4</Version>
+    <Version>0.3.0-alpha.5</Version>
     <Description>Backend-neutral runtime-provider registry and execution facade for validated UniversalToolchain language plans.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
   </PropertyGroup>
