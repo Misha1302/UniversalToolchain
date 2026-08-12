@@ -37,7 +37,7 @@
 
 ## Проверка
 
-Exact test manifest текущей ветки: **1,289 тестов**. Увеличение на 13 тестов соответствует targeted architecture/production hardening regressions. Canonical build/test gate обязан подтвердить 0 failed и 0 skipped на exact candidate revision; более старые workflow receipts не подменяют exact-head verification.
+Exact test manifest текущей ветки: **1,290 тестов**. Увеличение на 14 тестов соответствует targeted architecture/production hardening regressions: 9 Wist facade tests и 5 runtime construction/capability tests. Canonical build/test gate обязан подтвердить 0 failed и 0 skipped на exact candidate revision; более старые workflow receipts не подменяют exact-head verification.
 
 Baseline-bearing package gate проверяет девять package identities, exact `.nuspec` metadata, monotonic version/content provenance, Wist public API delta, physical package surface, clean external consumers и detached integrity manifest. GitHub aggregate CI остаётся отдельным обязательным gate.
 
