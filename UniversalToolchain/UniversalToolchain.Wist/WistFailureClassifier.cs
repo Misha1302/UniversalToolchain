@@ -10,6 +10,9 @@ internal static class WistFailureClassifier
     {
         ArgumentNullException.ThrowIfNull(exception);
 
+        if (Contains<BindingException>(exception))
+            return WistFailureKind.UserInput;
+
         return exception switch
         {
             WistResourceLimitException => WistFailureKind.Policy,
@@ -27,4 +30,15 @@ internal static class WistFailureClassifier
 
     public static bool IsStructuredResultFailure(WistFailureKind kind) =>
         kind is WistFailureKind.UserInput or WistFailureKind.Policy or WistFailureKind.Unsupported;
+
+    private static bool Contains<TException>(Exception exception)
+        where TException : Exception
+    {
+        for (Exception? current = exception; current != null; current = current.InnerException)
+        {
+            if (current is TException)
+                return true;
+        }
+        return false;
+    }
 }
