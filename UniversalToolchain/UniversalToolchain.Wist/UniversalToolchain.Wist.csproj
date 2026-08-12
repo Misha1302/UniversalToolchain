@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <LangVersion>14</LangVersion>
         <PackageId>UniversalToolchain.Wist</PackageId>
-        <Version>0.1.0-alpha.6</Version>
+        <Version>0.1.0-alpha.7</Version>
         <Title>UniversalToolchain Wist</Title>
         <Description>Restricted formulas for .NET: validate rules, evaluate diagnostics, and compile approved formulas into typed delegates while the host owns inputs and side effects.</Description>
         <Authors>Mikhail Razakov</Authors>
@@ -17,7 +17,7 @@
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageTags>dotnet;csharp;rule-engine;expression-engine;embedded-dsl;business-rules;formula;compiler;interpreter;cil;runtime;language-tooling;ssa;wist</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageReleaseNotes>Canonical LanguagePlan/LanguageRuntime facade migration candidate. This release intentionally does not provide binary compatibility with pre-hardening 1.0.0.0 runtime assemblies.</PackageReleaseNotes>
+        <PackageReleaseNotes>Architecture and production hardening over the canonical LanguagePlan/LanguageRuntime facade: typed runtime build capability, fail-safe failure taxonomy, explicit concurrency and source-retention contracts.</PackageReleaseNotes>
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <DebugType>portable</DebugType>
