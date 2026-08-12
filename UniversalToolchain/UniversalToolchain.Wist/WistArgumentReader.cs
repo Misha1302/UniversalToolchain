@@ -1,4 +1,3 @@
-using ExceptionsManager;
 using System.Collections;
 using System.Reflection;
 
@@ -8,6 +7,8 @@ internal static class WistArgumentReader
 {
     public static IReadOnlyDictionary<string, object?> FromObject(object arguments)
     {
+        ArgumentNullException.ThrowIfNull(arguments);
+
         if (arguments is IReadOnlyDictionary<string, object?> readOnlyDictionary)
             return readOnlyDictionary;
 
@@ -24,7 +25,7 @@ internal static class WistArgumentReader
             .ToArray();
 
         if (properties.Length == 0)
-            Thrower.Argument(nameof(arguments), "Argument object must expose at least one public readable property.");
+            throw new WistUserInputException("Argument object must expose at least one public readable property.", nameof(arguments));
 
         var result = new Dictionary<string, object?>(StringComparer.Ordinal);
         foreach (var property in properties)
@@ -40,6 +41,7 @@ internal static class WistArgumentReader
 
     public static IReadOnlyDictionary<string, Type> TypesFromNamesAndTypes(params (string Name, Type Type)[] arguments)
     {
+        ArgumentNullException.ThrowIfNull(arguments);
         var result = new Dictionary<string, Type>(StringComparer.Ordinal);
         foreach (var argument in arguments)
             AddArgumentType(result, argument.Name, argument.Type);
@@ -53,10 +55,7 @@ internal static class WistArgumentReader
         foreach (DictionaryEntry entry in dictionary)
         {
             if (entry.Key is not string name)
-            {
-                Thrower.Argument(nameof(dictionary), "Dictionary argument keys must be strings.");
-                continue;
-            }
+                throw new WistUserInputException("Dictionary argument keys must be strings.", nameof(dictionary));
 
             AddArgument(result, name, entry.Value);
         }
@@ -69,9 +68,9 @@ internal static class WistArgumentReader
         ValidateName(name);
 
         if (target.ContainsKey(name))
-            Thrower.Argument(nameof(target), $"Duplicate Wist argument name '{name}'.");
+            throw new WistUserInputException($"Duplicate Wist argument name '{name}'.", nameof(target));
 
-        target[name] = type.ArgNotNull();
+        target[name] = type ?? throw new WistUserInputException("Wist argument types must not be null.", nameof(type));
     }
 
     private static void AddArgument(IDictionary<string, object?> target, string name, object? value)
@@ -79,7 +78,7 @@ internal static class WistArgumentReader
         ValidateName(name);
 
         if (target.ContainsKey(name))
-            Thrower.Argument(nameof(target), $"Duplicate Wist argument name '{name}'.");
+            throw new WistUserInputException($"Duplicate Wist argument name '{name}'.", nameof(target));
 
         target[name] = value;
     }
@@ -87,6 +86,6 @@ internal static class WistArgumentReader
     private static void ValidateName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
-            Thrower.Argument(nameof(name), "Wist argument names must not be empty.");
+            throw new WistUserInputException("Wist argument names must not be empty.", nameof(name));
     }
 }
