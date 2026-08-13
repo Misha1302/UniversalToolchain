@@ -17,25 +17,33 @@ jobs:
     timeout-minutes: 35
 
     steps:
-      - name: Wait for all push workflows for this commit
+      - name: Checkout CI contract
+        uses: actions/checkout@v4
+
+      - name: Wait for all required push workflows for this commit
         uses: actions/github-script@v7
         with:
           script: |
+            const fs = require('fs');
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const sha = context.sha;
             const branch = context.ref.replace('refs/heads/', '');
             const statusContext = 'ci/aggregate';
-            const acceptableConclusions = new Set(['success', 'skipped', 'neutral']);
+            const contract = JSON.parse(fs.readFileSync('eng/ci-required-workflows.json', 'utf8'));
+            const acceptableConclusions = new Set(contract.allowedConclusions);
             const requiredWorkflows = new Set([
-              '.NET CI',
-              'UniversalToolchain validation',
-              'Docs Check',
-              'Published Wist package smoke',
-              'Wist Rollout Sample Smoke',
-              'Benchmark Smoke',
-              'Contract Experiment',
+              ...contract.requiredForCodeAcceptance.map(entry => entry.name),
             ]);
+            if (acceptableConclusions.size !== 1 || !acceptableConclusions.has('success')) {
+              core.setFailed('Canonical CI contract must allow only success for required workflows.');
+              return;
+            }
+            if (requiredWorkflows.size !== contract.requiredForCodeAcceptance.length) {
+              core.setFailed('Canonical CI contract contains duplicate required workflow names.');
+              return;
+            }
+
             const deadline = Date.now() + 30 * 60 * 1000;
             let stableCompletedSnapshots = 0;
             let previousCompletedIds = '';
@@ -52,7 +60,7 @@ jobs:
               });
             }
 
-            await publish('pending', 'Waiting for the complete CI suite on this commit');
+            await publish('pending', 'Waiting for the complete required CI suite on this commit');
 
             while (Date.now() < deadline) {
               const response = await github.rest.actions.listWorkflowRunsForRepo({
@@ -108,15 +116,15 @@ jobs:
                   `Failed: ${primary.name} #${primary.id} (${primary.conclusion})`,
                   primary.html_url,
                 );
-                core.setFailed(`Failed workflows: ${summary}`);
+                core.setFailed(`Failed required workflows: ${summary}`);
                 return;
               }
 
               const summary = requiredRuns.map(run => `${run.name}#${run.id}:${run.conclusion}`).join(', ');
-              core.info(`All workflows succeeded: ${summary}`);
-              await publish('success', `${requiredRuns.length} workflows completed successfully`);
+              core.info(`All required workflows succeeded: ${summary}`);
+              await publish('success', `${requiredRuns.length} required workflows completed successfully`);
               return;
             }
 
-            await publish('failure', 'Timed out waiting for the complete CI suite');
-            core.setFailed('Timed out waiting for the complete CI suite on this commit.');
+            await publish('failure', 'Timed out waiting for the complete required CI suite');
+            core.setFailed('Timed out waiting for the complete required CI suite on this commit. Missing workflows fail closed.');

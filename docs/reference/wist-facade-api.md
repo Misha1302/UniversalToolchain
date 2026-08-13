@@ -3,12 +3,12 @@ title: Wist Facade API
 description: Supported public entry points, result types, options and ownership rules for UniversalToolchain.Wist.
 audience: wist-application-developer
 status: current-alpha-reference
-lastVerifiedAgainst: wist-release-state-2026-08-06
+lastVerifiedAgainst: hardening-pr-360-2026-08-12
 ---
 
 # Wist facade API
 
-This page describes the supported compile-time facade exposed by `UniversalToolchain.Wist`. The current source candidate is `0.1.0-alpha.6`; the version currently verified from NuGet.org is listed in [Installation](/start/installation).
+This page describes the supported compile-time facade exposed by `UniversalToolchain.Wist`. The current source candidate is `0.1.0-alpha.7`; the version currently verified from NuGet.org is listed in [Installation](/start/installation).
 
 The authoritative exported surface is `UniversalToolchain/UniversalToolchain.Wist/PublicAPI.Shipped.txt`. Runtime implementation assemblies are not public compatibility contracts.
 
@@ -29,7 +29,7 @@ using var fullNative = WistEngine.CreateFullNative();
 
 `CreateRestrictedArithmetic()` is the recommended first-contact preset for restricted formulas.
 
-`CreateFullNative()` selects the broader native profile, but it does not automatically expose host CLR assemblies. Use `WistEngine.Create(options)` when you need an explicit preset, backend, resource limits, host assembly allowlist or experimental optimization route.
+`CreateFullNative()` selects the broader native profile, but it does not automatically expose host CLR assemblies. Use `WistEngine.Create(options)` when you need an explicit preset, backend, resource limits, host assembly allowlist, source-retention policy, diagnostics policy or experimental optimization route.
 
 ```csharp
 using var engine = WistEngine.Create(new WistEngineOptions
@@ -40,13 +40,15 @@ using var engine = WistEngine.Create(new WistEngineOptions
     {
         MaxSourceLength = 16_384,
         MaxParameterCount = 16
-    }
+    },
+    SourceRetention = WistSourceRetentionPolicy.HashAndIdentity,
+    DiagnosticExposure = WistDiagnosticExposure.Safe
 });
 ```
 
 Options are snapshotted when the engine is created. Changing the original options object later does not reconfigure an existing engine.
 
-## Validate without throwing
+## Validate expected input failures without throwing
 
 ```csharp
 var validation = engine.Validate(
@@ -55,6 +57,7 @@ var validation = engine.Validate(
 
 if (!validation.IsValid)
 {
+    Console.WriteLine(validation.FailureKind);
     foreach (var diagnostic in validation.Diagnostics)
         Console.WriteLine($"{diagnostic.Code}: {diagnostic.Message}");
 }
@@ -70,9 +73,12 @@ WistValidationResult Validate(string code, object sampleArguments);
 `WistValidationResult` exposes:
 
 - `IsValid`;
+- `FailureKind` for expected failures;
 - `Diagnostics`;
-- `Exception` for investigation of the captured failure;
+- `Exception` only according to `DiagnosticExposure`;
 - `OptimizationReport`, including route information captured before a failure.
+
+Structured non-throwing failures are limited to `UserInput`, `Policy` and `Unsupported`. `Infrastructure` and `Internal` are taxonomy values for fault ownership, but unexpected framework/infrastructure failures are fail-fast rather than converted to an ordinary invalid-formula result.
 
 There is no aggregate `Message` property. Consume structured diagnostics instead of parsing exception text.
 
@@ -123,11 +129,14 @@ WistCompileResult<TDelegate> TryCompile<TDelegate>(
 
 - `IsSuccess`;
 - `Program` when successful;
+- `FailureKind` for expected failures;
 - `Diagnostics`;
-- `Exception` for failure investigation;
+- `Exception` according to `DiagnosticExposure`;
 - `OptimizationReport`.
 
-`WistProgram<TDelegate>` exposes the typed `CompiledDelegate` and `Metadata`. Metadata includes source text, backend, ordered parameter names and types, return type and optimization report.
+Unexpected infrastructure/internal faults are not reported as `IsSuccess == false`; they throw.
+
+`WistProgram<TDelegate>` exposes the typed `CompiledDelegate` and `Metadata`. Metadata includes source retention/identity fields, backend, ordered parameter names and types, return type and optimization report.
 
 The delegate signature and the ordered `parameterNames` must describe the same parameters. Do not cache or reuse a compiled program under a different parameter order, dialect, backend or options snapshot.
 
@@ -154,7 +163,9 @@ sealed class ActiveRule : IDisposable
 }
 ```
 
-The host application owns synchronization when replacing and disposing engines. The alpha facade does not claim universal thread safety for arbitrary engine operations, custom dialect components or host interop. See [Production Integration](/start/production-integration) and [Lifecycle, Concurrency and Privacy](/reference/lifecycle-concurrency-privacy).
+One `WistEngine` instance is intentionally non-concurrent. Overlapping public operations fail fast. Use a separate engine per concurrent operation stream; do not infer thread safety from generic `PerSession` lifetime. Disposal coordinates with an already admitted operation and rejects later operations.
+
+See [Production Integration](/start/production-integration) and [Lifecycle, Concurrency and Privacy](/reference/lifecycle-concurrency-privacy).
 
 ## Engine options
 
@@ -167,6 +178,8 @@ The host application owns synchronization when replacing and disposing engines. 
 | `AllowedAssemblies` | Immutable-at-creation host assembly allowlist for CLR interop and type directives |
 | `ResourceLimits` | Host-owned source-length and parameter-count preflight limits |
 | `Optimization` | Optional compiler optimization routes; SSA remains experimental |
+| `SourceRetention` | `Full`, `HashAndIdentity` or `None` metadata retention policy |
+| `DiagnosticExposure` | `Developer` compatibility mode or `Safe` expected-failure diagnostics |
 
 Factory helpers:
 
@@ -185,6 +198,18 @@ WistDialectSource.FromText(sourceText, "custom.wistdialect");
 ```
 
 A backend alias that the selected dialect does not expose is rejected during engine creation.
+
+## Source retention
+
+`Full` is the alpha compatibility default. It preserves `SourceText` and also records `SourceSha256`/`SourceLength`.
+
+`HashAndIdentity` drops `SourceText` while retaining SHA-256 and length. `None` drops raw source and hash while retaining length. SHA-256 is an identity aid, not secret scrubbing; lower compiler/runtime artifacts may still retain source-derived data.
+
+## Diagnostic exposure
+
+`Developer` is the alpha compatibility default for expected input/policy/unsupported failures and may expose the original expected exception object. `Safe` omits that object from `WistValidationResult`/`WistCompileResult` and bounds diagnostic messages.
+
+Neither mode converts framework bugs into user validation failures. Safe mode is not a promise of cryptographic or semantic secret scrubbing.
 
 ## Resource limits
 
@@ -209,7 +234,7 @@ These are preflight limits only. They do not provide execution timeouts, memory 
 - human-readable `Message`;
 - structured `Hints`.
 
-Use diagnostic codes as compatibility keys. English message wording may become more precise during alpha. See [Diagnostics Reference](/reference/diagnostics).
+Use diagnostic codes plus `FailureKind` as compatibility keys. English message wording may become more precise during alpha. See [Diagnostics Reference](/reference/diagnostics).
 
 ## Experimental SSA options
 

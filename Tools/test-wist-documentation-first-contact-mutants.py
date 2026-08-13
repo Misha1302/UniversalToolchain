@@ -55,7 +55,7 @@ def main() -> int:
     source_version = state["sourceVersion"]
     package_readme = root / state["packageReadmeDocuments"][0]
     package_readme_identity = (
-        f"This README describes `UniversalToolchain.Wist` `{source_version}`."
+        f"This README belongs to `UniversalToolchain.Wist` `{source_version}`."
     )
 
     positive = run(checker, root)

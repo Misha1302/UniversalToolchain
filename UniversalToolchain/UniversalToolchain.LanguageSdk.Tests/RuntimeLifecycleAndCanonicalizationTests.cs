@@ -37,7 +37,7 @@ public sealed class RuntimeLifecycleAndCanonicalizationTests
     [Test]
     public async Task ReentrantDispose_FailsImmediatelyWithoutDeadlock()
     {
-        LanguageRuntime? runtime = null;
+        LanguageBuildRuntime? runtime = null;
         var fixture = CreateLifecycleFixture(
             _ => new CallbackTransformer(
                 "lifecycle.parse",
@@ -59,7 +59,7 @@ public sealed class RuntimeLifecycleAndCanonicalizationTests
     [Test]
     public async Task FlowedChildContext_AfterOperationCompletion_DoesNotRetainActiveLease()
     {
-        LanguageRuntime? runtime = null;
+        LanguageBuildRuntime? runtime = null;
         Task? childTask = null;
         var childReady = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var releaseChild = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);

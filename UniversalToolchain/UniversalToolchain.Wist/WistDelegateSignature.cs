@@ -1,5 +1,3 @@
-using ExceptionsManager;
-
 namespace UniversalToolchain.Wist;
 
 internal sealed class WistDelegateSignature
@@ -27,21 +25,21 @@ internal sealed class WistDelegateSignature
     public static WistDelegateSignature FromDelegate<TDelegate>(IReadOnlyList<string> parameterNames)
         where TDelegate : Delegate
     {
-        parameterNames = parameterNames.ArgNotNull();
+        ArgumentNullException.ThrowIfNull(parameterNames);
 
         var invoke = typeof(TDelegate).GetMethod("Invoke");
         if (invoke == null)
-            Thrower.Argument(nameof(TDelegate), $"Type '{typeof(TDelegate).FullName}' is not a delegate type.");
+            throw new WistUserInputException($"Type '{typeof(TDelegate).FullName}' is not a delegate type.", nameof(TDelegate));
 
         if (invoke.ReturnType == typeof(void))
-            Thrower.Argument(nameof(TDelegate), "Wist compiled delegates must return a value.");
+            throw new WistUserInputException("Wist compiled delegates must return a value.", nameof(TDelegate));
 
         var parameters = invoke.GetParameters();
         if (parameters.Length != parameterNames.Count)
         {
-            Thrower.Argument(
-                nameof(parameterNames),
-                $"Delegate '{typeof(TDelegate).Name}' expects {parameters.Length} parameters but {parameterNames.Count} names were provided.");
+            throw new WistUserInputException(
+                $"Delegate '{typeof(TDelegate).Name}' expects {parameters.Length} parameters but {parameterNames.Count} names were provided.",
+                nameof(parameterNames));
         }
 
         var names = new List<string>(parameterNames.Count);
@@ -53,14 +51,14 @@ internal sealed class WistDelegateSignature
         {
             var name = parameterNames[index];
             if (string.IsNullOrWhiteSpace(name))
-                Thrower.Argument(nameof(parameterNames), "Parameter names must not be null, empty, or whitespace.");
+                throw new WistUserInputException("Parameter names must not be null, empty, or whitespace.", nameof(parameterNames));
 
             if (!seen.Add(name))
-                Thrower.Argument(nameof(parameterNames), $"Duplicate parameter name '{name}'.");
+                throw new WistUserInputException($"Duplicate parameter name '{name}'.", nameof(parameterNames));
 
             var parameterType = parameters[index].ParameterType;
             if (parameterType.IsByRef)
-                Thrower.Argument(nameof(TDelegate), "Wist compiled delegates do not support by-ref parameters.");
+                throw new WistUserInputException("Wist compiled delegates do not support by-ref parameters.", nameof(TDelegate));
 
             names.Add(name);
             types.Add(parameterType);

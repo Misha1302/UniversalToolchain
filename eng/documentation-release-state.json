@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "packageId": "UniversalToolchain.Wist",
   "project": "UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj",
-  "sourceVersion": "0.1.0-alpha.6",
+  "sourceVersion": "0.1.0-alpha.7",
   "publishedVersion": "0.1.0-alpha.1",
   "targetFramework": "net10.0",
-  "stabilityDocument": "docs/evidence/wist-stability-v0.1.0-alpha.6.md",
+  "stabilityDocument": "docs/evidence/wist-stability-v0.1.0-alpha.7.md",
   "publishedSmokeWorkflow": ".github/workflows/published-package-smoke.yml",
   "publishedInstallDocuments": [
     "readme.md",

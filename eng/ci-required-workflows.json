@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "allowedConclusions": [
+    "success"
+  ],
+  "requiredForCodeAcceptance": [
+    {
+      "name": ".NET CI",
+      "workflow": ".github/workflows/dotnet-ci.yml"
+    },
+    {
+      "name": "UniversalToolchain validation",
+      "workflow": ".github/workflows/universal-toolchain-validation.yml"
+    },
+    {
+      "name": "Docs Check",
+      "workflow": ".github/workflows/docs-check.yml"
+    },
+    {
+      "name": "Published Wist package smoke",
+      "workflow": ".github/workflows/published-package-smoke.yml"
+    },
+    {
+      "name": "Wist Rollout Sample Smoke",
+      "workflow": ".github/workflows/wist-rollout-sample-smoke.yml"
+    },
+    {
+      "name": "Benchmark Smoke",
+      "workflow": ".github/workflows/benchmark-smoke.yml"
+    },
+    {
+      "name": "Contract Experiment",
+      "workflow": ".github/workflows/contract-experiment.yml"
+    },
+    {
+      "name": "CI contract check",
+      "workflow": ".github/workflows/ci-contract.yml"
+    }
+  ],
+  "nonBlockingWorkflows": [
+    {
+      "name": "Deploy documentation to GitHub Pages",
+      "workflow": ".github/workflows/deploy-docs.yml",
+      "reason": "Documentation deployment is an external publication step, not a code-acceptance prerequisite. Docs Check owns documentation correctness."
+    }
+  ]
+}

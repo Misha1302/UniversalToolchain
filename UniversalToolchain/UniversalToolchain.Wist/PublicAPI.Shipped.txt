@@ -1,6 +1,7 @@
 type class UniversalToolchain.Wist.WistCompileResult<TDelegate>
 property System.Collections.Generic.IReadOnlyList<UniversalToolchain.Wist.WistDiagnostic> UniversalToolchain.Wist.WistCompileResult<TDelegate>.Diagnostics { get; }
 property System.Exception UniversalToolchain.Wist.WistCompileResult<TDelegate>.Exception { get; }
+property System.Nullable<UniversalToolchain.Wist.WistFailureKind> UniversalToolchain.Wist.WistCompileResult<TDelegate>.FailureKind { get; }
 property System.Boolean UniversalToolchain.Wist.WistCompileResult<TDelegate>.IsSuccess { get; }
 property UniversalToolchain.Wist.WistOptimizationReport UniversalToolchain.Wist.WistCompileResult<TDelegate>.OptimizationReport { get; }
 property UniversalToolchain.Wist.WistProgram<TDelegate> UniversalToolchain.Wist.WistCompileResult<TDelegate>.Program { get; }
@@ -32,6 +33,10 @@ field System.String UniversalToolchain.Wist.WistDiagnosticCodes.SsaRouteFailure 
 field System.String UniversalToolchain.Wist.WistDiagnosticCodes.TypeResolutionFailure = UTC-WIST-RESOLVE-001
 field System.String UniversalToolchain.Wist.WistDiagnosticCodes.UnexpectedFailure = UTC-WIST-999
 field System.String UniversalToolchain.Wist.WistDiagnosticCodes.ValidationFailure = UTC-WIST-VALIDATE-001
+type enum UniversalToolchain.Wist.WistDiagnosticExposure
+field UniversalToolchain.Wist.WistDiagnosticExposure UniversalToolchain.Wist.WistDiagnosticExposure.Developer = 1
+field UniversalToolchain.Wist.WistDiagnosticExposure UniversalToolchain.Wist.WistDiagnosticExposure.Safe = 0
+field System.Int32 UniversalToolchain.Wist.WistDiagnosticExposure.value__
 type class UniversalToolchain.Wist.WistDiagnosticHint
 ctor UniversalToolchain.Wist.WistDiagnosticHint(System.String Message)
 property System.String UniversalToolchain.Wist.WistDiagnosticHint.Message { get; set; }
@@ -104,12 +109,21 @@ type class UniversalToolchain.Wist.WistEngineOptions
 ctor UniversalToolchain.Wist.WistEngineOptions()
 property System.Collections.Generic.IReadOnlyCollection<System.Reflection.Assembly> UniversalToolchain.Wist.WistEngineOptions.AllowedAssemblies { get; set; }
 property System.String UniversalToolchain.Wist.WistEngineOptions.BackendId { get; set; }
+property UniversalToolchain.Wist.WistDiagnosticExposure UniversalToolchain.Wist.WistEngineOptions.DiagnosticExposure { get; set; }
 property UniversalToolchain.Wist.WistDialectSource UniversalToolchain.Wist.WistEngineOptions.DialectSource { get; set; }
 property UniversalToolchain.Wist.WistOptimizationOptions UniversalToolchain.Wist.WistEngineOptions.Optimization { get; set; }
 property UniversalToolchain.Wist.WistResourceLimits UniversalToolchain.Wist.WistEngineOptions.ResourceLimits { get; set; }
+property UniversalToolchain.Wist.WistSourceRetentionPolicy UniversalToolchain.Wist.WistEngineOptions.SourceRetention { get; set; }
 method UniversalToolchain.Wist.WistEngineOptions UniversalToolchain.Wist.WistEngineOptions.FromDialectFile(System.String path)
 method UniversalToolchain.Wist.WistEngineOptions UniversalToolchain.Wist.WistEngineOptions.FromDialectText(System.String sourceText, System.String sourceName)
 method UniversalToolchain.Wist.WistEngineOptions UniversalToolchain.Wist.WistEngineOptions.FromPresetId(System.String presetId)
+type enum UniversalToolchain.Wist.WistFailureKind
+field UniversalToolchain.Wist.WistFailureKind UniversalToolchain.Wist.WistFailureKind.Infrastructure = 3
+field UniversalToolchain.Wist.WistFailureKind UniversalToolchain.Wist.WistFailureKind.Internal = 4
+field UniversalToolchain.Wist.WistFailureKind UniversalToolchain.Wist.WistFailureKind.Policy = 1
+field UniversalToolchain.Wist.WistFailureKind UniversalToolchain.Wist.WistFailureKind.Unsupported = 2
+field UniversalToolchain.Wist.WistFailureKind UniversalToolchain.Wist.WistFailureKind.UserInput = 0
+field System.Int32 UniversalToolchain.Wist.WistFailureKind.value__
 type class UniversalToolchain.Wist.WistOptimizationOptions
 ctor UniversalToolchain.Wist.WistOptimizationOptions()
 property UniversalToolchain.Wist.WistSsaOptions UniversalToolchain.Wist.WistOptimizationOptions.Ssa { get; set; }
@@ -123,6 +137,9 @@ property UniversalToolchain.Wist.WistOptimizationReport UniversalToolchain.Wist.
 property System.Collections.Generic.IReadOnlyList<System.String> UniversalToolchain.Wist.WistProgramMetadata.ParameterNames { get; }
 property System.Collections.Generic.IReadOnlyList<System.Type> UniversalToolchain.Wist.WistProgramMetadata.ParameterTypes { get; }
 property System.Type UniversalToolchain.Wist.WistProgramMetadata.ReturnType { get; }
+property System.Int32 UniversalToolchain.Wist.WistProgramMetadata.SourceLength { get; }
+property UniversalToolchain.Wist.WistSourceRetentionPolicy UniversalToolchain.Wist.WistProgramMetadata.SourceRetention { get; }
+property System.String UniversalToolchain.Wist.WistProgramMetadata.SourceSha256 { get; }
 property System.String UniversalToolchain.Wist.WistProgramMetadata.SourceText { get; }
 type class UniversalToolchain.Wist.WistProgram<TDelegate>
 property TDelegate UniversalToolchain.Wist.WistProgram<TDelegate>.CompiledDelegate { get; }
@@ -135,6 +152,11 @@ field System.Int32 UniversalToolchain.Wist.WistResourceLimits.DefaultMaxParamete
 field System.Int32 UniversalToolchain.Wist.WistResourceLimits.DefaultMaxSourceLength = 65536
 property System.Int32 UniversalToolchain.Wist.WistResourceLimits.MaxParameterCount { get; set; }
 property System.Int32 UniversalToolchain.Wist.WistResourceLimits.MaxSourceLength { get; set; }
+type enum UniversalToolchain.Wist.WistSourceRetentionPolicy
+field UniversalToolchain.Wist.WistSourceRetentionPolicy UniversalToolchain.Wist.WistSourceRetentionPolicy.Full = 0
+field UniversalToolchain.Wist.WistSourceRetentionPolicy UniversalToolchain.Wist.WistSourceRetentionPolicy.HashAndIdentity = 1
+field UniversalToolchain.Wist.WistSourceRetentionPolicy UniversalToolchain.Wist.WistSourceRetentionPolicy.None = 2
+field System.Int32 UniversalToolchain.Wist.WistSourceRetentionPolicy.value__
 type class UniversalToolchain.Wist.WistSourceSpan
 ctor UniversalToolchain.Wist.WistSourceSpan(System.String SourceName, System.Int32 StartLine, System.Int32 StartColumn, System.Int32 EndLine, System.Int32 EndColumn)
 property System.Int32 UniversalToolchain.Wist.WistSourceSpan.EndColumn { get; set; }
@@ -199,5 +221,6 @@ method System.String UniversalToolchain.Wist.WistSsaTraceEntry.ToString()
 type class UniversalToolchain.Wist.WistValidationResult
 property System.Collections.Generic.IReadOnlyList<UniversalToolchain.Wist.WistDiagnostic> UniversalToolchain.Wist.WistValidationResult.Diagnostics { get; }
 property System.Exception UniversalToolchain.Wist.WistValidationResult.Exception { get; }
+property System.Nullable<UniversalToolchain.Wist.WistFailureKind> UniversalToolchain.Wist.WistValidationResult.FailureKind { get; }
 property System.Boolean UniversalToolchain.Wist.WistValidationResult.IsValid { get; }
 property UniversalToolchain.Wist.WistOptimizationReport UniversalToolchain.Wist.WistValidationResult.OptimizationReport { get; }

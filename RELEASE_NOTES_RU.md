@@ -1,22 +1,21 @@
-# UniversalToolchain.Wist 0.1.0-alpha.6 — детерминированная граница shared contracts
+# UniversalToolchain.Wist 0.1.0-alpha.7 — architecture & production hardening candidate
 
-Дата candidate source/artifacts: 2026-08-03.
+Дата candidate source: 2026-08-12.
 
-`0.1.0-alpha.6` заменяет runtime-boundary candidate `0.1.0-alpha.5`. Пакет не обещает binary compatibility с ранними runtime assemblies и не опубликован на NuGet.org в рамках этой работы.
+`0.1.0-alpha.7` — новая **неопубликованная** candidate identity поверх канонической LanguagePlan/LanguageRuntime архитектуры из migration #332. Эта работа не выполняет publish, release promotion или merge в `master`.
 
 ## Основные изменения
 
-- process-history-dependent эвристика `TryLoadTrustedDefaultDependency` удалена;
-- host явно регистрирует shared contract assemblies через immutable snapshot;
-- сопоставление использует полную assembly identity: name, version, normalized culture и public key token;
-- configured shared copy проходит fail-closed SHA-256 validation;
-- незарегистрированные implementation assemblies остаются в collectible isolated `AssemblyLoadContext`;
-- скрытый fallback application assemblies в default context запрещён;
-- Wist preload-workaround удалён, contract closure регистрируется через canonical CLR owner types;
-- SSA runtime report/options/sink перенесены в abstractions owner без sharing optimizer implementation;
-- добавлены fresh-process preload-order, hostile same-name, concurrency, disposal и unload regressions;
-- добавлен `Tools/package_metadata.py` и negative mutants для project/docs/nupkg drift;
-- public value boundary нормализует implementation-owned numeric values до стабильных CLR categories.
+- `LanguageCompiler.Compile(...)` остаётся единственным public semantic planner; внутренние deterministic phases вынесены без второго planner/DI topology;
+- `LanguageRuntime` стал execution-only API, а artifact-build capability представлена типом `LanguageBuildRuntime`;
+- construction rollback сохраняет primary exception и stack, а cleanup failures — отдельно и после primary;
+- `Validate`/`TryCompile` различают `UserInput`, `Policy`, `Unsupported`, `Infrastructure`, `Internal`; infrastructure/internal faults fail-fast и не маскируются как invalid formula;
+- low-level binding сохраняет reviewed `InvalidOperationException` family, но несёт typed `BindingException` marker для Wist taxonomy;
+- один `WistEngine` не объявлен concurrent-reentrant: overlapping operations fail-fast, для параллельных streams используются отдельные instances;
+- добавлены source-retention policies `Full`, `HashAndIdentity`, `None` и отдельные developer/safe consumer diagnostics;
+- required CI workflow set вынесен в единый machine-readable owner и aggregate работает fail-closed;
+- physical Wist runtime closure классифицирован по фактическому package artifact; package graph не дробился без доказанной выгоды;
+- flaky percentage performance gate не добавлялся: сохранён benchmark smoke и добавлен artifact/trend collection.
 
 ## Матрица candidate packages
 
@@ -25,19 +24,29 @@
 |---|---|
 | `UniversalToolchain.Language.Abstractions` | `0.3.0-alpha.4` |
 | `UniversalToolchain.FeatureSdk` | `0.3.0-alpha.4` |
-| `UniversalToolchain.LanguageSdk` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Runtime` | `0.3.0-alpha.4` |
-| `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Testing` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Templates` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.5` |
-| `UniversalToolchain.Wist` | `0.1.0-alpha.6` |
+| `UniversalToolchain.LanguageSdk` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Runtime` | `0.3.0-alpha.5` |
+| `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Testing` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Templates` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.6` |
+| `UniversalToolchain.Wist` | `0.1.0-alpha.7` |
 <!-- package-matrix:end -->
+
+Новые версии зарезервированы потому, что соответствующие package payloads изменились относительно merge #332. Для `LanguageAuthoring`/`Testing` меняется generated dependency metadata из-за нового `Runtime`, а template package содержит новые candidate package references. Повторное использование прежних alpha identities для иного payload не допускается. Это versioning metadata для candidate build, а не публикация.
 
 ## Проверка
 
-Exact test manifest текущей ветки: **1,276 тестов**. Canonical build/test gate обязан подтвердить 0 failed и 0 skipped на exact candidate revision; provider-backed run IDs фиксируются в migration PR, а не подменяются более старым локальным результатом.
+Exact test manifest текущей ветки: **1,290 тестов**. Увеличение на 14 тестов соответствует targeted architecture/production hardening regressions: 9 Wist facade tests и 5 runtime construction/capability tests. Canonical build/test gate обязан подтвердить 0 failed и 0 skipped на exact candidate revision; более старые workflow receipts не подменяют exact-head verification.
 
-Fresh-process SafeMath receipts подтверждают `DIALECT_INSPECT=PASS`, Interpreter/CIL result `255`, одинаковую CLR value category, negative dialect rejection, hostile preload rejection и отсутствие незарегистрированного default-context fallback.
+Baseline-bearing package gate проверяет девять package identities, exact `.nuspec` metadata, monotonic version/content provenance, Wist public API delta, physical package surface, clean external consumers и detached integrity manifest. GitHub aggregate CI остаётся отдельным обязательным gate.
 
-Baseline-aware package gate проверяет девять package identities, exact `.nuspec` metadata, monotonic version/content provenance, Wist package surface, template/cross-package consumers и detached integrity manifest. GitHub aggregate CI остаётся отдельным обязательным gate; публикация packages не выполнялась.
+## Не является частью candidate
+
+- publish packages;
+- merge в `master`;
+- release promotion;
+- sandboxing claim;
+- secure secret scrubbing claim;
+- thread-safety claim для одного `WistEngine`;
+- preset-specific package splitting без отдельного доказанного ownership boundary.

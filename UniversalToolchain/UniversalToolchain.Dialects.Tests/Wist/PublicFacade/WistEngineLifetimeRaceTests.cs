@@ -46,9 +46,12 @@ public sealed class WistEngineLifetimeRaceTests
             {
                 Assert.That(values, Is.All.EqualTo(3.0d), $"iteration={iteration}");
                 Assert.That(
-                    exceptions,
-                    Has.All.TypeOf<ObjectDisposedException>(),
-                    $"iteration={iteration}; dispose races may reject operations, but must never expose a torn/null runtime publication.");
+                    exceptions.All(static exception =>
+                        exception is ObjectDisposedException ||
+                        exception is InvalidOperationException invalid &&
+                        invalid.Message.Contains("Concurrent operations on one WistEngine instance are not supported", StringComparison.Ordinal)),
+                    Is.True,
+                    $"iteration={iteration}; dispose may reject operations and overlapping operations fail fast, but no torn runtime state is observable.");
             });
 
             engine.Dispose();

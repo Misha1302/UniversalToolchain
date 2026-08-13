@@ -2,7 +2,7 @@
 
 ## Environment and authority
 
-- Record refreshed: 2026-08-07.
+- Record refreshed: 2026-08-12.
 - Target CI environment: GitHub Actions Ubuntu 24.04, Linux x64.
 - SDK policy: `UniversalToolchain/global.json` with .NET 10 feature-band roll-forward.
 - Ordinary integration command: `./build.sh --skip-docs --skip-pack`.
@@ -29,7 +29,11 @@ The repository implements and continuously verifies:
 - explicit rejection of repeated module identities until occurrence-sensitive effects are modeled;
 - `PerSession` ownership and explicit `SingletonStateless` lifecycle rules;
 - primary-first preservation of runtime construction failures when cleanup also fails;
+- typed separation of execution-only `LanguageRuntime` and artifact-capable `LanguageBuildRuntime`;
 - active-lease tracking that ignores completed leases retained by flowed execution contexts;
+- Wist expected-failure taxonomy distinct from infrastructure/internal faults;
+- explicit Wist source-retention and diagnostic-exposure policies;
+- explicit non-concurrent same-instance `WistEngine` contract;
 - interpreter/CIL parity on the shared supported surface;
 - PlanFuzz fresh-process replay, evidence-complete classification and exact-fingerprint reduction;
 - a separate production-boundary B0/B1/B2 contract experiment;
@@ -53,13 +57,13 @@ Parallel graph traversal and shared compilation are the default. `--jobs`, `--se
 |---|---:|---:|---:|
 | `Tests` | 524 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
-| `UniversalToolchain.Dialects.Tests` | 253 | 0 | 0 |
-| `UniversalToolchain.LanguageSdk.Tests` | 156 | 0 | 0 |
+| `UniversalToolchain.Dialects.Tests` | 262 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Tests` | 161 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,276** | **0** | **0** |
+| **Total** | **1,290** | **0** | **0** |
 
-The deterministic runtime-boundary candidate adds resolver, loader, hostile-preload, fresh-process, package-metadata and boundary-regression coverage over merged baseline `f13ad1310856e5618e1c3042c447ca543e0f3125`. The exact manifest is owned by `eng/test-counts.json`; provider-backed exact-head results for the active migration stage are recorded against their commit/run identities rather than inferred from an older local TRX snapshot.
+The hardening delta is 14 targeted tests: nine Wist facade failure/privacy/concurrency regressions and five runtime construction/capability regressions. The exact manifest is owned by `eng/test-counts.json`; provider-backed exact-head results are recorded against their commit/run identities rather than inferred from an older local TRX snapshot.
 
 ## Production-boundary contract experiment
 
@@ -104,50 +108,43 @@ These are post-freeze review-derived holdouts, not an externally authored or sta
 
 ## Workflow contract
 
-Every `master` revision is required to start and complete:
+`eng/ci-required-workflows.json` is the single machine-readable owner for the code-acceptance workflow set and acceptable conclusions. `.github/workflows/ci-aggregate.yml` consumes that file; documentation must not maintain an independent required-workflow list as a semantic authority.
 
-- `.NET CI`;
-- `UniversalToolchain validation`;
-- `Docs Check`;
-- `Deploy documentation to GitHub Pages`;
-- `Published Wist package smoke`;
-- `Wist Rollout Sample Smoke`;
-- `Benchmark Smoke`;
-- `Contract Experiment`.
+`CI aggregate` is fail-closed. For a required workflow, only `success` passes. `missing`, `failure`, `cancelled`, `timed_out`, `skipped` and `neutral` do not pass unless a future owner schema explicitly types a different contract and the checker is updated accordingly.
 
-`CI aggregate` waits for this complete workflow set and publishes the `ci/aggregate` commit status. Path-filtered pull-request checks remain narrow where appropriate; master-push checks are unconditional so the aggregate cannot wait for a workflow that was never eligible to start.
+`Deploy documentation to GitHub Pages` is explicitly non-blocking for code acceptance. Documentation correctness is owned by `Docs Check`; deployment is a publication step. `CI contract check` validates the owner/aggregate consistency and kills mutants for required-workflow removal and fail-open conclusion drift.
 
-Review-remediation master commit `2b0a4d1f0e255432daf0d5ddd485269b6490b67e` completed aggregate run `30585251873` successfully. The exact successful push runs were Docs Check `30585251865`, published-package smoke `30585251928`, documentation deployment `30585251875`, Contract Experiment `30585251945`, rollout smoke `30585251930`, Benchmark Smoke `30585251904`, UniversalToolchain validation `30585251890`, and `.NET CI` `30585251901`.
+Historical aggregate receipts remain evidence for the exact revisions that produced them; they do not override the current machine-readable owner.
 
 ## Package and release boundary
 
-The deterministic shared-contract boundary candidate contains nine package identities. Strict content provenance showed that every package payload changed relative to the reviewed `f13ad131` candidate, so all affected versions were advanced rather than reused.
+The current architecture/production-hardening candidate contains nine public package identities. Payload-bearing packages changed relative to merge #332 and therefore receive new monotonic prerelease identities instead of reusing the previous payload identity. Dependency metadata and template package references are treated as package payload, not ignored as incidental text.
 
 <!-- package-matrix:begin -->
 | Package ID | Version |
 |---|---|
 | `UniversalToolchain.Language.Abstractions` | `0.3.0-alpha.4` |
 | `UniversalToolchain.FeatureSdk` | `0.3.0-alpha.4` |
-| `UniversalToolchain.LanguageSdk` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Runtime` | `0.3.0-alpha.4` |
-| `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Testing` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Templates` | `0.3.0-alpha.4` |
-| `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.5` |
-| `UniversalToolchain.Wist` | `0.1.0-alpha.6` |
+| `UniversalToolchain.LanguageSdk` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Runtime` | `0.3.0-alpha.5` |
+| `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Testing` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Templates` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.6` |
+| `UniversalToolchain.Wist` | `0.1.0-alpha.7` |
 <!-- package-matrix:end -->
 
-The local baseline-aware package gate uses the exact `f13ad1310856e5618e1c3042c447ca543e0f3125` source archive and a deterministic bundle of its nine reviewed packages. It verifies:
+The baseline-aware package gate verifies:
 
-- monotonic version/content provenance for 9/9 identities;
+- monotonic version/content provenance for all package identities;
 - project, filename and embedded `.nuspec` identity agreement;
-- exact synchronization of the four active package matrices;
+- exact synchronization of active package matrices;
 - Wist compile/runtime package-surface separation;
-- exact public API delta classification (`removed=0`, `added=0`);
+- exact public API delta classification;
 - clean Wist consumer, template consumer and cross-package consumer;
 - detached release-integrity manifest and mutation tests.
 
-The package candidate is locally validated but is not published. NuGet publication, merge and conference submission remain separately authorized actions. GitHub aggregate CI must complete before the result may be called release-clean.
+The package candidate is not published by verification. NuGet publication, merge and release remain separately authorized actions.
 
 ## PlanFuzz evidence boundary
 

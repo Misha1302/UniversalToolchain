@@ -9,18 +9,22 @@ using UniversalToolchain.Wist.LanguagePack;
 namespace UniversalToolchain.Wist;
 
 /// <summary>
-/// Public Wist facade over one canonical LanguagePlan and LanguageRuntime.
+/// Public Wist facade over one canonical LanguagePlan and exact LanguageBuildRuntime.
+/// Planning occurs only during Create; hot operations reuse the same plan/runtime.
+/// One instance intentionally rejects overlapping public operations; use separate engines for concurrency.
 /// </summary>
 public sealed class WistEngine : IDisposable
 {
-    private LanguageRuntime? _runtime;
+    private LanguageBuildRuntime? _runtime;
     private readonly LanguagePlan _plan;
     private readonly BackendId _backend;
     private readonly WistEngineOptions _options;
     private readonly WistResourceLimits _resourceLimits;
+    private readonly RuntimeLifetimeGate _lifetime = new();
+    private readonly WistOperationConcurrencyGate _concurrency = new();
 
     private WistEngine(
-        LanguageRuntime runtime,
+        LanguageBuildRuntime runtime,
         LanguagePlan plan,
         BackendId backend,
         WistEngineOptions options,
@@ -35,8 +39,17 @@ public sealed class WistEngine : IDisposable
 
     public void Dispose()
     {
-        var runtime = Interlocked.Exchange(ref _runtime, null);
-        runtime?.Dispose();
+        if (!_lifetime.BeginDispose())
+            return;
+        try
+        {
+            var runtime = Interlocked.Exchange(ref _runtime, null);
+            runtime?.Dispose();
+        }
+        finally
+        {
+            _lifetime.CompleteDispose();
+        }
     }
 
     public static WistEngine CreateRestrictedArithmetic() =>
@@ -67,6 +80,8 @@ public sealed class WistEngine : IDisposable
             AllowedAssemblies = allowedAssemblies,
             ResourceLimits = resourceLimits,
             Optimization = optimization,
+            SourceRetention = RequireSourceRetention(options.SourceRetention),
+            DiagnosticExposure = RequireDiagnosticExposure(options.DiagnosticExposure),
             VerificationPolicy = RequireVerificationPolicy(options.VerificationPolicy)
         };
 
@@ -85,20 +100,12 @@ public sealed class WistEngine : IDisposable
                 runtimeAssemblies,
                 CreateModuleContractOptions(optionsSnapshot.VerificationPolicy)));
 
-        try
-        {
-            return new WistEngine(runtime, plan, backend, optionsSnapshot, resourceLimits);
-        }
-        catch
-        {
-            runtime.Dispose();
-            throw;
-        }
+        return new WistEngine(runtime, plan, backend, optionsSnapshot, resourceLimits);
     }
 
     public T Evaluate<T>(string code)
     {
-        ThrowIfDisposed();
+        using var operation = EnterOperation();
         EnsureSourceWithinLimits(code);
         var result = Runtime.Run(new LanguageExecutionRequest(code, _backend));
         return WistResultConverter.ConvertTo<T>(result.Value);
@@ -112,7 +119,7 @@ public sealed class WistEngine : IDisposable
 
     public T Evaluate<T>(string code, IReadOnlyDictionary<string, object?> arguments)
     {
-        ThrowIfDisposed();
+        using var operation = EnterOperation();
         EnsureSourceWithinLimits(code);
         arguments = arguments.ArgNotNull();
         EnsureParameterCountWithinLimits(arguments.Count);
@@ -123,7 +130,7 @@ public sealed class WistEngine : IDisposable
 
     public WistValidationResult Validate(string code)
     {
-        ThrowIfDisposed();
+        using var operation = EnterOperation();
         try
         {
             EnsureSourceWithinLimits(code);
@@ -133,16 +140,20 @@ public sealed class WistEngine : IDisposable
         }
         catch (Exception exception)
         {
+            var kind = WistFailureClassifier.Classify(exception);
+            if (!WistFailureClassifier.IsStructuredResultFailure(kind))
+                throw;
             return WistValidationResult.Failure(
-                exception,
-                WistDiagnosticFactory.FromException(exception, "Validation"),
+                kind,
+                ExposeExpectedException(exception),
+                WistDiagnosticFactory.FromException(exception, "Validation", _options.DiagnosticExposure),
                 CreateOptimizationReport(WistBuiltArtifactActivation.TryGetSsaReport(exception)));
         }
     }
 
     public WistValidationResult Validate(string code, object sampleArguments)
     {
-        ThrowIfDisposed();
+        using var operation = EnterOperation();
         try
         {
             EnsureSourceWithinLimits(code);
@@ -156,9 +167,13 @@ public sealed class WistEngine : IDisposable
         }
         catch (Exception exception)
         {
+            var kind = WistFailureClassifier.Classify(exception);
+            if (!WistFailureClassifier.IsStructuredResultFailure(kind))
+                throw;
             return WistValidationResult.Failure(
-                exception,
-                WistDiagnosticFactory.FromException(exception, "Validation"),
+                kind,
+                ExposeExpectedException(exception),
+                WistDiagnosticFactory.FromException(exception, "Validation", _options.DiagnosticExposure),
                 CreateOptimizationReport(WistBuiltArtifactActivation.TryGetSsaReport(exception)));
         }
     }
@@ -166,30 +181,32 @@ public sealed class WistEngine : IDisposable
     public WistProgram<TDelegate> Compile<TDelegate>(string formula, params string[] parameterNames)
         where TDelegate : Delegate
     {
-        ThrowIfDisposed();
+        using var operation = EnterOperation();
         return CompileCore<TDelegate>(formula, parameterNames);
     }
 
     public WistCompileResult<TDelegate> TryCompile<TDelegate>(string formula, params string[] parameterNames)
         where TDelegate : Delegate
     {
-        ThrowIfDisposed();
+        using var operation = EnterOperation();
         try
         {
             return WistCompileResult<TDelegate>.Success(CompileCore<TDelegate>(formula, parameterNames));
         }
         catch (Exception exception)
         {
+            var kind = WistFailureClassifier.Classify(exception);
+            if (!WistFailureClassifier.IsStructuredResultFailure(kind))
+                throw;
             return WistCompileResult<TDelegate>.Failure(
-                exception,
-                WistDiagnosticFactory.FromException(exception, "Compilation"),
+                kind,
+                ExposeExpectedException(exception),
+                WistDiagnosticFactory.FromException(exception, "Compilation", _options.DiagnosticExposure),
                 CreateOptimizationReport(WistBuiltArtifactActivation.TryGetSsaReport(exception)));
         }
     }
 
-    private WistProgram<TDelegate> CompileCore<TDelegate>(
-        string formula,
-        string[] parameterNames)
+    private WistProgram<TDelegate> CompileCore<TDelegate>(string formula, string[] parameterNames)
         where TDelegate : Delegate
     {
         EnsureSourceWithinLimits(formula);
@@ -215,7 +232,8 @@ public sealed class WistEngine : IDisposable
                 signature.ParameterNames,
                 signature.ParameterTypes,
                 signature.ReturnType,
-                report));
+                report,
+                _options.SourceRetention));
     }
 
     private static LanguageDefinition ResolveLanguageDefinition(WistEngineOptions options)
@@ -243,10 +261,7 @@ public sealed class WistEngine : IDisposable
         };
     }
 
-    private static LanguageDefinition FromDialectFile(
-        WistDialectSource.File file,
-        string backend,
-        WistFacadeSsaPolicy policy)
+    private static LanguageDefinition FromDialectFile(WistDialectSource.File file, string backend, WistFacadeSsaPolicy policy)
     {
         var path = Path.GetFullPath(file.Path);
         return WistFacadeLanguageDefinitionFactory.FromDialectText(
@@ -256,8 +271,7 @@ public sealed class WistEngine : IDisposable
             policy);
     }
 
-    private IReadOnlyDictionary<string, object?> NormalizeArguments(
-        IReadOnlyDictionary<string, object?> arguments)
+    private IReadOnlyDictionary<string, object?> NormalizeArguments(IReadOnlyDictionary<string, object?> arguments)
     {
         var normalized = new Dictionary<string, object?>(arguments.Count, StringComparer.Ordinal);
         foreach (var argument in arguments)
@@ -265,8 +279,7 @@ public sealed class WistEngine : IDisposable
         return normalized;
     }
 
-    private IReadOnlyList<LanguageBuildBinding> CreateBuildBindings(
-        IReadOnlyDictionary<string, object?> arguments)
+    private IReadOnlyList<LanguageBuildBinding> CreateBuildBindings(IReadOnlyDictionary<string, object?> arguments)
     {
         var bindings = new List<LanguageBuildBinding>(arguments.Count);
         foreach (var argument in arguments)
@@ -323,6 +336,24 @@ public sealed class WistEngine : IDisposable
                     : []));
     }
 
+    private IDisposable EnterOperation()
+    {
+        var lifetime = _lifetime.EnterOperation(this);
+        try
+        {
+            var concurrency = _concurrency.Enter();
+            return new CompositeOperationLease(concurrency, lifetime);
+        }
+        catch
+        {
+            lifetime.Dispose();
+            throw;
+        }
+    }
+
+    private Exception? ExposeExpectedException(Exception exception) =>
+        _options.DiagnosticExposure == WistDiagnosticExposure.Developer ? exception : null;
+
     private static ModuleContractVerificationOptions CreateModuleContractOptions(WistVerificationPolicy policy) =>
         new ModuleContractVerificationOptions
         {
@@ -345,6 +376,16 @@ public sealed class WistEngine : IDisposable
         Enum.IsDefined(policy)
             ? policy
             : throw new ArgumentOutOfRangeException(nameof(policy), policy, "Unknown Wist verification policy.");
+
+    private static WistSourceRetentionPolicy RequireSourceRetention(WistSourceRetentionPolicy policy) =>
+        Enum.IsDefined(policy)
+            ? policy
+            : throw new ArgumentOutOfRangeException(nameof(policy), policy, "Unknown Wist source-retention policy.");
+
+    private static WistDiagnosticExposure RequireDiagnosticExposure(WistDiagnosticExposure exposure) =>
+        Enum.IsDefined(exposure)
+            ? exposure
+            : throw new ArgumentOutOfRangeException(nameof(exposure), exposure, "Unknown Wist diagnostic exposure.");
 
     private static string RequireBackendId(string backendId)
     {
@@ -378,10 +419,19 @@ public sealed class WistEngine : IDisposable
             $"Wist parameter count {count} exceeds the configured maximum of {_resourceLimits.MaxParameterCount}.");
     }
 
-    private LanguageRuntime Runtime =>
+    private LanguageBuildRuntime Runtime =>
         Volatile.Read(ref _runtime)
         ?? throw new ObjectDisposedException(nameof(WistEngine));
 
-    private void ThrowIfDisposed() =>
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _runtime) is null, this);
+    private sealed class CompositeOperationLease(IDisposable concurrency, IDisposable lifetime) : IDisposable
+    {
+        private IDisposable? _concurrency = concurrency;
+        private IDisposable? _lifetime = lifetime;
+
+        public void Dispose()
+        {
+            Interlocked.Exchange(ref _concurrency, null)?.Dispose();
+            Interlocked.Exchange(ref _lifetime, null)?.Dispose();
+        }
+    }
 }

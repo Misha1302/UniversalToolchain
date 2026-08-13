@@ -155,6 +155,8 @@ Invoke-CheckedNative "python" @(
 )
 Invoke-CheckedNative "python" @("Tools/check-retired-surface.py", "--root", $root)
 Invoke-CheckedNative "python" @("Tools/test-retired-surface-mutants.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/check-hardening-contract.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/test-hardening-contract-mutants.py", "--root", $root)
 Invoke-CheckedNative "python" @("Tools/check_documentation_status.py")
 Invoke-CheckedNative "python" @("Tools/test-documentation-status-mutants.py", "--root", $root)
 
@@ -283,7 +285,6 @@ if (-not $SkipPack) {
         "--packages", "artifacts/packages",
         "--dotnet", $dotnet
     )
-
 
     $releaseArtifacts = Get-ChildItem "artifacts/packages" -File |
         Where-Object { $_.Name.EndsWith(".nupkg") -or $_.Name.EndsWith(".snupkg") } |

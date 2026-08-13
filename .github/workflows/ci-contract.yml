@@ -1,0 +1,36 @@
+name: CI contract check
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/**'
+      - 'eng/ci-required-workflows.json'
+      - 'Tools/check-ci-contract.py'
+      - 'Tools/test-ci-contract-mutants.py'
+      - 'Tools/check-hardening-contract.py'
+      - 'Tools/test-hardening-contract-mutants.py'
+      - 'UniversalToolchain/UniversalToolchain.Runtime/**/*.cs'
+      - 'UniversalToolchain/UniversalToolchain.Wist/**/*.cs'
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify canonical CI contract
+        run: python3 Tools/check-ci-contract.py --root "$GITHUB_WORKSPACE"
+      - name: Reject CI contract mutants
+        run: python3 Tools/test-ci-contract-mutants.py --root "$GITHUB_WORKSPACE"
+      - name: Verify architecture hardening contract
+        run: python3 Tools/check-hardening-contract.py --root "$GITHUB_WORKSPACE"
+      - name: Reject architecture hardening mutants
+        run: python3 Tools/test-hardening-contract-mutants.py --root "$GITHUB_WORKSPACE"

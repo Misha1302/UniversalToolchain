@@ -33,6 +33,19 @@ public sealed class ParserException : WistException
     }
 }
 
+public sealed class BindingException : WistException
+{
+    public BindingException(string message) : base(message)
+    {
+        Stage = "Binding";
+    }
+
+    public BindingException(string message, Exception inner) : base(message, inner)
+    {
+        Stage = "Binding";
+    }
+}
+
 public sealed class BytecodeGenerationException : WistException
 {
     public BytecodeGenerationException(string message) : base(message)

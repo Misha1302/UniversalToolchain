@@ -12,6 +12,7 @@
         <ProjectReference Include="..\AbstractIrExtensions\AbstractIrExtensions.csproj"/>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
         <ProjectReference Include="..\BasicTypesExtensions\BasicTypesExtensions.csproj"/>
+        <ProjectReference Include="..\CommonExceptions\CommonExceptions.csproj"/>
         <ProjectReference Include="..\ObjectExtensions\ObjectExtensions.csproj"/>
         <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
 </ItemGroup>
