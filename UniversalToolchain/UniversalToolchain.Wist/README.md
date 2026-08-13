@@ -20,7 +20,7 @@ admin / config / LLM suggestion
 
 ## Install
 
-This README describes the reviewed source candidate `UniversalToolchain.Wist` `0.1.0-alpha.7`. That candidate is not published by this hardening change. Install that exact artifact only from a reviewed package feed containing the candidate:
+This README belongs to `UniversalToolchain.Wist` `0.1.0-alpha.7`. Install that exact artifact from a reviewed package feed:
 
 ```bash ci-run=false
 dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.7 --source <reviewed-feed>
