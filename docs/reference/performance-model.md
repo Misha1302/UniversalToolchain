@@ -1,25 +1,57 @@
 ---
 title: Performance Model
-description: Separate Wist compilation, convenience execution and prepared hot invocation; avoid generic claims.
+description: Separate Wist setup, formula compilation, convenience execution and prepared hot invocation; avoid generic claims.
 audience: all-technical-users
 status: current-reference
-lastVerifiedAgainst: wist-release-state-2026-08-06
+lastVerifiedAgainst: wist-architecture-production-hardening-2026-08-13
 ---
 
 # Performance model
 
 ## Wist paths
 
-Cold path:
+Wist has three materially different cost boundaries. Do not collapse them into one "execution" path.
+
+### 1. Engine setup and semantic planning
+
+`WistEngine.Create(...)` resolves the selected preset or dialect once and materializes one exact runtime from the resulting immutable plan:
 
 ```text
-source -> parse/bind -> dialect/runtime selection -> compile or execute
+DialectSource / preset
+  -> LanguageDefinition
+  -> LanguageCompiler
+  -> immutable LanguagePlan
+  -> LanguageBuildRuntime
 ```
 
-Prepared hot path:
+`LanguageCompiler` is the semantic planner. `Evaluate`, `Validate`, `Compile<TDelegate>` and `TryCompile<TDelegate>` reuse the plan/runtime created here; they do not perform dialect selection or create a second backend plan for each formula.
+
+Measure this boundary when engine construction itself matters to startup or request latency.
+
+### 2. Formula processing
+
+Formula work begins after the engine already owns its plan/runtime. The exact stages depend on the selected route, but the Wist pipeline is conceptually:
 
 ```text
-compiled typed delegate -> invocation
+source
+  -> lexer / parser
+  -> AST
+  -> Bytecode
+  -> AIR
+  -> optional optimizer / SSA route
+  -> selected backend artifact or execution
+```
+
+`Evaluate<T>` is the convenience path for one-off execution. It includes source processing and the selected runtime route on every call.
+
+`Compile<TDelegate>` processes the formula and materializes a typed durable program/delegate for repeated invocation. Compilation is therefore a cold operation relative to the prepared delegate hot path.
+
+### 3. Prepared hot invocation
+
+```text
+compiled typed delegate
+  -> invocation
+  -> result
 ```
 
 Use `Evaluate<T>` for one-off evaluation, tests and administration paths. Use `Compile<TDelegate>` when the same approved formula is invoked repeatedly.
@@ -34,7 +66,7 @@ var program = engine.Compile<Func<double, double, double>>(
 double result = program.CompiledDelegate(100.0, 5.0);
 ```
 
-Do not compare `Evaluate` against a prepared delegate and call the result “execution overhead”; those paths include different work.
+Do not compare `Evaluate` against a prepared delegate and call the difference "execution overhead": those paths include different work. Likewise, do not attribute `WistEngine.Create` planning/runtime-creation cost to per-formula execution; it is a distinct setup boundary.
 
 ## Generic language runtime
 

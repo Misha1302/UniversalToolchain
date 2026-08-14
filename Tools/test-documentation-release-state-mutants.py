@@ -64,6 +64,15 @@ def main() -> int:
     require_killed(root, 'source-version-drift', stale_source_version)
     require_killed(
         root,
+        'current-architecture-source-version-drift',
+        lambda mutant: replace(
+            mutant / 'docs/CURRENT_ARCHITECTURE_STATUS.md',
+            f'`{source_version}`',
+            '`0.0.0-mutant`',
+        ),
+    )
+    require_killed(
+        root,
         'published-install-drift',
         lambda mutant: replace(
             mutant / 'docs/start/first-program.md',
