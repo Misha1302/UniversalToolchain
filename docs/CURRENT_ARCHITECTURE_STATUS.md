@@ -9,7 +9,9 @@ This page is the current architecture authority for the repository. Historical c
 
 ## Current public/product surface
 
-`UniversalToolchain.Wist` source candidate `0.1.0-alpha.6` provides:
+<!-- wist-source-candidate:begin -->
+`UniversalToolchain.Wist` source candidate `0.1.0-alpha.7` is **not published on NuGet.org** and provides:
+<!-- wist-source-candidate:end -->
 
 - `WistEngine`;
 - restricted arithmetic and broader native presets;
@@ -31,8 +33,10 @@ The repository implements:
 - `UniversalToolchain.Runtime` for exact plan verification, route materialization, executor selection, policy validation and lifecycle;
 - `UniversalToolchain.Testing` for reusable contract/parity support;
 - `UniversalToolchain.Templates` with `ut-language`;
-- `UniversalToolchain.Wist.LanguagePack` `0.3.0-alpha.5` as the typed Wist package boundary;
+- `UniversalToolchain.Wist.LanguagePack` as the typed Wist package boundary;
 - `samples/Acme.PricingLanguage` as a non-Wist sample.
+
+Package versions are release identities rather than architecture contracts. The active Wist source identity is checked through `eng/documentation-release-state.json`; the full candidate package matrix belongs to release evidence rather than this architecture authority.
 
 ## Implemented generic contracts
 

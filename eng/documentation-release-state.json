@@ -15,7 +15,8 @@
   ],
   "sourceCandidateDocuments": [
     "readme.md",
-    "docs/start/installation.md"
+    "docs/start/installation.md",
+    "docs/CURRENT_ARCHITECTURE_STATUS.md"
   ],
   "sourceBuildDocuments": [
     "readme.md",
