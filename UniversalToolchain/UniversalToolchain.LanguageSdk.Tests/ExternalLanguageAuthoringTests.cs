@@ -32,6 +32,7 @@ public sealed class ExternalLanguageAuthoringTests
             Assert.That(first.Plan.Routes[new BackendId("interpreter")].Steps.Select(static x => x.ContributionId), Is.EqualTo(new[]
             {
                 WistContributionIds.Frontend,
+                WistContributionIds.SemanticBinding,
                 WistContributionIds.LoweringToBytecode,
                 WistContributionIds.LoweringToAir,
                 WistContributionIds.InterpreterBackend
