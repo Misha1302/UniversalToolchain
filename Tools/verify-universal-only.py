@@ -45,6 +45,13 @@ def main() -> int:
         raise RuntimeError("No UNIVERSAL projects were classified.")
 
     tests = [project for project in universal if is_test_project(project)]
+
+    # UniversalToolchain/NuGet.config intentionally declares the repository-local
+    # packages feed. Canonical build entrypoints provision the directory even when
+    # it is empty, so the standalone verifier must preserve the same bootstrap
+    # invariant instead of weakening NuGet source validation.
+    (root / "UniversalToolchain" / "packages").mkdir(parents=True, exist_ok=True)
+
     with tempfile.TemporaryDirectory(prefix="ut-only-") as tmp:
         workspace = Path(tmp)
         # .NET 10 defaults the sln template to .slnx. This verifier intentionally
