@@ -19,6 +19,13 @@
     <ProjectReference Include="..\UniversalToolchain.LanguageSdk\UniversalToolchain.LanguageSdk.csproj" />
     <ProjectReference Include="..\UniversalToolchain.LanguageAuthoring\UniversalToolchain.LanguageAuthoring.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Runtime\UniversalToolchain.Runtime.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Dialects.Core\UniversalToolchain.Dialects.Core.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Dialects.Parsing\UniversalToolchain.Dialects.Parsing.csproj" />
+    <ProjectReference Include="..\BytecodeDynamicMethodsCompiler\BytecodeDynamicMethodsCompiler.csproj" />
+    <ProjectReference Include="..\BasicCore\BasicCore.csproj" />
+    <ProjectReference Include="..\IntermediateRepresentationAbstractions\IntermediateRepresentationAbstractions.csproj" />
   </ItemGroup>
   <ItemGroup><Using Include="NUnit.Framework" /></ItemGroup>
 </Project>
