@@ -2,7 +2,7 @@
 
 ## Environment and authority
 
-- Record refreshed: 2026-08-12.
+- Record refreshed: 2026-08-15.
 - Target CI environment: GitHub Actions Ubuntu 24.04, Linux x64.
 - SDK policy: `UniversalToolchain/global.json` with .NET 10 feature-band roll-forward.
 - Ordinary integration command: `./build.sh --skip-docs --skip-pack`.
@@ -20,6 +20,8 @@ The repository implements and continuously verifies:
 - deterministic language/package planning, schema-v6 locks and exact package-manifest binding;
 - exact `(contribution, backend, input contract)` executor resolution;
 - strict selected-module contract enforcement in the Wist composition path;
+- explicit Wist syntax, semantic-binding and bytecode-lowering ownership selected from the immutable `LanguagePlan`;
+- data-only phase artifacts with stage-local module activation and disposal;
 - production Bytecode metadata reading plus declared/observed emission verification;
 - mandatory producer-module and source-node identity for every contract-annotated Bytecode emission;
 - AIR structural, stack and backend-capability verification;
@@ -35,6 +37,7 @@ The repository implements and continuously verifies:
 - explicit Wist source-retention and diagnostic-exposure policies;
 - explicit non-concurrent same-instance `WistEngine` contract;
 - interpreter/CIL parity on the shared supported surface;
+- fail-closed UNIVERSAL/WIST ownership validation including project, package, assembly, friend and build edges;
 - PlanFuzz fresh-process replay, evidence-complete classification and exact-fingerprint reduction;
 - a separate production-boundary B0/B1/B2 contract experiment;
 - a separately reported post-freeze review-derived holdout set.
@@ -58,12 +61,12 @@ Parallel graph traversal and shared compilation are the default. `--jobs`, `--se
 | `Tests` | 524 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 262 | 0 | 0 |
-| `UniversalToolchain.LanguageSdk.Tests` | 163 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Tests` | 169 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,292** | **0** | **0** |
+| **Total** | **1,298** | **0** | **0** |
 
-The hardening delta is 16 targeted tests: the previous fourteen Wist facade/runtime hardening regressions plus two Wist phase-boundary regressions added by this repair. The exact manifest is owned by `eng/test-counts.json`; provider-backed exact-head results are recorded against their commit/run identities rather than inferred from an older local TRX snapshot.
+The current candidate adds focused regressions for the real `Syntax -> Semantic -> Bytecode` boundary, syntax-mutation isolation, canonical Add convergence, independent stage-local activation, exact planned lowering fail-closed behavior and hidden `UNIVERSAL -> WIST_PRODUCT` friend edges. The exact manifest is owned by `eng/test-counts.json`; provider-backed exact-head results are recorded against their commit/run identities rather than inferred from an older local TRX snapshot.
 
 ## Production-boundary contract experiment
 
