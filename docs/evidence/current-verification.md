@@ -28,12 +28,12 @@ The documentation guard requires this table to mirror the repository's current e
 | `Tests` | 524 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 262 | 0 | 0 |
-| `UniversalToolchain.LanguageSdk.Tests` | 161 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Tests` | 163 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,290** | **0** | **0** |
+| **Total** | **1,292** | **0** | **0** |
 
-The exact manifest belongs to `eng/test-counts.json`. The hardening delta is 14 targeted tests: nine Wist facade failure/privacy/concurrency regressions and five runtime construction/capability regressions. `.NET CI` run `31049607823` completed the canonical entrypoint for the pinned commit; that historical receipt still corresponds to its own earlier manifest. A current revision is green only when its own exact manifest is verified.
+The exact manifest belongs to `eng/test-counts.json`. The hardening delta is 16 targeted tests: the previous fourteen Wist facade/runtime hardening regressions plus two Wist phase-boundary regressions added by this repair. `.NET CI` run `31049607823` completed the canonical entrypoint for the pinned commit; that historical receipt still corresponds to its own earlier manifest. A current revision is green only when its own exact manifest is verified.
 
 ## Workflow set
 
