@@ -284,7 +284,7 @@ public sealed class WistRemediationRegressionTests
     }
 
     [Test]
-    public void SplitConditionFeatures_MapToExactSemanticModules()
+    public void SplitConditionFeature_MapsToExactSyntaxAndLoweringContributions()
     {
         var package = new WistLanguageFeaturePackage();
         var aliases = package.Descriptor.Contributions.ToDictionary(
@@ -301,7 +301,10 @@ public sealed class WistRemediationRegressionTests
                 {
                     WistContributionIds.ComparisonsModule,
                     WistContributionIds.BooleanLogicModule,
-                    WistContributionIds.ConditionalControlFlowModule
+                    WistContributionIds.ConditionalControlFlowModule,
+                    WistModulePhaseOwnership.LoweringContributionId(WistContributionIds.ComparisonsModule),
+                    WistModulePhaseOwnership.LoweringContributionId(WistContributionIds.BooleanLogicModule),
+                    WistModulePhaseOwnership.LoweringContributionId(WistContributionIds.ConditionalControlFlowModule)
                 }));
         });
     }
