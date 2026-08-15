@@ -129,16 +129,12 @@ internal static class WistFacadeLanguageDefinitionFactory
         ApplySsaPolicy(selectedFeatures, ssaPolicy);
 
         var orderConstraints = slice.OrderDirectives
-            .Select(directive => new LanguageContributionOrderConstraint(
-                directive.Kind switch
-                {
-                    DialectOrderDirectiveKind.Requires => LanguageContributionOrderKind.Requires,
-                    DialectOrderDirectiveKind.Before => LanguageContributionOrderKind.Before,
-                    DialectOrderDirectiveKind.After => LanguageContributionOrderKind.After,
-                    _ => throw new InvalidOperationException($"Unknown Wist order directive '{directive.Kind}'.")
-                },
-                ResolveOrderedModuleContribution(directive.SourceModule, groups, directive.SourceLocation),
-                ResolveOrderedModuleContribution(directive.TargetModule, groups, directive.SourceLocation)))
+            .SelectMany(directive => ResolveOrderedModuleConstraints(
+                directive.Kind,
+                directive.SourceModule,
+                directive.TargetModule,
+                groups,
+                directive.SourceLocation))
             .ToArray();
         var intrinsicPolicy = slice.IntrinsicDirectives
             .Select(directive =>
@@ -198,7 +194,54 @@ internal static class WistFacadeLanguageDefinitionFactory
         }
     }
 
-    private static LanguageContributionId ResolveOrderedModuleContribution(
+    private static IReadOnlyList<LanguageContributionOrderConstraint> ResolveOrderedModuleConstraints(
+        DialectOrderDirectiveKind kind,
+        string sourceAlias,
+        string targetAlias,
+        IReadOnlyDictionary<string, IReadOnlyList<string>> groups,
+        DialectSourceLocation? sourceLocation)
+    {
+        var source = ResolveOrderedModuleComponent(sourceAlias, groups, sourceLocation);
+        var target = ResolveOrderedModuleComponent(targetAlias, groups, sourceLocation);
+        var languageKind = kind switch
+        {
+            DialectOrderDirectiveKind.Requires => LanguageContributionOrderKind.Requires,
+            DialectOrderDirectiveKind.Before => LanguageContributionOrderKind.Before,
+            DialectOrderDirectiveKind.After => LanguageContributionOrderKind.After,
+            _ => throw new InvalidOperationException($"Unknown Wist order directive '{kind}'.")
+        };
+
+        var constraints = new List<LanguageContributionOrderConstraint>
+        {
+            new(languageKind, source.ContributionId, target.ContributionId)
+        };
+
+        if (WistModulePhaseOwnership.TryGetSemanticComponent(
+                WistModulePhaseOwnership.SemanticContributionId(source.ContributionId), out _) &&
+            WistModulePhaseOwnership.TryGetSemanticComponent(
+                WistModulePhaseOwnership.SemanticContributionId(target.ContributionId), out _))
+        {
+            constraints.Add(new LanguageContributionOrderConstraint(
+                languageKind,
+                WistModulePhaseOwnership.SemanticContributionId(source.ContributionId),
+                WistModulePhaseOwnership.SemanticContributionId(target.ContributionId)));
+        }
+
+        if (WistModulePhaseOwnership.TryGetLoweringComponent(
+                WistModulePhaseOwnership.LoweringContributionId(source.ContributionId), out _) &&
+            WistModulePhaseOwnership.TryGetLoweringComponent(
+                WistModulePhaseOwnership.LoweringContributionId(target.ContributionId), out _))
+        {
+            constraints.Add(new LanguageContributionOrderConstraint(
+                languageKind,
+                WistModulePhaseOwnership.LoweringContributionId(source.ContributionId),
+                WistModulePhaseOwnership.LoweringContributionId(target.ContributionId)));
+        }
+
+        return constraints;
+    }
+
+    private static WistRuntimeComponentDescriptor ResolveOrderedModuleComponent(
         string alias,
         IReadOnlyDictionary<string, IReadOnlyList<string>> groups,
         DialectSourceLocation? sourceLocation)
@@ -219,7 +262,7 @@ internal static class WistFacadeLanguageDefinitionFactory
             throw new InvalidOperationException("Unreachable dialect translation error path.");
         }
 
-        return component!.ContributionId;
+        return component!;
     }
 
     private static IReadOnlyDictionary<string, bool> NormalizeCapabilities(
