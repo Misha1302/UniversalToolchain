@@ -1,10 +1,11 @@
 namespace BasicCore.Compilation;
 
 /// <summary>
-/// Canonical low-level compiler stages shared by the legacy orchestration path and direct artifact runtimes.
+/// Canonical low-level compiler stages shared by orchestration and language-specific artifact runtimes.
 /// This type owns stage mechanics only; it does not select modules, optimizers, backends, or runtime providers.
+/// Callers must supply components that were already selected by their planning owner.
 /// </summary>
-internal static class CanonicalArtifactStages
+public static class CanonicalArtifactStages
 {
     public static AstNode ParseAndBind(
         CompilationInput input,
