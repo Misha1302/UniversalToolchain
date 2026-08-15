@@ -1,7 +1,9 @@
 using ArithmeticModule.Visitors;
 using BasicCore.Binding;
 using BasicCore.Binding.Symbols;
+using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
+using BasicCore.Semantics;
 using BasicTypesExtensions;
 
 namespace UniversalToolchain.Wist.LanguagePack;
@@ -39,19 +41,49 @@ internal sealed class WistSemanticOperationNode : WistSemanticNode
     public WistSemanticOperationId Operation { get; }
 }
 
+internal enum WistLegacySemanticNodeKind
+{
+    Plain,
+    LocalReference,
+    ExternalReference,
+    Assignment,
+    Call,
+    BinaryOperator
+}
+
 /// <summary>
 /// Explicit compatibility representation for Wist features that have not yet moved to canonical semantic nodes.
-/// It keeps the already-bound AST payload as data so symbol identity is not lost while those features are migrated.
-/// No frontend module/plugin or optimizer instance crosses the semantic artifact boundary.
+/// The mutable compiler AST is snapshotted into immutable data at the semantic boundary so later AST mutation cannot
+/// change an already-produced semantic artifact. Bound symbol identity is retained as immutable semantic identity;
+/// no frontend module/plugin, optimizer instance, or live AST node crosses the boundary.
 /// </summary>
 internal sealed class WistLegacySemanticNode : WistSemanticNode
 {
     public WistLegacySemanticNode(AstNode boundNode, IEnumerable<WistSemanticNode> children) : base(children)
     {
-        BoundNode = boundNode ?? throw new ArgumentNullException(nameof(boundNode));
+        ArgumentNullException.ThrowIfNull(boundNode);
+
+        NodeType = boundNode.NodeType;
+        LexemeValue = boundNode.LexemeValue;
+        CurrentTags = Array.AsReadOnly(boundNode.CurrentTags.OrderBy(static tag => tag, StringComparer.Ordinal).ToArray());
+        LocalSemanticTags = Array.AsReadOnly(boundNode.LocalSemanticTags.OrderBy(static tag => tag.Value, StringComparer.Ordinal).ToArray());
+        (Kind, Symbol) = boundNode switch
+        {
+            BoundLocalReference local => (WistLegacySemanticNodeKind.LocalReference, local.Symbol),
+            BoundExternalReference external => (WistLegacySemanticNodeKind.ExternalReference, external.Symbol),
+            BoundAssignment => (WistLegacySemanticNodeKind.Assignment, null),
+            BoundCall => (WistLegacySemanticNodeKind.Call, null),
+            BoundBinaryOperator => (WistLegacySemanticNodeKind.BinaryOperator, null),
+            _ => (WistLegacySemanticNodeKind.Plain, null)
+        };
     }
 
-    public AstNode BoundNode { get; }
+    public ExtensibleEnum<AstNodeTag> NodeType { get; }
+    public LexemeValue? LexemeValue { get; }
+    public IReadOnlyList<string> CurrentTags { get; }
+    public IReadOnlyList<AstSemanticTagId> LocalSemanticTags { get; }
+    public WistLegacySemanticNodeKind Kind { get; }
+    public Symbol? Symbol { get; }
 }
 
 internal sealed class WistSemanticProgram(WistSemanticNode root)
@@ -98,10 +130,10 @@ internal static class WistSemanticNormalizer
         if (node is not WistLegacySemanticNode legacy)
             throw new InvalidOperationException($"Unsupported Wist semantic node '{node.GetType().FullName}'.");
 
-        return RebuildLegacyNode(legacy.BoundNode, children);
+        return RebuildLegacyNode(legacy, children);
     }
 
-    private static AstNode RebuildLegacyNode(AstNode source, List<AstNode> children)
+    private static AstNode RebuildLegacyNode(WistLegacySemanticNode source, List<AstNode> children)
     {
         var projectedSource = new AstNode(source.NodeType, source.LexemeValue, children);
         foreach (var tag in source.CurrentTags)
@@ -109,14 +141,20 @@ internal static class WistSemanticNormalizer
         foreach (var tag in source.LocalSemanticTags)
             projectedSource.AddSemanticTag(tag);
 
-        return source switch
+        return source.Kind switch
         {
-            BoundLocalReference local => new BoundLocalReference(projectedSource, (LocalVariableSymbol)local.Symbol),
-            BoundExternalReference external => new BoundExternalReference(projectedSource, external.Symbol),
-            BoundAssignment => new BoundAssignment(projectedSource),
-            BoundCall => new BoundCall(projectedSource),
-            BoundBinaryOperator => new BoundBinaryOperator(projectedSource),
-            _ => projectedSource
+            WistLegacySemanticNodeKind.LocalReference =>
+                new BoundLocalReference(projectedSource, (LocalVariableSymbol)(source.Symbol ?? throw MissingBoundSymbol(source.Kind))),
+            WistLegacySemanticNodeKind.ExternalReference =>
+                new BoundExternalReference(projectedSource, source.Symbol ?? throw MissingBoundSymbol(source.Kind)),
+            WistLegacySemanticNodeKind.Assignment => new BoundAssignment(projectedSource),
+            WistLegacySemanticNodeKind.Call => new BoundCall(projectedSource),
+            WistLegacySemanticNodeKind.BinaryOperator => new BoundBinaryOperator(projectedSource),
+            WistLegacySemanticNodeKind.Plain => projectedSource,
+            _ => throw new InvalidOperationException($"Unsupported Wist legacy semantic node kind '{source.Kind}'.")
         };
     }
+
+    private static InvalidOperationException MissingBoundSymbol(WistLegacySemanticNodeKind kind) =>
+        new($"Wist legacy semantic node kind '{kind}' requires a bound symbol snapshot.");
 }
