@@ -27,14 +27,14 @@ The documentation guard requires this table to mirror the repository's current e
 |---|---:|---:|---:|
 | `Tests` | 500 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
-| `UniversalToolchain.Dialects.Tests` | 245 | 0 | 0 |
-| `UniversalToolchain.LanguageSdk.Generic.Tests` | 45 | 0 | 0 |
-| `UniversalToolchain.LanguageSdk.Tests` | 170 | 0 | 0 |
+| `UniversalToolchain.Dialects.Tests` | 233 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Generic.Tests` | 62 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Tests` | 165 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
 | **Total** | **1,303** | **0** | **0** |
 
-The exact manifest belongs to `eng/test-counts.json`. The current candidate adds focused regressions for the real syntax/semantic/lowering boundary, stage-local lifetime, plan-owned lowering activation, phase-owned module ordering and hidden ownership edges. Forty-one generic implementation tests were moved from mixed Wist-owned suites into the Wist-free generic project rather than restoring forbidden friend edges; together with its four existing ownership tests the canonical generic suite now contains 45 tests. `.NET CI` run `31049607823` completed the canonical entrypoint for the pinned historical commit; that receipt corresponds only to its own earlier manifest. A current revision is green only when its own exact manifest is verified.
+The exact manifest belongs to `eng/test-counts.json`. The current candidate adds focused regressions for the real syntax/semantic/lowering boundary, stage-local lifetime, plan-owned lowering activation, phase-owned module ordering and hidden ownership edges. Fifty-eight generic implementation tests were moved from mixed Wist-owned suites into the Wist-free generic project rather than restoring forbidden friend edges; together with its four existing ownership tests the canonical generic suite now contains 62 tests. `.NET CI` run `31049607823` completed the canonical entrypoint for the pinned historical commit; that receipt corresponds only to its own earlier manifest. A current revision is green only when its own exact manifest is verified.
 
 ## Workflow set
 
@@ -117,6 +117,6 @@ Verified PlanFuzz behavior includes the language-neutral core, Acme and Wist ada
 
 The preserved Wist pilot included the regression corpus. Its violating-case count is not clean discovery yield, and its normalized classes are not unique-defect counts. Current bounded discovery and surface-oracle smokes are regression/stability evidence only.
 
-Schedule reduction, lifecycle/concurrency campaigns, equal-budget baselines, a third adapter and publication novelty remain unverified future work.
+Schedule reduction, lifecycle/session/concurrency campaigns, equal-budget baselines, a third adapter and publication novelty remain unverified future work.
 
 The root `VERIFICATION.md` remains the detailed authority for commands, package boundaries, claim limits and artifact requirements.
