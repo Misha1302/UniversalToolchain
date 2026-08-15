@@ -81,6 +81,39 @@ public sealed class WistDirectArtifactStageTests
     }
 
     [Test]
+    public void LegacySemanticCompatibility_SnapshotsMutableAstState()
+    {
+        var originalRootType = ExtensibleEnum<AstNodeTag>.CreateOrGet("LegacySnapshot.Root");
+        var originalChildType = ExtensibleEnum<AstNodeTag>.CreateOrGet("LegacySnapshot.Child");
+        var source = new AstNode(
+            originalRootType,
+            null,
+            [new AstNode(originalChildType, null, [])]);
+        source.AddTag("snapshot-before");
+
+        var program = WistSemanticNormalizer.Normalize(source);
+
+        source.NodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("LegacySnapshot.MutatedRoot");
+        source.AddTag("snapshot-after");
+        source[0] = new AstNode(ExtensibleEnum<AstNodeTag>.CreateOrGet("LegacySnapshot.MutatedChild"), null, []);
+
+        var projected = WistSemanticNormalizer.ProjectForLegacyLowering(program);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(projected.NodeType, Is.EqualTo(originalRootType));
+            Assert.That(projected[0].NodeType, Is.EqualTo(originalChildType));
+            Assert.That(projected.CurrentTags, Does.Contain("snapshot-before"));
+            Assert.That(projected.CurrentTags, Does.Not.Contain("snapshot-after"));
+            Assert.That(
+                typeof(WistLegacySemanticNode).GetProperties()
+                    .Any(static property => typeof(AstNode).IsAssignableFrom(property.PropertyType)),
+                Is.False,
+                "Semantic compatibility nodes must not expose live mutable AST nodes.");
+        });
+    }
+
+    [Test]
     public void DirectArtifacts_AreDataOnlyAcrossPhaseBoundaries()
     {
         var forbidden = new[] { typeof(IFrontendCoreModule), typeof(IAirOptimizer) };
