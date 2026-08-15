@@ -15,5 +15,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Validate diff whitespace
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin master:refs/remotes/origin/master
+          base="$(git merge-base HEAD origin/master)"
+          git diff --check "${base}..HEAD"
       - name: Validate ownership graph
         run: python3 Tools/check-project-ownership.py --root .
