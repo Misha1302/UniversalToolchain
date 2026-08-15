@@ -24,8 +24,10 @@
     <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Dialects.Parsing\UniversalToolchain.Dialects.Parsing.csproj" />
     <ProjectReference Include="..\BytecodeDynamicMethodsCompiler\BytecodeDynamicMethodsCompiler.csproj" />
+    <ProjectReference Include="..\BasicCilCompiler\BasicCilCompiler.csproj" />
     <ProjectReference Include="..\BasicCore\BasicCore.csproj" />
     <ProjectReference Include="..\IntermediateRepresentationAbstractions\IntermediateRepresentationAbstractions.csproj" />
+    <ProjectReference Include="..\UniversalIntermediateRepresentation\UniversalIntermediateRepresentation.csproj" />
   </ItemGroup>
   <ItemGroup><Using Include="NUnit.Framework" /></ItemGroup>
 </Project>
