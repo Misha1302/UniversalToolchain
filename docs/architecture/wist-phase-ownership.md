@@ -1,6 +1,7 @@
 ---
 title: Wist phase ownership
-status: current
+navigation: hidden
+status: Internal maintainer architecture evidence for phase-boundary and split-readiness review.
 ---
 
 # Wist phase ownership
