@@ -19,21 +19,22 @@ The canonical non-release GitHub Actions gate runs:
 ./build.sh --skip-docs --skip-pack
 ```
 
-It restores and builds both `UniversalToolchain/Wist.sln` and `UniversalToolchain/PlanFuzz.sln`, builds runnable samples, executes the shared test manifest and runs architecture/documentation-status guards. Parallel project-graph traversal and shared compilation are the defaults; serial/no-build-server modes remain explicit diagnostics.
+It restores and builds both `UniversalToolchain/Wist.sln` and `UniversalToolchain/PlanFuzz.sln`, builds runnable samples, executes the shared test manifest and runs architecture/documentation-status guards. `UniversalToolchain.LanguageSdk.Generic.Tests` is an independent Wist-free owner proof and is therefore built by its explicit `buildBeforeTest` test-contract entry on both Linux and Windows. Parallel project-graph traversal and shared compilation are the defaults; serial/no-build-server modes remain explicit diagnostics.
 
 The documentation guard requires this table to mirror the repository's current exact test manifest even though the workflow receipt immediately below remains tied to the pinned snapshot commit.
 
 | Project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
-| `Tests` | 524 | 0 | 0 |
+| `Tests` | 500 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
-| `UniversalToolchain.Dialects.Tests` | 262 | 0 | 0 |
+| `UniversalToolchain.Dialects.Tests` | 245 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Generic.Tests` | 45 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 170 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,299** | **0** | **0** |
+| **Total** | **1,303** | **0** | **0** |
 
-The exact manifest belongs to `eng/test-counts.json`. The current candidate adds focused regressions for the real syntax/semantic/lowering boundary, stage-local lifetime, plan-owned lowering activation, phase-owned module ordering and hidden ownership edges. `.NET CI` run `31049607823` completed the canonical entrypoint for the pinned historical commit; that receipt corresponds only to its own earlier manifest. A current revision is green only when its own exact manifest is verified.
+The exact manifest belongs to `eng/test-counts.json`. The current candidate adds focused regressions for the real syntax/semantic/lowering boundary, stage-local lifetime, plan-owned lowering activation, phase-owned module ordering and hidden ownership edges. Forty-one generic implementation tests were moved from mixed Wist-owned suites into the Wist-free generic project rather than restoring forbidden friend edges; together with its four existing ownership tests the canonical generic suite now contains 45 tests. `.NET CI` run `31049607823` completed the canonical entrypoint for the pinned historical commit; that receipt corresponds only to its own earlier manifest. A current revision is green only when its own exact manifest is verified.
 
 ## Workflow set
 
