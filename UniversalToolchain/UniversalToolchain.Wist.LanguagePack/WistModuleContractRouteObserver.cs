@@ -17,7 +17,7 @@ namespace UniversalToolchain.Wist.LanguagePack;
 /// runtime-profile overlay, or backend selection. Contract components are metadata-only projections
 /// of the exact contributions already captured by <see cref="LanguagePlan"/>.
 /// </summary>
-internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteObserver
+internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteListener
 {
     private readonly ModuleContractPipelineOptions _options;
     private readonly IModuleContractDiagnosticSink _sink;
@@ -38,7 +38,7 @@ internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteOb
         ModuleContractVerificationOptions verification)
     {
         var options = new LanguageRuntimeOptions(allowedAssemblies);
-        options.AddRouteObserver(new WistModuleContractRouteObserver(verification));
+        options.AddRouteListener(new WistModuleContractRouteObserver(verification));
         return options;
     }
 
@@ -70,7 +70,7 @@ internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteOb
             new IntrinsicTypeStackProcessor(catalog, new IntrinsicTypeResolutionContext()));
     }
 
-    public void AfterTransformation(LanguageArtifactRouteObservation observation)
+    public void AfterTransformation(LanguageArtifactRouteObservationContext observation)
     {
         ArgumentNullException.ThrowIfNull(observation);
         var observer = GetObserver(observation.Plan);
@@ -129,7 +129,7 @@ internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteOb
             .ToArray();
 
     private static IReadOnlyList<IAirOptimizer> CreateAppliedOptimizerContractComponents(
-        LanguageArtifactRouteObservation observation)
+        LanguageArtifactRouteObservationContext observation)
     {
         var optimizerIds = WistRuntimeComponentCatalog.Optimizers
             .Select(static component => component.ContributionId)
@@ -162,7 +162,7 @@ internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteOb
         return new DeclaredRuntimeComponentContractDescriptorProvider(component.ImplementationType);
     }
 
-    private static bool HasLaterAirPass(LanguageArtifactRouteObservation observation) =>
+    private static bool HasLaterAirPass(LanguageArtifactRouteObservationContext observation) =>
         observation.RouteSteps
             .Skip(observation.StepIndex + 1)
             .Any(step => step.SourceContract == WistArtifactKinds.AirContract &&
