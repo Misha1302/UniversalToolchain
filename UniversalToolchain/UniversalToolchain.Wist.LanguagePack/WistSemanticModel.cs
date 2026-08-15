@@ -1,8 +1,8 @@
-using BasicCore.LexerWrapper;
-using BasicCore.ParserWrapper;
-using BasicCore.Semantics;
-using BasicTypesExtensions;
 using ArithmeticModule.Visitors;
+using BasicCore.Binding;
+using BasicCore.Binding.Symbols;
+using BasicCore.ParserWrapper;
+using BasicTypesExtensions;
 
 namespace UniversalToolchain.Wist.LanguagePack;
 
@@ -41,27 +41,17 @@ internal sealed class WistSemanticOperationNode : WistSemanticNode
 
 /// <summary>
 /// Explicit compatibility representation for Wist features that have not yet moved to canonical semantic nodes.
-/// It is data-only: no frontend module/plugin instance crosses the semantic artifact boundary.
+/// It keeps the already-bound AST payload as data so symbol identity is not lost while those features are migrated.
+/// No frontend module/plugin or optimizer instance crosses the semantic artifact boundary.
 /// </summary>
 internal sealed class WistLegacySemanticNode : WistSemanticNode
 {
-    public WistLegacySemanticNode(
-        ExtensibleEnum<AstNodeTag> nodeType,
-        LexemeValue? lexemeValue,
-        IEnumerable<string> tags,
-        IEnumerable<AstSemanticTagId> semanticTags,
-        IEnumerable<WistSemanticNode> children) : base(children)
+    public WistLegacySemanticNode(AstNode boundNode, IEnumerable<WistSemanticNode> children) : base(children)
     {
-        NodeType = nodeType ?? throw new ArgumentNullException(nameof(nodeType));
-        LexemeValue = lexemeValue;
-        Tags = Array.AsReadOnly((tags ?? throw new ArgumentNullException(nameof(tags))).ToArray());
-        SemanticTags = Array.AsReadOnly((semanticTags ?? throw new ArgumentNullException(nameof(semanticTags))).ToArray());
+        BoundNode = boundNode ?? throw new ArgumentNullException(nameof(boundNode));
     }
 
-    public ExtensibleEnum<AstNodeTag> NodeType { get; }
-    public LexemeValue? LexemeValue { get; }
-    public IReadOnlyList<string> Tags { get; }
-    public IReadOnlyList<AstSemanticTagId> SemanticTags { get; }
+    public AstNode BoundNode { get; }
 }
 
 internal sealed class WistSemanticProgram(WistSemanticNode root)
@@ -92,12 +82,7 @@ internal static class WistSemanticNormalizer
         if (node.NodeType == SymbolicAddition || node.NodeType == TextualAddition)
             return new WistSemanticOperationNode(WistSemanticOperations.Add, children);
 
-        return new WistLegacySemanticNode(
-            node.NodeType,
-            node.LexemeValue,
-            node.CurrentTags,
-            node.LocalSemanticTags,
-            children);
+        return new WistLegacySemanticNode(node, children);
     }
 
     private static AstNode ProjectNode(WistSemanticNode node)
@@ -113,11 +98,25 @@ internal static class WistSemanticNormalizer
         if (node is not WistLegacySemanticNode legacy)
             throw new InvalidOperationException($"Unsupported Wist semantic node '{node.GetType().FullName}'.");
 
-        var projected = new AstNode(legacy.NodeType, legacy.LexemeValue, children);
-        foreach (var tag in legacy.Tags)
-            projected.AddTag(tag);
-        foreach (var tag in legacy.SemanticTags)
-            projected.AddSemanticTag(tag);
-        return projected;
+        return RebuildLegacyNode(legacy.BoundNode, children);
+    }
+
+    private static AstNode RebuildLegacyNode(AstNode source, List<AstNode> children)
+    {
+        var projectedSource = new AstNode(source.NodeType, source.LexemeValue, children);
+        foreach (var tag in source.CurrentTags)
+            projectedSource.AddTag(tag);
+        foreach (var tag in source.LocalSemanticTags)
+            projectedSource.AddSemanticTag(tag);
+
+        return source switch
+        {
+            BoundLocalReference local => new BoundLocalReference(projectedSource, (LocalVariableSymbol)local.Symbol),
+            BoundExternalReference external => new BoundExternalReference(projectedSource, external.Symbol),
+            BoundAssignment => new BoundAssignment(projectedSource),
+            BoundCall => new BoundCall(projectedSource),
+            BoundBinaryOperator => new BoundBinaryOperator(projectedSource),
+            _ => projectedSource
+        };
     }
 }
