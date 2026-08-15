@@ -47,7 +47,10 @@ def main() -> int:
     tests = [project for project in universal if is_test_project(project)]
     with tempfile.TemporaryDirectory(prefix="ut-only-") as tmp:
         workspace = Path(tmp)
-        run("dotnet", "new", "sln", "-n", "UniversalOnly", cwd=workspace)
+        # .NET 10 defaults the sln template to .slnx. This verifier intentionally
+        # uses the legacy .sln container below, so make the requested format
+        # explicit instead of guessing the extension produced by the SDK.
+        run("dotnet", "new", "sln", "-n", "UniversalOnly", "--format", "sln", cwd=workspace)
         solution = workspace / "UniversalOnly.sln"
         for project in universal:
             run("dotnet", "sln", str(solution), "add", str(project), cwd=root)
