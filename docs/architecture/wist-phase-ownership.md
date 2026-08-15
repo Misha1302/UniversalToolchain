@@ -34,7 +34,7 @@ source text
 
 The phase split is behavioral, not just nominal. The frontend stage performs source preprocessing, lexer/parser configuration and syntax-tree processing only. It does not invoke `Binder` or bytecode visitors. The semantic stage materializes only the semantic contributions selected by `LanguagePlan`, owns `Binder`, and snapshots the bound result into `WistSemanticProgram`. The bytecode stage materializes only the lowering contributions selected by the same plan and never derives its modules from syntax contribution IDs.
 
-Phase artifacts are data boundaries. `WistSyntaxArtifact`, `WistSemanticArtifact`, `WistBytecodeArtifact`, and `WistAirArtifact` do not carry `IFrontendCoreModule` or `IAirOptimizer` instances. Syntax, semantic and lowering module instances are created independently for their owning stage and disposed after that stage execution.
+Phase artifacts are data boundaries. `WistSyntaxArtifact`, `WistSemanticArtifact`, `WistBytecodeArtifact`, and `WistAirArtifact` do not carry `IFrontendCoreModule` or `IAirOptimizer` instances. Syntax, semantic and lowering module instances are created independently for their owning stage and disposed after that stage execution. When an external planned AIR pass supplies module-contract metadata, `WistAirArtifact` retains only a copied `WistOptimizerContractSnapshot` of its contribution identity, namespace owners and facets; the executable optimizer/provider object itself is not retained.
 
 The historical combined `IFrontendCoreModule` remains an implementation shape used by existing Wist module assemblies, but its methods no longer determine phase ownership. `WistModulePhaseOwnership` explicitly maps actual module duties to separate plan contributions:
 
@@ -93,9 +93,9 @@ The Runtime dispatcher behind route observation remains internal. `WistModuleCon
 
 ## Module-contract observation
 
-Module-contract verification is derived from the exact selected plan/route. The observer does not instantiate executable frontend modules or AIR optimizers merely to diagnose them. It builds contract-only projections from selected descriptors, preserving namespace owners/facets and deriving applied optimizer contracts only from route steps already executed.
+Module-contract verification is derived from the exact selected plan/route. The observer does not instantiate executable frontend modules or AIR optimizers merely to diagnose them. Built-in Wist contracts are projected from the exact selected plan; contract metadata emitted by external planned AIR passes is carried forward as metadata-only snapshots. The observer merges those two sources in already-executed route order and fails on duplicate snapshot identities rather than selecting an alternative implementation.
 
-This keeps diagnostics observational: verification can reject an invalid execution, but it does not become a second feature registry or planner.
+This keeps diagnostics observational: verification can reject an invalid execution, but it does not become a second feature registry or planner. In particular, a third-party AIR pass can invalidate compiler facts and trigger P2/P3 reverification without forcing Wist to retain the pass object beyond its transformation.
 
 ## UT/Wist ownership
 
