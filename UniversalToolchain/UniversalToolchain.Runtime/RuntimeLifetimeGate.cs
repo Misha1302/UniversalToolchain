@@ -1,11 +1,12 @@
 namespace UniversalToolchain.Runtime;
 
 /// <summary>
-/// Coordinates synchronous runtime operations with deterministic one-time disposal.
+/// Coordinates synchronous runtime/facade operations with deterministic one-time disposal.
 /// New operations are rejected once disposal starts; external disposal waits for in-flight operations.
 /// Disposal from a call context that owns an active lease fails immediately instead of self-deadlocking.
+/// This is lifecycle mechanics only and carries no planning or language-specific state.
 /// </summary>
-internal sealed class RuntimeLifetimeGate
+public sealed class RuntimeLifetimeGate
 {
     private static readonly AsyncLocal<LeaseScope?> CurrentLease = new();
 
