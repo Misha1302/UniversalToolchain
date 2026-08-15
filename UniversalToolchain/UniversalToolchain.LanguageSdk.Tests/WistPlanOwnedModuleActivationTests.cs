@@ -29,7 +29,7 @@ public sealed class WistPlanOwnedModuleActivationTests
         using var services = new ServiceCollection().BuildServiceProvider();
 
         var factories = WistFrontendModuleActivation.CreateOrderedFactories(plan, [reversed], services);
-        var actual = factories.Skip(1).Select(factory => factory().GetType().Name).ToArray();
+        var actual = factories.Select(factory => factory().GetType().Name).ToArray();
         var planned = PlannedModuleIds(plan).ToArray();
         var expected = planned.Select(id =>
         {
@@ -72,7 +72,7 @@ public sealed class WistPlanOwnedModuleActivationTests
             plan,
             [WistFrontendModuleActivation.CreateBuiltInSource(wist), externalSource],
             services);
-        var modules = factories.Skip(1).Select(factory => factory()).ToArray();
+        var modules = factories.Select(factory => factory()).ToArray();
 
         Assert.Multiple(() =>
         {
@@ -149,8 +149,8 @@ public sealed class WistPlanOwnedModuleActivationTests
         {
             Assert.That(PlannedModuleIds(interpreterPlan), Is.EqualTo(PlannedModuleIds(cilPlan)));
             Assert.That(
-                interpreterFactories.Skip(1).Select(factory => factory().GetType()),
-                Is.EqualTo(cilFactories.Skip(1).Select(factory => factory().GetType())));
+                interpreterFactories.Select(factory => factory().GetType()),
+                Is.EqualTo(cilFactories.Select(factory => factory().GetType())));
         });
     }
 
