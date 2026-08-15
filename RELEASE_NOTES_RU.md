@@ -16,6 +16,7 @@
 - required CI workflow set вынесен в единый machine-readable owner и aggregate работает fail-closed;
 - physical Wist runtime closure классифицирован по фактическому package artifact; package graph не дробился без доказанной выгоды;
 - Wist feature ownership разделён по фактическим syntax / semantic-binding / lowering обязанностям, runtime materializes эти роли только из exact `LanguagePlan`, а DSL ordering распространяется на соответствующие phase-owned contributions;
+- generic Dialects/CIL implementation tests перенесены из mixed Wist-owned suites в `UniversalToolchain.LanguageSdk.Generic.Tests`, поэтому UT internal friend edges остаются только `UNIVERSAL -> UNIVERSAL`, а Wist-free proof стал содержательнее;
 - flaky percentage performance gate не добавлялся: сохранён benchmark smoke и добавлен artifact/trend collection.
 
 ## Матрица candidate packages
@@ -38,7 +39,7 @@
 
 ## Проверка
 
-Exact test manifest текущей ветки: **1,299 тестов**: Core 524, Modules 292, Dialects 262, LanguageSdk 170, PlanFuzz 41. Дополнительные regressions фиксируют реальную `Syntax -> Semantic -> Bytecode` границу, stage-local lifetime, plan-owned lowering/fail-closed activation, phase-owned module ordering и скрытые `UNIVERSAL -> WIST_PRODUCT` friend edges. Canonical build/test gate обязан подтвердить 0 failed и 0 skipped на exact candidate revision; более старые workflow receipts не подменяют exact-head verification.
+Exact test manifest текущей ветки: **1,303 теста**: Core 500, Modules 292, Dialects 245, LanguageSdk.Generic 45, LanguageSdk 170, PlanFuzz 41 и 10 isolated integration cases. Перенос 41 generic теста между owner-specific suites не уменьшает покрытие; 4 ранее существовавших Wist-free generic tests теперь также входят в canonical Linux/Windows contract. Дополнительные regressions фиксируют реальную `Syntax -> Semantic -> Bytecode` границу, stage-local lifetime, plan-owned lowering/fail-closed activation, phase-owned module ordering и скрытые `UNIVERSAL -> WIST_PRODUCT` friend edges. Canonical build/test gate обязан подтвердить 0 failed и 0 skipped на exact candidate revision; более старые workflow receipts не подменяют exact-head verification.
 
 Baseline-bearing package gate проверяет девять package identities, exact `.nuspec` metadata, monotonic version/content provenance, Wist public API delta, physical package surface, clean external consumers и detached integrity manifest. GitHub aggregate CI остаётся отдельным обязательным gate.
 
