@@ -70,14 +70,25 @@ The canonical Wist ownership chain is:
 The planned execution route then follows the concrete language pipeline:
 
 ```text
-Source/Text -> Lexer/Parser -> AST -> Bytecode -> AIR -> optimizers/optional SSA -> backend artifact -> execution
+Source/Text
+  -> frontend/syntax artifact
+  -> semantic binding / WistSemanticProgram
+  -> Bytecode lowering
+  -> AIR lowering
+  -> planned optimizers / optional SSA
+  -> planned backend artifact
+  -> execution
 ```
 
-`WistFacadeLanguageDefinitionFactory` is a configuration translator, not a second planner. It maps Wist-facing aliases and policy to typed generic contracts. `LanguageCompiler` alone owns feature dependency closure, contribution/capability-provider resolution, explicit exclusions, contribution ordering, runtime-provider selection and backend artifact routes.
+The phase split is behavioral. Syntax owns preprocessing, lexer/parser configuration and syntax-tree processing. Semantic binding owns `Binder` and binding rules. Bytecode lowering materializes only lowering contributions selected by the same `LanguagePlan`; it does not rediscover or reuse syntax contribution identities to choose lowerers. Stage-local module instances are independent and phase artifacts do not carry executable module/optimizer objects.
+
+`WistFacadeLanguageDefinitionFactory` is a configuration translator, not a second planner. It maps Wist-facing aliases and policy to typed generic contracts. `LanguageCompiler` alone owns feature dependency closure, contribution/capability-provider resolution, explicit exclusions, contribution ordering, runtime-provider selection and backend artifact routes. Wist DSL `before`/`after`/`requires` directives are translated to the corresponding phase-owned contribution constraints before planning, so syntax and lowering order remain one-plan semantics rather than separate runtime ordering.
 
 `LanguageRuntime` materializes the graph already selected by `LanguagePlan`. Runtime materialization validates exact package/source provenance for executable components and must not add features, reorder contributions or choose a second backend plan. Tooling-only planned contributions do not become runtime-source requirements merely because they are present in the semantic plan.
 
 For public embedding, `WistEngine.Create` constructs this plan/runtime once. `Evaluate`, `Validate` and `Compile<TDelegate>` reuse the same canonical ownership chain rather than invoking another Wist composition workflow.
+
+The semantic representation no longer retains a live mutable parser AST. Canonical operations such as symbolic `+` and textual `plus` converge to one semantic `Add` identity before lowering. Non-canonicalized legacy nodes are immutable semantic snapshots and may be projected to a fresh AST only inside bounded legacy visitor lowering; this is representation debt, not a syntax-to-lowering ownership path.
 
 Bytecode and AIR remain separate semantic boundaries. Interpreter/CIL parity is required for shared supported behavior and is tested from one canonical multi-route plan where parity itself is the contract.
 
@@ -102,6 +113,10 @@ The retired orchestration surface spans S11-S13: old dialect build/runtime plann
 The runtime/compiler pipeline retains explicit module-contract, Bytecode, AIR, ownership, capability and reverification checks. Verification operates on represented typed metadata and contracts; it is not a proof that every future instruction implementation carries a complete formal semantic specification.
 
 Do not use compatibility/observation policy as a hidden route around canonical feature/contribution selection. Module authoring and verification contracts must remain explicit and test-protected.
+
+## UT/Wist ownership boundary
+
+`eng/project-ownership.json` is the owner source for the repository graph. `WIST_PRODUCT -> UNIVERSAL` is allowed; `UNIVERSAL -> WIST_PRODUCT` is forbidden. The validator checks project references and hidden package/assembly/friend/build identities, and its workflow includes a negative friend-edge mutant. Generic implementation-internal Dialects/CIL tests live in the Wist-free `UniversalToolchain.LanguageSdk.Generic.Tests` owner so UT internals do not need friendship with mixed Wist test assemblies.
 
 ## Experimental PlanFuzz research tooling
 
