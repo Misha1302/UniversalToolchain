@@ -58,10 +58,5 @@
     "UniversalToolchain.Wist.LanguagePack",
     "UniversalToolchain.Wist.Contracts"
   ],
-  "legacyArtifactFieldAllowlist": [
-    "WistSyntaxArtifact.Modules",
-    "WistBytecodeArtifact.FrontendModules",
-    "WistAirArtifact.FrontendModules",
-    "WistAirArtifact.Optimizers"
-  ]
+  "legacyArtifactFieldAllowlist": []
 }

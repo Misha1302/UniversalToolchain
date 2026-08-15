@@ -7,14 +7,19 @@ public class ArithmeticAstVisitor : IAstVisitor
 {
     private static readonly FrozenDictionary<string, string> _opToName = new Dictionary<string, string>
     {
-        ["+"] = "Add",
         ["-"] = "Sub",
         ["*"] = "Mul",
         ["/"] = "Div"
     }.ToFrozenDictionary(StringComparer.Ordinal);
 
+    private static readonly ExtensibleEnum<AstNodeTag> LegacyAddition =
+        ExtensibleEnum<AstNodeTag>.CreateOrGet("Addition");
+
     public void TryVisit(BytecodeVisitorData data)
     {
+        // Addition is lowered exclusively from the canonical semantic Add node.
+        if (data.Node.NodeType == LegacyAddition)
+            return;
         if (ArithmeticModuleImpl.Ops.All(op => data.Node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet(op)))
             return;
 

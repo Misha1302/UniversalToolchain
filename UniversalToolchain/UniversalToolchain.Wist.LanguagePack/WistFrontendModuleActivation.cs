@@ -47,10 +47,7 @@ internal static class WistFrontendModuleActivation
         var selectedModules = plan.Contributions
             .Where(static contribution => contribution.Contribution.Slot == LanguageSlots.FrontendSyntax)
             .ToArray();
-        var result = new List<Func<IFrontendCoreModule>>(selectedModules.Length + 1)
-        {
-            static () => new WistProgramStructureFrontendModule()
-        };
+        var result = new List<Func<IFrontendCoreModule>>(selectedModules.Length);
 
         foreach (var contribution in selectedModules)
         {
