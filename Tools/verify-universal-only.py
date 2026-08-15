@@ -25,9 +25,24 @@ def run(*args: str, cwd: Path) -> None:
     subprocess.run(args, cwd=cwd, check=True)
 
 
+def project_text(path: Path) -> str:
+    return path.read_text(encoding="utf-8-sig")
+
+
 def is_test_project(path: Path) -> bool:
-    text = path.read_text(encoding="utf-8-sig")
+    text = project_text(path)
     return "Microsoft.NET.Test.Sdk" in text or "<IsTestProject>true</IsTestProject>" in text
+
+
+def is_packaged_template_consumer(path: Path, root: Path) -> bool:
+    relative = path.relative_to(root).as_posix()
+    if not relative.startswith("UniversalToolchain/UniversalToolchain.Templates/content/"):
+        return False
+    # Template content is a generated-consumer fixture: it intentionally validates
+    # the public NuGet surface rather than participating in the repository source
+    # project graph. Keep it owned/classified, but do not source-build it in the
+    # UNIVERSAL-only solution before those packages have been produced.
+    return '<PackageReference Include="UniversalToolchain.' in project_text(path)
 
 
 def main() -> int:
@@ -44,7 +59,9 @@ def main() -> int:
     if not universal:
         raise RuntimeError("No UNIVERSAL projects were classified.")
 
-    tests = [project for project in universal if is_test_project(project)]
+    packaged_consumers = [project for project in universal if is_packaged_template_consumer(project, root)]
+    source_projects = [project for project in universal if project not in packaged_consumers]
+    tests = [project for project in source_projects if is_test_project(project)]
 
     # UniversalToolchain/NuGet.config intentionally declares the repository-local
     # packages feed. Canonical build entrypoints provision the directory even when
@@ -59,14 +76,17 @@ def main() -> int:
         # explicit instead of guessing the extension produced by the SDK.
         run("dotnet", "new", "sln", "-n", "UniversalOnly", "--format", "sln", cwd=workspace)
         solution = workspace / "UniversalOnly.sln"
-        for project in universal:
+        for project in source_projects:
             run("dotnet", "sln", str(solution), "add", str(project), cwd=root)
         run("dotnet", "restore", str(solution), "--nologo", cwd=root)
         run("dotnet", "build", str(solution), "-c", "Release", "--no-restore", "--nologo", cwd=root)
         for project in tests:
             run("dotnet", "test", str(project), "-c", "Release", "--no-build", "--nologo", cwd=root)
 
-    print(f"UNIVERSAL_ONLY=PASS projects={len(universal)} tests={len(tests)}")
+    print(
+        f"UNIVERSAL_ONLY=PASS owned={len(universal)} source_projects={len(source_projects)} "
+        f"packaged_consumers={len(packaged_consumers)} tests={len(tests)}"
+    )
     return 0
 
 
