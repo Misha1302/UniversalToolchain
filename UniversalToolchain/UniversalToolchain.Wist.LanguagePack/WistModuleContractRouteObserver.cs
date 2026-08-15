@@ -131,19 +131,28 @@ internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteLi
     private static IReadOnlyList<IAirOptimizer> CreateAppliedOptimizerContractComponents(
         LanguageArtifactRouteObservationContext observation)
     {
-        var optimizerIds = WistRuntimeComponentCatalog.Optimizers
-            .Select(static component => component.ContributionId)
-            .ToHashSet();
-        return observation.RouteSteps
-            .Take(observation.StepIndex + 1)
-            .Select(static step => step.ContributionId)
-            .Where(optimizerIds.Contains)
-            .Select(static contributionId => WistRuntimeComponentCatalog.GetRequired(
-                contributionId,
-                WistRuntimeComponentKind.Optimizer))
-            .Select(static component => (IAirOptimizer)new PlannedOptimizerContractComponent(
-                CreateContractDescriptorProvider(component)))
-            .ToArray();
+        if (observation.Artifact is not LanguageArtifact<WistAirArtifact> airArtifact)
+            return [];
+
+        var builtInById = WistRuntimeComponentCatalog.Optimizers
+            .ToDictionary(static component => component.ContributionId);
+        var snapshotById = airArtifact.Value.AppliedOptimizerContracts
+            .ToDictionary(static snapshot => snapshot.ContributionId);
+        var result = new List<IAirOptimizer>();
+
+        foreach (var step in observation.RouteSteps.Take(observation.StepIndex + 1))
+        {
+            if (builtInById.TryGetValue(step.ContributionId, out var component))
+            {
+                result.Add(new PlannedOptimizerContractComponent(CreateContractDescriptorProvider(component)));
+                continue;
+            }
+
+            if (snapshotById.TryGetValue(step.ContributionId, out var snapshot))
+                result.Add(new PlannedOptimizerContractComponent(snapshot));
+        }
+
+        return result;
     }
 
     private static IModuleContractDescriptorProvider CreateContractDescriptorProvider(
