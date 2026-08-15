@@ -53,6 +53,7 @@ def main() -> int:
     ownership = load_ownership_module(root)
     manifest = ownership.load_manifest(root)
     owners = ownership.require_graph_direction(root, manifest)
+    ownership.require_no_hidden_reverse_identity_edges(root, manifest, owners)
     ownership.require_universal_sources_language_neutral(root, manifest, owners)
 
     universal = sorted(path for path, owner in owners.items() if owner == "UNIVERSAL")
