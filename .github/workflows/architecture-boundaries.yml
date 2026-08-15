@@ -1,0 +1,19 @@
+name: Architecture Boundaries
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  project-ownership:
+    name: UT/Wist ownership and dependency direction
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate ownership graph
+        run: python3 Tools/check-project-ownership.py --root .
