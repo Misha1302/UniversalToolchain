@@ -1,4 +1,5 @@
 using ArithmeticModule.Visitors;
+using BasicCore.Binding;
 using BasicCore.Compilation;
 using BasicCore.Contracts;
 using BasicCore.LexerWrapper;
@@ -89,19 +90,25 @@ internal sealed class WistDirectArtifactStageFactory(
     Func<IParser> parserFactory,
     Func<IAstToBytecodeTranslator> astTranslatorFactory,
     Func<IAbstractMethodsTranslator> abstractMethodsTranslatorFactory,
-    IReadOnlyList<Func<IFrontendCoreModule>> moduleFactories,
+    IReadOnlyList<Func<IFrontendCoreModule>> syntaxModuleFactories,
+    IReadOnlyList<Func<IFrontendCoreModule>> semanticModuleFactories,
+    IReadOnlyList<Func<IFrontendCoreModule>> loweringModuleFactories,
+    bool canonicalAddLowering,
     WistHostBindingAdapter hostBindingAdapter)
 {
     private readonly Func<ILexer> _lexerFactory = lexerFactory ?? throw new ArgumentNullException(nameof(lexerFactory));
     private readonly Func<IParser> _parserFactory = parserFactory ?? throw new ArgumentNullException(nameof(parserFactory));
     private readonly Func<IAstToBytecodeTranslator> _astTranslatorFactory = astTranslatorFactory ?? throw new ArgumentNullException(nameof(astTranslatorFactory));
     private readonly Func<IAbstractMethodsTranslator> _abstractMethodsTranslatorFactory = abstractMethodsTranslatorFactory ?? throw new ArgumentNullException(nameof(abstractMethodsTranslatorFactory));
-    private readonly IReadOnlyList<Func<IFrontendCoreModule>> _moduleFactories = moduleFactories?.ToArray() ?? throw new ArgumentNullException(nameof(moduleFactories));
+    private readonly IReadOnlyList<Func<IFrontendCoreModule>> _syntaxModuleFactories = syntaxModuleFactories?.ToArray() ?? throw new ArgumentNullException(nameof(syntaxModuleFactories));
+    private readonly IReadOnlyList<Func<IFrontendCoreModule>> _semanticModuleFactories = semanticModuleFactories?.ToArray() ?? throw new ArgumentNullException(nameof(semanticModuleFactories));
+    private readonly IReadOnlyList<Func<IFrontendCoreModule>> _loweringModuleFactories = loweringModuleFactories?.ToArray() ?? throw new ArgumentNullException(nameof(loweringModuleFactories));
+    private readonly bool _canonicalAddLowering = canonicalAddLowering;
     private readonly WistHostBindingAdapter _hostBindingAdapter = hostBindingAdapter ?? throw new ArgumentNullException(nameof(hostBindingAdapter));
 
-    public WistDirectFrontendTransformer CreateFrontend() => new(_lexerFactory, _parserFactory, _moduleFactories, _hostBindingAdapter);
-    public WistDirectSemanticTransformer CreateSemanticBinding() => new();
-    public WistDirectBytecodeTransformer CreateBytecodeLowering() => new(_astTranslatorFactory, _moduleFactories);
+    public WistDirectFrontendTransformer CreateFrontend() => new(_lexerFactory, _parserFactory, _syntaxModuleFactories, _hostBindingAdapter);
+    public WistDirectSemanticTransformer CreateSemanticBinding() => new(_semanticModuleFactories);
+    public WistDirectBytecodeTransformer CreateBytecodeLowering() => new(_astTranslatorFactory, _loweringModuleFactories, _canonicalAddLowering);
     public WistDirectAirTransformer CreateAirLowering() => new(_abstractMethodsTranslatorFactory);
 }
 
@@ -140,15 +147,25 @@ internal sealed class WistDirectFrontendTransformer(
 
     private WistSyntaxArtifact TransformCore(CompilationInput input)
     {
-        var modules = WistLegacyFrontendModuleCompatibility.CreateModules(_moduleFactories);
-        var root = CanonicalArtifactStages.ParseAndBind(input, _lexerFactory(), _parserFactory(), modules);
-        return new WistSyntaxArtifact(input, root);
+        var modules = WistPhaseModuleExecution.CreateModules(_moduleFactories);
+        try
+        {
+            var root = WistPhaseModuleExecution.ParseSyntax(input, _lexerFactory(), _parserFactory(), modules);
+            return new WistSyntaxArtifact(input, root);
+        }
+        finally
+        {
+            WistPhaseModuleExecution.DisposeModules(modules);
+        }
     }
 }
 
-internal sealed class WistDirectSemanticTransformer : ILanguageArtifactTransformer<WistSyntaxArtifact, WistSemanticArtifact>
+internal sealed class WistDirectSemanticTransformer(
+    IReadOnlyList<Func<IFrontendCoreModule>> moduleFactories) : ILanguageArtifactTransformer<WistSyntaxArtifact, WistSemanticArtifact>
 {
     private static readonly LanguageRuntimeComponentTraits Traits = LanguageRuntimeComponentTraits.DeterministicNoHostInterop;
+    private readonly IReadOnlyList<Func<IFrontendCoreModule>> _moduleFactories = moduleFactories?.ToArray() ?? throw new ArgumentNullException(nameof(moduleFactories));
+
     public LanguageContributionId ContributionId => WistContributionIds.SemanticBinding;
     public LanguageArtifactKind<WistSyntaxArtifact> TypedSourceKind => WistDirectArtifactKinds.Syntax;
     public LanguageArtifactKind<WistSemanticArtifact> TypedTargetKind => WistDirectArtifactKinds.Semantic;
@@ -158,17 +175,28 @@ internal sealed class WistDirectSemanticTransformer : ILanguageArtifactTransform
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(context);
-        return new WistSemanticArtifact(source.Input, WistSemanticNormalizer.Normalize(source.Root));
+        var modules = WistPhaseModuleExecution.CreateModules(_moduleFactories);
+        try
+        {
+            var boundRoot = WistPhaseModuleExecution.BindSemantic(source.Input, source.Root, modules);
+            return new WistSemanticArtifact(source.Input, WistSemanticNormalizer.Normalize(boundRoot));
+        }
+        finally
+        {
+            WistPhaseModuleExecution.DisposeModules(modules);
+        }
     }
 }
 
 internal sealed class WistDirectBytecodeTransformer(
     Func<IAstToBytecodeTranslator> translatorFactory,
-    IReadOnlyList<Func<IFrontendCoreModule>> moduleFactories) : ILanguageArtifactTransformer<WistSemanticArtifact, WistBytecodeArtifact>
+    IReadOnlyList<Func<IFrontendCoreModule>> moduleFactories,
+    bool canonicalAddLowering) : ILanguageArtifactTransformer<WistSemanticArtifact, WistBytecodeArtifact>
 {
     private static readonly LanguageRuntimeComponentTraits Traits = LanguageRuntimeComponentTraits.Unknown;
     private readonly Func<IAstToBytecodeTranslator> _translatorFactory = translatorFactory ?? throw new ArgumentNullException(nameof(translatorFactory));
     private readonly IReadOnlyList<Func<IFrontendCoreModule>> _moduleFactories = moduleFactories?.ToArray() ?? throw new ArgumentNullException(nameof(moduleFactories));
+    private readonly bool _canonicalAddLowering = canonicalAddLowering;
 
     public LanguageContributionId ContributionId => WistContributionIds.LoweringToBytecode;
     public LanguageArtifactKind<WistSemanticArtifact> TypedSourceKind => WistDirectArtifactKinds.Semantic;
@@ -179,31 +207,108 @@ internal sealed class WistDirectBytecodeTransformer(
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(context);
-        var bytecode = WistLegacyFrontendModuleCompatibility.LowerToBytecode(
-            WistSemanticNormalizer.ProjectForLegacyLowering(source.Program),
-            _translatorFactory(),
-            WistLegacyFrontendModuleCompatibility.CreateModules(_moduleFactories));
-        return new WistBytecodeArtifact(source.Input, bytecode);
+        var modules = WistPhaseModuleExecution.CreateModules(_moduleFactories);
+        try
+        {
+            var bytecode = WistPhaseModuleExecution.LowerToBytecode(
+                WistSemanticNormalizer.ProjectForLegacyLowering(source.Program),
+                _translatorFactory(),
+                modules,
+                _canonicalAddLowering);
+            return new WistBytecodeArtifact(source.Input, bytecode);
+        }
+        finally
+        {
+            WistPhaseModuleExecution.DisposeModules(modules);
+        }
     }
 }
 
-internal static class WistLegacyFrontendModuleCompatibility
+internal static class WistPhaseModuleExecution
 {
     public static IReadOnlyList<IFrontendCoreModule> CreateModules(IReadOnlyList<Func<IFrontendCoreModule>> factories)
     {
-        var modules = new IFrontendCoreModule[factories.Count];
-        for (var i = 0; i < factories.Count; i++)
-            modules[i] = factories[i]() ?? throw new InvalidOperationException($"Wist frontend module factory at index {i} returned null.");
-        return modules;
+        ArgumentNullException.ThrowIfNull(factories);
+        var modules = new List<IFrontendCoreModule>(factories.Count);
+        try
+        {
+            for (var index = 0; index < factories.Count; index++)
+            {
+                var module = factories[index]() ?? throw new InvalidOperationException(
+                    $"Wist phase module factory at index {index} returned null.");
+                modules.Add(module);
+            }
+            return modules;
+        }
+        catch
+        {
+            DisposeModules(modules);
+            throw;
+        }
     }
 
-    public static Bytecode LowerToBytecode(AstNode root, IAstToBytecodeTranslator translator, IReadOnlyList<IFrontendCoreModule> modules)
+    public static AstNode ParseSyntax(
+        CompilationInput input,
+        ILexer lexer,
+        IParser parser,
+        IReadOnlyList<IFrontendCoreModule> modules)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(lexer);
+        ArgumentNullException.ThrowIfNull(parser);
+        ArgumentNullException.ThrowIfNull(modules);
+
+        var targetCode = modules.Aggregate(input.SourceText, static (current, module) => module.ProcessText(current));
+        foreach (var module in modules)
+            module.InitLexer(lexer);
+        var lexemes = lexer.Lexemize(targetCode);
+
+        var targetLexemes = modules.Aggregate(lexemes, static (current, module) => module.ProcessLexemes(current));
+        foreach (var module in modules)
+            module.InitParser(parser);
+        var root = parser.Parse(targetLexemes);
+        return modules.Aggregate(root, static (current, module) => module.ProcessAst(current));
+    }
+
+    public static AstNode BindSemantic(
+        CompilationInput input,
+        AstNode syntaxRoot,
+        IReadOnlyList<IFrontendCoreModule> modules)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(syntaxRoot);
+        ArgumentNullException.ThrowIfNull(modules);
+        var bindingRules = modules.SelectMany(static module => module.GetAstBindingRules()).ToArray();
+        return new Binder(input.ExternalBindings, bindingRules).Bind(syntaxRoot);
+    }
+
+    public static Bytecode LowerToBytecode(
+        AstNode root,
+        IAstToBytecodeTranslator translator,
+        IReadOnlyList<IFrontendCoreModule> modules,
+        bool canonicalAddLowering)
     {
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(translator);
         ArgumentNullException.ThrowIfNull(modules);
-        translator.AddVisitors(new WistProgramStructureLoweringVisitor(), new CanonicalAddSemanticAstVisitor());
-        return CanonicalArtifactStages.LowerToBytecode(root, translator, modules);
+
+        translator.AddVisitors(new WistProgramStructureLoweringVisitor());
+        if (canonicalAddLowering)
+            translator.AddVisitors(new CanonicalAddSemanticAstVisitor());
+        foreach (var module in modules)
+            module.InitAstTranslator(translator, modules);
+        var bytecode = translator.Translate(root);
+        return modules.Aggregate(bytecode, static (current, module) => module.ProcessBytecode(current));
+    }
+
+    public static void DisposeModules(IEnumerable<IFrontendCoreModule> modules)
+    {
+        ArgumentNullException.ThrowIfNull(modules);
+        foreach (var module in modules.Reverse())
+        {
+            if (module is IDisposable disposable)
+                disposable.Dispose();
+        }
     }
 
     private sealed class WistProgramStructureLoweringVisitor : IAstVisitor
