@@ -32,7 +32,11 @@ public sealed class WistDirectArtifactStageTests
     {
         const string source = "2 + 3 * 4";
         var plan = CreatePlan();
-        var factory = CreateDirectFactory(CreateCanonicalModuleFactories(), plan);
+        var factory = CreateDirectFactory(
+            CreateCanonicalModuleFactories(),
+            semanticFactories: [],
+            loweringFactories: CreateCanonicalModuleFactories(),
+            plan);
         var context = CreateContext(plan, source);
 
         var syntax = factory.CreateFrontend().Transform(source, context);
@@ -46,6 +50,52 @@ public sealed class WistDirectArtifactStageTests
             Assert.That(bytecode.Bytecode.Instructions, Is.Not.Empty);
             Assert.That(air.Air.Instructions, Is.Not.Empty);
             Assert.That(WistDirectArtifactKinds.Semantic.Contract, Is.EqualTo(WistArtifactKinds.SemanticProgramContract));
+        });
+    }
+
+    [Test]
+    public void SyntaxStage_DoesNotExecuteSemanticBindingRules()
+    {
+        var bindingRuleRequests = 0;
+        var syntaxFactories = CreateCanonicalModuleFactories(() => new BindingProbeModule(() => bindingRuleRequests++));
+        var semanticFactories = new Func<IFrontendCoreModule>[]
+        {
+            () => new BindingProbeModule(() => bindingRuleRequests++)
+        };
+        var plan = CreatePlan();
+        var factory = CreateDirectFactory(syntaxFactories, semanticFactories, CreateCanonicalModuleFactories(), plan);
+        var context = CreateContext(plan, "2 + 3");
+
+        var syntax = factory.CreateFrontend().Transform("2 + 3", context);
+        Assert.That(bindingRuleRequests, Is.Zero, "Syntax must stop before semantic binding.");
+
+        _ = factory.CreateSemanticBinding().Transform(syntax, context);
+        Assert.That(bindingRuleRequests, Is.EqualTo(1), "Binding rules must be requested only by the semantic stage.");
+    }
+
+    [Test]
+    public void LoweringStage_MaterializesItsOwnFactories_NotSyntaxFactories()
+    {
+        var syntaxInstances = 0;
+        var loweringInstances = 0;
+        var plan = CreatePlan();
+        var factory = CreateDirectFactory(
+            CreateCanonicalModuleFactories(() => new SessionMarkerModule(() => Interlocked.Increment(ref syntaxInstances))),
+            semanticFactories: [],
+            loweringFactories: CreateCanonicalModuleFactories(() => new SessionMarkerModule(() => Interlocked.Increment(ref loweringInstances))),
+            plan);
+        var context = CreateContext(plan, "2 + 3");
+
+        var syntax = factory.CreateFrontend().Transform("2 + 3", context);
+        var afterSyntax = syntaxInstances;
+        var semantic = factory.CreateSemanticBinding().Transform(syntax, context);
+        _ = factory.CreateBytecodeLowering().Transform(semantic, context);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(afterSyntax, Is.EqualTo(1));
+            Assert.That(syntaxInstances, Is.EqualTo(afterSyntax), "Lowering must not recreate syntax-owned modules.");
+            Assert.That(loweringInstances, Is.EqualTo(1), "Lowering must create its own stage-local module instance.");
         });
     }
 
@@ -149,7 +199,7 @@ public sealed class WistDirectArtifactStageTests
             return module;
         });
         var plan = CreatePlan();
-        var frontend = CreateDirectFactory(factories, plan).CreateFrontend();
+        var frontend = CreateDirectFactory(factories, [], [], plan).CreateFrontend();
 
         var tasks = Enumerable.Range(0, 24)
             .Select(index => Task.Run(() => frontend.Transform($"{index} + 1", CreateContext(plan, $"{index} + 1"))))
@@ -184,13 +234,18 @@ public sealed class WistDirectArtifactStageTests
     }
 
     private static WistDirectArtifactStageFactory CreateDirectFactory(
-        IReadOnlyList<Func<IFrontendCoreModule>> moduleFactories,
+        IReadOnlyList<Func<IFrontendCoreModule>> syntaxFactories,
+        IReadOnlyList<Func<IFrontendCoreModule>> semanticFactories,
+        IReadOnlyList<Func<IFrontendCoreModule>> loweringFactories,
         LanguagePlan plan) => new(
         static () => new BasicLexerImpl(),
         static () => new BasicParserImpl(),
         static () => new BasicAstToBytecodeTranslatorImpl(),
         CreateMethodsTranslator,
-        moduleFactories,
+        syntaxFactories,
+        semanticFactories,
+        loweringFactories,
+        canonicalAddLowering: true,
         new WistHostBindingAdapter(plan));
 
     private static IAbstractMethodsTranslator CreateMethodsTranslator()
@@ -224,5 +279,17 @@ public sealed class WistDirectArtifactStageTests
         return factories;
     }
 
-    private sealed class SessionMarkerModule : IFrontendCoreModule;
+    private sealed class BindingProbeModule(Action onBindingRules) : IFrontendCoreModule
+    {
+        public IReadOnlyList<IAstBindingRule> GetAstBindingRules()
+        {
+            onBindingRules();
+            return [];
+        }
+    }
+
+    private sealed class SessionMarkerModule : IFrontendCoreModule
+    {
+        public SessionMarkerModule(Action? onCreate = null) => onCreate?.Invoke();
+    }
 }
