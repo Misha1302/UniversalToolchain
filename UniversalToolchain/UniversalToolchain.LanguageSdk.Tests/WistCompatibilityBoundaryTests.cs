@@ -1,4 +1,6 @@
+using BasicCore.Contracts;
 using UniversalToolchain.Language.Abstractions;
+using UniversalToolchain.ModuleContracts;
 using UniversalToolchain.Wist.LanguagePack;
 
 namespace UniversalToolchain.LanguageSdk.Tests;
@@ -70,6 +72,12 @@ public sealed class WistCompatibilityBoundaryTests
             Assert.That(
                 assembly.GetType("UniversalToolchain.Wist.LanguagePack.WistProgramStructureFrontendModule", throwOnError: false),
                 Is.Null);
+            Assert.That(typeof(IAirOptimizer).IsAssignableFrom(typeof(WistOptimizerContractSnapshot)), Is.False);
+            Assert.That(typeof(IFrontendCoreModule).IsAssignableFrom(typeof(WistOptimizerContractSnapshot)), Is.False);
+            Assert.That(typeof(IModuleContractDescriptorProvider).IsAssignableFrom(typeof(WistOptimizerContractSnapshot)), Is.True);
+            Assert.That(
+                typeof(WistAirArtifact).GetProperty(nameof(WistAirArtifact.AppliedOptimizerContracts))?.PropertyType,
+                Is.EqualTo(typeof(IReadOnlyList<WistOptimizerContractSnapshot>)));
         });
     }
 }
