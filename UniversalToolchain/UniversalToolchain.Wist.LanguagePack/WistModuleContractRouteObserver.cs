@@ -14,13 +14,16 @@ namespace UniversalToolchain.Wist.LanguagePack;
 /// <summary>
 /// Adapts the canonical LanguagePlan artifact route to the existing module-contract verifier.
 /// Verification observes already-selected route components; it never performs planning, discovery,
-/// runtime-profile overlay, or backend selection.
+/// runtime-profile overlay, or backend selection. Contract components are metadata-only projections
+/// of the exact contributions already captured by <see cref="LanguagePlan"/>.
 /// </summary>
 internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteObserver
 {
     private readonly ModuleContractPipelineOptions _options;
     private readonly IModuleContractDiagnosticSink _sink;
     private readonly ConcurrentDictionary<string, ModuleContractPipelineObserver> _observers =
+        new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, IReadOnlyList<IFrontendCoreModule>> _frontendContracts =
         new(StringComparer.Ordinal);
 
     private WistModuleContractRouteObserver(ModuleContractVerificationOptions verification)
@@ -41,6 +44,9 @@ internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteOb
 
     private ModuleContractPipelineObserver GetObserver(LanguagePlan plan) =>
         _observers.GetOrAdd(plan.PlanHash, _ => CreateObserver(plan));
+
+    private IReadOnlyList<IFrontendCoreModule> GetFrontendContractComponents(LanguagePlan plan) =>
+        _frontendContracts.GetOrAdd(plan.PlanHash, _ => CreateFrontendContractComponents(plan));
 
     private ModuleContractPipelineObserver CreateObserver(LanguagePlan plan) =>
         new(
@@ -68,6 +74,7 @@ internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteOb
     {
         ArgumentNullException.ThrowIfNull(observation);
         var observer = GetObserver(observation.Plan);
+        var frontendContracts = GetFrontendContractComponents(observation.Plan);
         var backendComponents = CreateBackendComponents(observation.Backend);
 
         if (observation.Step.ContributionId == WistContributionIds.LoweringToBytecode &&
@@ -76,7 +83,7 @@ internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteOb
             var bytecode = bytecodeArtifact.Value;
             observer.AfterBytecode(new(
                 bytecode.Input,
-                bytecode.FrontendModules,
+                frontendContracts,
                 bytecode.Bytecode,
                 backendComponents));
             return;
@@ -86,13 +93,14 @@ internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteOb
             return;
 
         var air = airArtifact.Value;
+        var appliedOptimizerContracts = CreateAppliedOptimizerContractComponents(observation);
         var supportedIntrinsics = GetSupportedIntrinsics(observation.Backend);
         if (observation.Step.ContributionId == WistContributionIds.LoweringToAir)
         {
             observer.AfterAir(new(
                 air.Input,
-                air.FrontendModules,
-                air.Optimizers,
+                frontendContracts,
+                appliedOptimizerContracts,
                 air.Air,
                 supportedIntrinsics,
                 backendComponents));
@@ -102,12 +110,56 @@ internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteOb
         {
             observer.AfterOptimizedAir(new(
                 air.Input,
-                air.FrontendModules,
-                air.Optimizers,
+                frontendContracts,
+                appliedOptimizerContracts,
                 air.Air,
                 supportedIntrinsics,
                 backendComponents));
         }
+    }
+
+    private static IReadOnlyList<IFrontendCoreModule> CreateFrontendContractComponents(LanguagePlan plan) =>
+        plan.Contributions
+            .Where(static contribution => WistRuntimeComponentCatalog.IsCanonicalModule(contribution.Contribution.Id))
+            .Select(static contribution => WistRuntimeComponentCatalog.GetRequired(
+                contribution.Contribution.Id,
+                WistRuntimeComponentKind.Module))
+            .Select(static component => (IFrontendCoreModule)new PlannedFrontendContractComponent(
+                CreateContractDescriptorProvider(component)))
+            .ToArray();
+
+    private static IReadOnlyList<IAirOptimizer> CreateAppliedOptimizerContractComponents(
+        LanguageArtifactRouteObservation observation)
+    {
+        var optimizerIds = WistRuntimeComponentCatalog.Optimizers
+            .Select(static component => component.ContributionId)
+            .ToHashSet();
+        return observation.RouteSteps
+            .Take(observation.StepIndex + 1)
+            .Select(static step => step.ContributionId)
+            .Where(optimizerIds.Contains)
+            .Select(static contributionId => WistRuntimeComponentCatalog.GetRequired(
+                contributionId,
+                WistRuntimeComponentKind.Optimizer))
+            .Select(static component => (IAirOptimizer)new PlannedOptimizerContractComponent(
+                CreateContractDescriptorProvider(component)))
+            .ToArray();
+    }
+
+    private static IModuleContractDescriptorProvider CreateContractDescriptorProvider(
+        WistRuntimeComponentDescriptor component)
+    {
+        if (component.ContributionId == WistContributionIds.NumbersModule)
+            return new NumbersModule.Contracts.NumbersModuleContractDescriptorProvider();
+        if (component.ContributionId == WistContributionIds.ScopesModule)
+            return new ScopesModule.Contracts.ScopesModuleContractDescriptorProvider();
+        if (component.ContributionId == WistContributionIds.IdentifiersModule)
+            return new IdentifierModule.Contracts.IdentifierModuleContractDescriptorProvider();
+        if (component.ContributionId == WistContributionIds.VariablesModule)
+            return new VariablesModule.Contracts.VariablesModuleContractDescriptorProvider();
+        if (component.ContributionId == WistContributionIds.LabelsModule)
+            return new LabelsModule.Contracts.LabelsModuleContractDescriptorProvider();
+        return new DeclaredRuntimeComponentContractDescriptorProvider(component.ImplementationType);
     }
 
     private static bool HasLaterAirPass(LanguageArtifactRouteObservation observation) =>
@@ -147,4 +199,26 @@ internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteOb
         "interpreter" => AbstractIrToAbstractIrStub.SupportedIntrinsicIds,
         _ => throw new InvalidOperationException($"Unsupported Wist backend '{backend.Value}'.")
     };
+
+    private sealed class PlannedFrontendContractComponent(IModuleContractDescriptorProvider provider) :
+        IFrontendCoreModule,
+        IModuleContractDescriptorProvider
+    {
+        private readonly IModuleContractDescriptorProvider _provider =
+            provider ?? throw new ArgumentNullException(nameof(provider));
+
+        public IReadOnlyList<ContractNamespaceOwner> NamespaceOwners => _provider.NamespaceOwners;
+        public IReadOnlyList<IModuleContractFacet> GetFacets() => _provider.GetFacets();
+    }
+
+    private sealed class PlannedOptimizerContractComponent(IModuleContractDescriptorProvider provider) :
+        IAirOptimizer,
+        IModuleContractDescriptorProvider
+    {
+        private readonly IModuleContractDescriptorProvider _provider =
+            provider ?? throw new ArgumentNullException(nameof(provider));
+
+        public IReadOnlyList<ContractNamespaceOwner> NamespaceOwners => _provider.NamespaceOwners;
+        public IReadOnlyList<IModuleContractFacet> GetFacets() => _provider.GetFacets();
+    }
 }

@@ -5,6 +5,7 @@ using BasicCore.Capabilities;
 using BasicCore.Compilation;
 using BasicCore.Contracts;
 using BasicCore.Execution;
+using BasicCore.Registration;
 using BasicInterpreter;
 using BasicLexer.Core;
 using BasicParser.Core;
