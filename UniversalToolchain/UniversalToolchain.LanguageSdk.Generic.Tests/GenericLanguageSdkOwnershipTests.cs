@@ -74,7 +74,7 @@ public sealed class GenericLanguageSdkOwnershipTests
         Assert.That(error!.Message, Does.Contain("generic.parse"));
     }
 
-    private static ILanguageExtensionPackage CreatePackage() =>
+    private static AuthoredLanguagePackage CreatePackage() =>
         LanguagePackageBuilder.Create("Generic.Language", "1")
             .AddFeature("generic.core", feature => feature
                 .AddTransformer(
