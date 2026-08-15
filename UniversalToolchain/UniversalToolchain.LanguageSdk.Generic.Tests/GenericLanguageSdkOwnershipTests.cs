@@ -83,25 +83,24 @@ public sealed class GenericLanguageSdkOwnershipTests
     [Test]
     public void Runtime_FailsClosedWhenExactPlannedTransformerIsMissing()
     {
-        var package = CreatePackage();
-        var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package))
+        var complete = CreatePackage();
+        var incomplete = new IncompleteRoutePackage(
+            complete.Descriptor,
+            new LanguageRouteComponentRegistry()
+                .AddExecutor(complete.Components.Executors.Single())
+                .CreateCatalog());
+        var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(incomplete))
             .Compile(CreateDefinition())
             .GetRequiredPlan();
-        var incomplete = LanguagePackageBuilder.Create("Generic.Incomplete", "1")
-            .AddFeature("generic.core", feature => feature
-                .AddBackend(
-                    Backend,
-                    new LanguageContributionId("generic.backend"),
-                    Parsed,
-                    static (value, _) => value * 2,
-                    LanguageRuntimeComponentTraits.DeterministicNoHostInterop))
-            .UseRouteRuntime("generic.runtime", "1")
-            .Build();
 
         var error = Assert.Throws<InvalidOperationException>(() =>
             LanguageRuntime.Create(plan, new ILanguageRouteComponentSource[] { incomplete }));
 
-        Assert.That(error!.Message, Does.Contain("generic.parse"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(error!.Message, Does.Contain("generic.parse"));
+            Assert.That(error.Message, Does.Contain("does not export transformer implementation"));
+        });
     }
 
     private static AuthoredLanguagePackage CreatePackage() =>
@@ -129,6 +128,16 @@ public sealed class GenericLanguageSdkOwnershipTests
             .UseFeature("generic.core")
             .EnableBackend(Backend)
             .Build();
+
+    private sealed class IncompleteRoutePackage(
+        LanguagePackageDescriptor descriptor,
+        LanguageRouteComponentCatalog components) :
+        ILanguageExtensionPackage,
+        ILanguageRouteComponentSource
+    {
+        public LanguagePackageDescriptor Descriptor { get; } = descriptor;
+        public LanguageRouteComponentCatalog Components { get; } = components;
+    }
 
     private sealed class RecordingRouteListener : ILanguageArtifactRouteListener
     {
