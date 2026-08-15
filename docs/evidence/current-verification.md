@@ -28,12 +28,12 @@ The documentation guard requires this table to mirror the repository's current e
 | `Tests` | 524 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 262 | 0 | 0 |
-| `UniversalToolchain.LanguageSdk.Tests` | 169 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Tests` | 170 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,298** | **0** | **0** |
+| **Total** | **1,299** | **0** | **0** |
 
-The exact manifest belongs to `eng/test-counts.json`. The current candidate adds focused regressions for the real syntax/semantic/lowering boundary, stage-local lifetime, plan-owned lowering activation and hidden ownership edges. `.NET CI` run `31049607823` completed the canonical entrypoint for the pinned historical commit; that receipt corresponds only to its own earlier manifest. A current revision is green only when its own exact manifest is verified.
+The exact manifest belongs to `eng/test-counts.json`. The current candidate adds focused regressions for the real syntax/semantic/lowering boundary, stage-local lifetime, plan-owned lowering activation, phase-owned module ordering and hidden ownership edges. `.NET CI` run `31049607823` completed the canonical entrypoint for the pinned historical commit; that receipt corresponds only to its own earlier manifest. A current revision is green only when its own exact manifest is verified.
 
 ## Workflow set
 
