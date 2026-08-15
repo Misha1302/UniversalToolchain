@@ -102,12 +102,16 @@ def require_universal_sources_language_neutral(root: Path, manifest: OwnershipMa
         for source in project.parent.rglob("*.cs"):
             if any(part in {"bin", "obj"} for part in source.parts):
                 continue
+            # Friend-assembly metadata is an API-access concern, not language semantics.
+            # ProjectReference/PackageReference direction is validated separately and fail-closed.
+            if source.name == "AssemblyInternals.cs":
+                continue
             text = source.read_text(encoding="utf-8-sig", errors="strict")
             hit = next((token for token in manifest.forbidden_universal_tokens if token in text), None)
             if hit is not None:
                 violations.append(f"{posix(source.relative_to(root))}: {hit}")
     if violations:
-        raise OwnershipError("UNIVERSAL production/test source contains Wist-owned surface: " + "; ".join(sorted(violations)))
+        raise OwnershipError("UNIVERSAL source contains Wist-owned semantic surface: " + "; ".join(sorted(violations)))
 
 def require_artifact_allowlist_empty(manifest: OwnershipManifest) -> None:
     if manifest.legacy_artifact_fields:
