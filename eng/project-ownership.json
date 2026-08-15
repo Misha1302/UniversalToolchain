@@ -2,7 +2,6 @@
   "schemaVersion": 1,
   "owners": {
     "WIST_PRODUCT": [
-      "UniversalToolchain/AbstractIrExtensions/AbstractIrExtensions.csproj",
       "UniversalToolchain/ArithmeticModule/ArithmeticModule.csproj",
       "UniversalToolchain/BasicStdLib/BasicStdLib.csproj",
       "UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj",
@@ -39,7 +38,6 @@
       "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/UniversalToolchain.Wist.LanguagePack.csproj",
       "UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj",
       "UniversalToolchain/VariablesModule/VariablesModule.csproj",
-      "UniversalToolchain/VariablesRuntime/VariablesRuntime.csproj",
       "UniversalToolchain/WhitespacesModule/WhitespacesModule.csproj",
       "UniversalToolchain/Wistc/Wistc.csproj",
       "samples/Wist.RolloutScoring/Wist.RolloutScoring.csproj"
