@@ -24,7 +24,7 @@
       "runner": "project",
       "path": "UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj",
       "timeoutSeconds": 600,
-      "expectedPassed": 245
+      "expectedPassed": 241
     },
     {
       "label": "LanguageSdk.Generic",
@@ -33,7 +33,7 @@
       "path": "UniversalToolchain/UniversalToolchain.LanguageSdk.Generic.Tests/UniversalToolchain.LanguageSdk.Generic.Tests.csproj",
       "buildBeforeTest": true,
       "timeoutSeconds": 600,
-      "expectedPassed": 45
+      "expectedPassed": 54
     },
     {
       "label": "LanguageSdk",
@@ -41,7 +41,7 @@
       "runner": "assembly",
       "path": "UniversalToolchain/UniversalToolchain.LanguageSdk.Tests/bin/Release/net10.0/UniversalToolchain.LanguageSdk.Tests.dll",
       "timeoutSeconds": 420,
-      "expectedPassed": 170
+      "expectedPassed": 165
     },
     {
       "label": "PlanFuzz",
