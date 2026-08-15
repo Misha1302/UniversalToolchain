@@ -1,6 +1,6 @@
 # UniversalToolchain.Wist 0.1.0-alpha.7 — architecture & production hardening candidate
 
-Дата candidate source: 2026-08-12.
+Дата candidate source: 2026-08-15.
 
 `0.1.0-alpha.7` — новая **неопубликованная** candidate identity поверх канонической LanguagePlan/LanguageRuntime архитектуры из migration #332. Эта работа не выполняет publish, release promotion или merge в `master`.
 
@@ -15,6 +15,7 @@
 - добавлены source-retention policies `Full`, `HashAndIdentity`, `None` и отдельные developer/safe consumer diagnostics;
 - required CI workflow set вынесен в единый machine-readable owner и aggregate работает fail-closed;
 - physical Wist runtime closure классифицирован по фактическому package artifact; package graph не дробился без доказанной выгоды;
+- Wist feature ownership разделён по фактическим syntax / semantic-binding / lowering обязанностям, а runtime materializes эти роли только из exact `LanguagePlan`;
 - flaky percentage performance gate не добавлялся: сохранён benchmark smoke и добавлен artifact/trend collection.
 
 ## Матрица candidate packages
@@ -37,7 +38,7 @@
 
 ## Проверка
 
-Exact test manifest текущей ветки: **1,292 тестов**. Увеличение на 16 тестов включает прежние 14 targeted architecture/production hardening regressions и 2 Wist phase-boundary regressions, добавленные этим repair. Canonical build/test gate обязан подтвердить 0 failed и 0 skipped на exact candidate revision; более старые workflow receipts не подменяют exact-head verification.
+Exact test manifest текущей ветки: **1,298 тестов**: Core 524, Modules 292, Dialects 262, LanguageSdk 169, PlanFuzz 41. Дополнительные regressions фиксируют реальную `Syntax -> Semantic -> Bytecode` границу, stage-local lifetime, plan-owned lowering/fail-closed activation и скрытые `UNIVERSAL -> WIST_PRODUCT` friend edges. Canonical build/test gate обязан подтвердить 0 failed и 0 skipped на exact candidate revision; более старые workflow receipts не подменяют exact-head verification.
 
 Baseline-bearing package gate проверяет девять package identities, exact `.nuspec` metadata, monotonic version/content provenance, Wist public API delta, physical package surface, clean external consumers и detached integrity manifest. GitHub aggregate CI остаётся отдельным обязательным gate.
 
