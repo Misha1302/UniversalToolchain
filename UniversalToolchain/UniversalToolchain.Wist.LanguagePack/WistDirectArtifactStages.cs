@@ -10,6 +10,7 @@ using BasicTypesExtensions;
 using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Language.Abstractions;
 using UniversalToolchain.LanguageSdk;
+using UniversalToolchain.ModuleContracts;
 using UniversalToolchain.Runtime;
 using UniversalToolchain.Ssa.Optimization;
 
@@ -78,11 +79,47 @@ internal sealed class WistBytecodeArtifact(CompilationInput input, Bytecode byte
     public Bytecode Bytecode { get; } = bytecode ?? throw new ArgumentNullException(nameof(bytecode));
 }
 
-internal sealed class WistAirArtifact(CompilationInput input, IAbstractIR air, SsaRouteReport? ssaReport = null)
+internal sealed class WistOptimizerContractSnapshot : IModuleContractDescriptorProvider
+{
+    private readonly IReadOnlyList<IModuleContractFacet> _facets;
+
+    private WistOptimizerContractSnapshot(
+        LanguageContributionId contributionId,
+        IReadOnlyList<ContractNamespaceOwner> namespaceOwners,
+        IReadOnlyList<IModuleContractFacet> facets)
+    {
+        ContributionId = contributionId;
+        NamespaceOwners = namespaceOwners.ToArray();
+        _facets = facets.ToArray();
+    }
+
+    public LanguageContributionId ContributionId { get; }
+    public IReadOnlyList<ContractNamespaceOwner> NamespaceOwners { get; }
+    public IReadOnlyList<IModuleContractFacet> GetFacets() => _facets;
+
+    public static WistOptimizerContractSnapshot Capture(
+        LanguageContributionId contributionId,
+        IModuleContractDescriptorProvider provider)
+    {
+        ArgumentNullException.ThrowIfNull(provider);
+        return new WistOptimizerContractSnapshot(
+            contributionId,
+            provider.NamespaceOwners,
+            provider.GetFacets());
+    }
+}
+
+internal sealed class WistAirArtifact(
+    CompilationInput input,
+    IAbstractIR air,
+    SsaRouteReport? ssaReport = null,
+    IReadOnlyList<WistOptimizerContractSnapshot>? appliedOptimizerContracts = null)
 {
     public CompilationInput Input { get; } = input ?? throw new ArgumentNullException(nameof(input));
     public IAbstractIR Air { get; } = air ?? throw new ArgumentNullException(nameof(air));
     public SsaRouteReport? SsaReport { get; } = ssaReport;
+    public IReadOnlyList<WistOptimizerContractSnapshot> AppliedOptimizerContracts { get; } =
+        appliedOptimizerContracts?.ToArray() ?? [];
 }
 
 internal sealed class WistDirectArtifactStageFactory(
