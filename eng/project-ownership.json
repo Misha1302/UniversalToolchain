@@ -55,8 +55,7 @@
     "WistFeatureIds",
     "WistArtifactKinds",
     "WistContributionIds",
-    "UniversalToolchain.Wist.LanguagePack",
-    "UniversalToolchain.Wist.Contracts"
+    "UniversalToolchain.Wist"
   ],
   "legacyArtifactFieldAllowlist": []
 }
