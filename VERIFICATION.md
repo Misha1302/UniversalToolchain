@@ -63,7 +63,7 @@ Parallel graph traversal and shared compilation are the default. `--jobs`, `--se
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
 | **Total** | **1,292** | **0** | **0** |
 
-The hardening delta is 14 targeted tests: nine Wist facade failure/privacy/concurrency regressions and five runtime construction/capability regressions. The exact manifest is owned by `eng/test-counts.json`; provider-backed exact-head results are recorded against their commit/run identities rather than inferred from an older local TRX snapshot.
+The hardening delta is 16 targeted tests: the previous fourteen Wist facade/runtime hardening regressions plus two Wist phase-boundary regressions added by this repair. The exact manifest is owned by `eng/test-counts.json`; provider-backed exact-head results are recorded against their commit/run identities rather than inferred from an older local TRX snapshot.
 
 ## Production-boundary contract experiment
 
