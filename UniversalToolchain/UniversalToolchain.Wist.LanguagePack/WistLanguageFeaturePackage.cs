@@ -212,6 +212,7 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage, ILan
             new(
                 WistContributionIds.InterpreterBackend,
                 LanguageSlots.Backends,
+                requiresCapabilities: [new LanguageCapabilityId("lowering:air")],
                 providesCapabilities: [LanguageCapabilities.Backend(Interpreter)],
                 supportedBackends: [Interpreter],
                 transformation: new ArtifactTransformationDescriptor(WistArtifactKinds.AirContract, WistArtifactKinds.InterpreterArtifactContract, 10),
@@ -219,6 +220,7 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage, ILan
             new(
                 WistContributionIds.CilBackend,
                 LanguageSlots.Backends,
+                requiresCapabilities: [new LanguageCapabilityId("lowering:air")],
                 providesCapabilities: [LanguageCapabilities.Backend(Cil)],
                 supportedBackends: [Cil],
                 transformation: new ArtifactTransformationDescriptor(WistArtifactKinds.AirContract, WistArtifactKinds.CilArtifactContract, 10),
