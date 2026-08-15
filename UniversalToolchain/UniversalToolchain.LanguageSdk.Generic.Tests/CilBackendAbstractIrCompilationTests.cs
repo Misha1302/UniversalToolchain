@@ -1,0 +1,602 @@
+using System.Reflection;
+using System.Reflection.Emit;
+using BasicCilCompiler.Execution;
+using BasicCore.Builtins;
+using BasicCore.Compilation;
+using BasicCore.Contracts;
+using BasicCore.Core;
+using BasicCore.Execution;
+using BytecodeDynamicMethodsCompiler.Compilers;
+using IntermediateRepresentationAbstractions;
+using UniversalIntermediateRepresentation;
+
+namespace Tests.Backends;
+
+[TestFixture]
+public class CilBackendAbstractIrCompilationTests
+{
+    [Test]
+    public void SupportedIntrinsics_HaveDescriptorCompileAndTypeHandlers_ForEveryPublishedName()
+    {
+        var compiler = new AbstractMethodsCompilerImpl();
+        var registry = new CilIntrinsicRegistry();
+
+        Assert.That(compiler.SupportedIntrinsics.OrderBy(x => x), Is.EqualTo(registry.SupportedIntrinsics.OrderBy(x => x)));
+        Assert.That(compiler.SupportedIntrinsics.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(compiler.SupportedIntrinsics.Count));
+
+        foreach (var intrinsicName in compiler.SupportedIntrinsics)
+        {
+            var descriptor = registry.GetRequired(intrinsicName);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor, Is.Not.Null, $"Intrinsic '{intrinsicName}' must resolve to a descriptor.");
+                Assert.That(descriptor.Name, Is.EqualTo(intrinsicName), $"Descriptor name mismatch for intrinsic '{intrinsicName}'.");
+                Assert.That(descriptor.Compile, Is.Not.Null, $"Intrinsic '{intrinsicName}' must expose compile handling.");
+                Assert.That(descriptor.ProcessTypes, Is.Not.Null, $"Intrinsic '{intrinsicName}' must expose type-stack handling.");
+            });
+        }
+    }
+
+    [Test]
+    public void RegistryProcessTypes_UsesSharedIntrinsicTypeProcessor_ForEveryRegisteredIntrinsic()
+    {
+        var registry = new CilIntrinsicRegistry();
+        var representativeCases = new[]
+        {
+            ("load_f64", IntrinsicInstructionFactory.CreateForCapability("load_f64", 1.5d), new List<Type>()),
+            ("boolean_not", IntrinsicInstructionFactory.CreateForCapability("boolean_not"), new List<Type> { typeof(bool) }),
+            ("add_i32", IntrinsicInstructionFactory.CreateForCapability("add_i32"), new List<Type> { typeof(int), typeof(int) }),
+            ("cmp_le_f64", IntrinsicInstructionFactory.CreateForCapability("cmp_le_f64"), new List<Type> { typeof(double), typeof(double) }),
+            ("load_local", IntrinsicInstructionFactory.CreateForCapability("load_local", "x", typeof(int)), new List<Type>())
+        };
+
+        foreach (var (name, instruction, initialStack) in representativeCases)
+        {
+            var registryStack = initialStack.ToList();
+            var sharedStack = initialStack.ToList();
+
+            registry.GetRequired(name).ProcessTypes(instruction, registryStack);
+            IntrinsicTypeProcessor.ProcessTypes(instruction, sharedStack);
+
+            Assert.That(registryStack, Is.EqualTo(sharedStack), name);
+        }
+    }
+
+    [Test]
+    public void LocalStoreAndLoad_WithStaticCall_ProducesCorrectResult()
+    {
+        var addOneMethod = typeof(CilBackendAbstractIrCompilationTests)
+            .GetMethod(nameof(AddOne), BindingFlags.NonPublic | BindingFlags.Static);
+
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [41]),
+            IntrinsicInstructionFactory.CreateForCapability("store_local", "x", typeof(int)),
+            IntrinsicInstructionFactory.CreateForCapability("load_local", "x", typeof(int)),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", addOneMethod!)
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(42));
+    }
+
+    [Test]
+    public void BranchWithStackMerge_InfersReturnTypeAndExecutesCorrectly()
+    {
+        var trueLabel = Guid.NewGuid();
+        var endLabel = Guid.NewGuid();
+
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.JmpIf, [trueLabel]),
+            new Instruction(UOpCode.Push, ["left"]),
+            new Instruction(UOpCode.Jmp, [endLabel]),
+            new Instruction(UOpCode.Label, [trueLabel]),
+            new Instruction(UOpCode.Push, ["right"]),
+            new Instruction(UOpCode.Label, [endLabel])
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo("right"));
+    }
+
+    [Test]
+    public void GenericMethodCall_ResolvesMethodViaReflection()
+    {
+        var genericEcho = typeof(CilBackendAbstractIrCompilationTests)
+            .GetMethod(nameof(Echo), BindingFlags.NonPublic | BindingFlags.Static);
+
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, ["generic"]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", genericEcho!)
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo("generic"));
+    }
+
+    [Test]
+    public void ConstructorAndInstanceCall_UsesReflectionMembersCorrectly()
+    {
+        var ctor = typeof(ReflectionTarget).GetConstructor([typeof(int)]);
+        var increment = typeof(ReflectionTarget).GetMethod(nameof(ReflectionTarget.IncrementBy), [typeof(int)]);
+
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [40]),
+            IntrinsicInstructionFactory.CreateForCapability("call C# ctor", ctor!),
+            new Instruction(UOpCode.Push, [2]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", increment!)
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(42));
+    }
+
+    [Test]
+    public void LoadLocalRef_WithRefCall_UsesBackendTypeSimulation()
+    {
+        var incrementRef = typeof(CilBackendAbstractIrCompilationTests)
+            .GetMethod(nameof(IncrementRef), BindingFlags.NonPublic | BindingFlags.Static);
+
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [41]),
+            IntrinsicInstructionFactory.CreateForCapability("store_local", "x", typeof(int)),
+            IntrinsicInstructionFactory.CreateForCapability("load_local_ref", "x", typeof(int)),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", incrementRef!)
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(42));
+    }
+
+    [Test]
+    public void ComparisonIntrinsicI32_ProducesCorrectResult()
+    {
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [7]),
+            new Instruction(UOpCode.Push, [3]),
+            IntrinsicInstructionFactory.CreateForCapability("cmp_gt_i32")
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void ComparisonIntrinsicF64_ProducesCorrectResult()
+    {
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [2.5d]),
+            new Instruction(UOpCode.Push, [2.5d]),
+            IntrinsicInstructionFactory.CreateForCapability("cmp_le_f64")
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void ArithmeticIntrinsicI32_ProducesCorrectResultWithoutOptimizer()
+    {
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [19]),
+            new Instruction(UOpCode.Push, [23]),
+            IntrinsicInstructionFactory.CreateForCapability("add_i32")
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(42));
+    }
+
+    [Test]
+    public void BooleanNotIntrinsic_ProducesCorrectResultWithoutOptimizer()
+    {
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [true]),
+            IntrinsicInstructionFactory.CreateForCapability("boolean_not")
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(false));
+    }
+
+    [Test]
+    public void UnknownNumericLoaderIntrinsic_ThrowsInvalidOperationException()
+    {
+        var ir = BuildIr(IntrinsicInstructionFactory.CreateForCapability("load_x128", 1));
+
+        Assert.Throws<InvalidOperationException>(() => CompileAndExecute(ir));
+    }
+
+    [Test]
+    public void SupportedIntrinsics_ExposeRegisteredFamilies()
+    {
+        var supportedIntrinsics = new AbstractMethodsCompilerImpl().SupportedIntrinsics;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(supportedIntrinsics, Contains.Item("call C#"));
+            Assert.That(supportedIntrinsics, Contains.Item("load_decimal"));
+            Assert.That(supportedIntrinsics, Contains.Item("add_decimal"));
+            Assert.That(supportedIntrinsics, Contains.Item("cmp_le_f64"));
+            Assert.That(supportedIntrinsics.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(supportedIntrinsics.Count));
+        });
+    }
+
+    [Test]
+    public void DeepNestedConditionsWithSharedStackState_HandlesComplexControlFlow()
+    {
+        var branch1 = Guid.NewGuid();
+        var branch2 = Guid.NewGuid();
+        var branch3 = Guid.NewGuid();
+        var afterInner = Guid.NewGuid();
+        var finish = Guid.NewGuid();
+
+        var combineMethod = typeof(CilBackendAbstractIrCompilationTests)
+            .GetMethod(nameof(CombineDigits), BindingFlags.NonPublic | BindingFlags.Static);
+
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [0]),
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.JmpIf, [branch1]),
+            new Instruction(UOpCode.Push, [999]),
+            new Instruction(UOpCode.Drop),
+            new Instruction(UOpCode.Label, [branch1]),
+            new Instruction(UOpCode.Push, [1]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!),
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.JmpIf, [branch2]),
+            new Instruction(UOpCode.Jmp, [finish]),
+            new Instruction(UOpCode.Label, [branch2]),
+            new Instruction(UOpCode.Push, [2]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!),
+            new Instruction(UOpCode.Push, [false]),
+            new Instruction(UOpCode.JmpIf, [branch3]),
+            new Instruction(UOpCode.Push, [3]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!),
+            new Instruction(UOpCode.Jmp, [afterInner]),
+            new Instruction(UOpCode.Label, [branch3]),
+            new Instruction(UOpCode.Push, [8]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!),
+            new Instruction(UOpCode.Label, [afterInner]),
+            new Instruction(UOpCode.Push, [4]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!),
+            new Instruction(UOpCode.Label, [finish])
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(1234));
+    }
+
+    [Test]
+    public void BranchWithComparisonCondition_InfersMergedReturnType_WithoutOptimizer()
+    {
+        var branchTrue = Guid.NewGuid();
+        var end = Guid.NewGuid();
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [7]),
+            new Instruction(UOpCode.Push, [3]),
+            IntrinsicInstructionFactory.CreateForCapability("cmp_gt_i32"),
+            new Instruction(UOpCode.JmpIf, [branchTrue]),
+            new Instruction(UOpCode.Push, ["no"]),
+            new Instruction(UOpCode.Jmp, [end]),
+            new Instruction(UOpCode.Label, [branchTrue]),
+            new Instruction(UOpCode.Push, ["yes"]),
+            new Instruction(UOpCode.Label, [end])
+        );
+
+        var compiled = Compile(ir);
+        var result = Execute(compiled);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(compiled.Method.ReturnType, Is.EqualTo(typeof(string)));
+            Assert.That(result, Is.EqualTo("yes"));
+        });
+    }
+
+    [Test]
+    public void NestedBranches_InfersBooleanReturnType_WithoutOptimizer()
+    {
+        var outerTrue = Guid.NewGuid();
+        var innerTrue = Guid.NewGuid();
+        var end = Guid.NewGuid();
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.JmpIf, [outerTrue]),
+            new Instruction(UOpCode.Push, [false]),
+            new Instruction(UOpCode.Jmp, [end]),
+            new Instruction(UOpCode.Label, [outerTrue]),
+            new Instruction(UOpCode.Push, [2.5d]),
+            new Instruction(UOpCode.Push, [2.5d]),
+            IntrinsicInstructionFactory.CreateForCapability("cmp_le_f64"),
+            new Instruction(UOpCode.JmpIf, [innerTrue]),
+            new Instruction(UOpCode.Push, [false]),
+            new Instruction(UOpCode.Jmp, [end]),
+            new Instruction(UOpCode.Label, [innerTrue]),
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.Label, [end])
+        );
+
+        var compiled = Compile(ir);
+        var result = Execute(compiled);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(compiled.Method.ReturnType, Is.EqualTo(typeof(bool)));
+            Assert.That(result, Is.EqualTo(true));
+        });
+    }
+
+    [Test]
+    public void LocalLoadAfterBranchMerge_UsesMergedLabelState_WithoutOptimizer()
+    {
+        var branchTrue = Guid.NewGuid();
+        var end = Guid.NewGuid();
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.JmpIf, [branchTrue]),
+            new Instruction(UOpCode.Push, [41]),
+            IntrinsicInstructionFactory.CreateForCapability("store_local", "x", typeof(int)),
+            new Instruction(UOpCode.Jmp, [end]),
+            new Instruction(UOpCode.Label, [branchTrue]),
+            new Instruction(UOpCode.Push, [40]),
+            IntrinsicInstructionFactory.CreateForCapability("store_local", "x", typeof(int)),
+            new Instruction(UOpCode.Label, [end]),
+            IntrinsicInstructionFactory.CreateForCapability("load_local", "x", typeof(int)),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", typeof(CilBackendAbstractIrCompilationTests).GetMethod(nameof(AddOne), BindingFlags.NonPublic | BindingFlags.Static)!)
+        );
+
+        var compiled = Compile(ir);
+        var result = Execute(compiled);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(compiled.Method.ReturnType, Is.EqualTo(typeof(int)));
+            Assert.That(result, Is.EqualTo(41));
+        });
+    }
+
+    [Test]
+    public void BranchingAndDropPipeline_CombinesStackOperationsWithoutLeakingGarbage()
+    {
+        var toBranch = Guid.NewGuid();
+        var end = Guid.NewGuid();
+
+        var combineMethod = typeof(CilBackendAbstractIrCompilationTests)
+            .GetMethod(nameof(CombineDigits), BindingFlags.NonPublic | BindingFlags.Static);
+
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [10]),
+            new Instruction(UOpCode.Push, [111]),
+            new Instruction(UOpCode.Drop),
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.JmpIf, [toBranch]),
+            new Instruction(UOpCode.Push, [77]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!),
+            new Instruction(UOpCode.Jmp, [end]),
+            new Instruction(UOpCode.Label, [toBranch]),
+            new Instruction(UOpCode.Push, [5]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!),
+            new Instruction(UOpCode.Label, [end]),
+            new Instruction(UOpCode.Push, [6]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!)
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(1056));
+    }
+
+    [Test]
+    public void TypedArithmeticIntrinsicI32_ProducesCorrectResult()
+    {
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [19]),
+            new Instruction(UOpCode.Push, [23]),
+            CreateTypedIntrinsic(BuiltinIntrinsicSymbols.Arithmetic.Add, [IntrinsicTypeArgument.From(typeof(int))])
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(42));
+    }
+
+    [Test]
+    public void TypedBooleanNotIntrinsic_ProducesCorrectResult()
+    {
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [true]),
+            CreateTypedIntrinsic(BuiltinIntrinsicSymbols.Boolean.Not)
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(false));
+    }
+
+    [Test]
+    public void ObjectConstants_AreStoredInArtifactOwnedPool_AndReturnedByReference()
+    {
+        var constant = new ReferenceConstant("same");
+        var ir = BuildIr(new Instruction(UOpCode.Push, [constant]));
+
+        var compiled = Compile(ir);
+        var result = Execute(compiled);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(compiled.ConstantPool, Is.Not.Null);
+            Assert.That(compiled.ConstantPool!.Count, Is.EqualTo(1));
+            Assert.That(compiled.Method.GetParameters().Select(static x => x.ParameterType).ToArray(),
+                Is.EqualTo(new[] { typeof(ArtifactConstantPool) }));
+            Assert.That(result, Is.SameAs(constant));
+        });
+    }
+
+    [Test]
+    public void ObjectConstants_DoNotDeduplicateByValueEquality()
+    {
+        var first = new ValueEqualConstant(7);
+        var second = new ValueEqualConstant(7);
+        var keepSecond = typeof(CilBackendAbstractIrCompilationTests)
+            .GetMethod(nameof(KeepSecond), BindingFlags.NonPublic | BindingFlags.Static)!;
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [first]),
+            new Instruction(UOpCode.Push, [second]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", keepSecond));
+
+        var compiled = Compile(ir);
+        var result = Execute(compiled);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(compiled.ConstantPool, Is.Not.Null);
+            Assert.That(compiled.ConstantPool!.Count, Is.EqualTo(2));
+            Assert.That(result, Is.SameAs(second));
+        });
+    }
+
+    [Test]
+    public void ObjectConstants_LargePool_PreservesSlotOrderAndReferences()
+    {
+        var constants = Enumerable.Range(0, 128)
+            .Select(static index => new ReferenceConstant($"item-{index}"))
+            .ToArray();
+        var keepSecond = typeof(CilBackendAbstractIrCompilationTests)
+            .GetMethod(nameof(KeepSecond), BindingFlags.NonPublic | BindingFlags.Static)!;
+        var instructions = new List<Instruction> { new(UOpCode.Push, [constants[0]]) };
+        instructions.AddRange(constants.Skip(1).SelectMany(constant => new[]
+        {
+            new Instruction(UOpCode.Push, [constant]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", keepSecond)
+        }));
+
+        var compiled = Compile(BuildIr(instructions.ToArray()));
+        var result = Execute(compiled);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(compiled.ConstantPool, Is.Not.Null);
+            Assert.That(compiled.ConstantPool!.Count, Is.EqualTo(constants.Length));
+            Assert.That(result, Is.SameAs(constants[^1]));
+            for (var i = 0; i < constants.Length; i++)
+                Assert.That(compiled.ConstantPool.GetValue<ReferenceConstant>(i), Is.SameAs(constants[i]), $"slot {i}");
+        });
+    }
+
+    [Test]
+    public void ObjectConstants_WithExecutionScopedProvider_KeepEnvironmentAndExternalOffsets()
+    {
+        var descriptor = new CSharpCallDescriptor(
+            typeof(ConstantProvider).GetMethod(nameof(ConstantProvider.Get))!,
+            new CSharpCallReceiver.ExecutionScopedProvider(typeof(ConstantProvider)));
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [new ReferenceConstant("constant")]),
+            new Instruction(UOpCode.Drop),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", descriptor),
+            IntrinsicInstructionFactory.CreateForCapability("load_external", 0, typeof(int)),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", typeof(CilBackendAbstractIrCompilationTests).GetMethod(nameof(Add), BindingFlags.NonPublic | BindingFlags.Static)!));
+        var input = new CompilationInput
+        {
+            SourceText = string.Empty,
+            ExternalBindings =
+            [
+                new ExternalBinding { Name = "external", Type = typeof(int), Kind = ExternalBindingKind.Variable }
+            ]
+        };
+        var compiler = new AbstractMethodsCompilerImpl();
+        var output = compiler.Compile(ir, input);
+        var environment = new ExecutionEnvironment(
+            input.ExternalBindings,
+            allowedRuntimeProviderTypes: [typeof(ConstantProvider)]);
+        environment.SetExternalValue(0, 5);
+
+        var result = new DynamicMethodExecutor().Execute(output, environment);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(output.Method.GetParameters().Select(static x => x.ParameterType).ToArray(),
+                Is.EqualTo(new[] { typeof(ArtifactConstantPool), typeof(IExecutionEnvironment), typeof(int) }));
+            Assert.That(result, Is.EqualTo(42));
+        });
+    }
+
+    private static int AddOne(int value) => value + 1;
+
+    private static int IncrementRef(ref int value)
+    {
+        value++;
+        return value;
+    }
+
+    private static int CombineDigits(int acc, int nextDigit) => acc * 10 + nextDigit;
+
+    private static int Add(int left, int right) => left + right;
+
+    private static T KeepSecond<T>(T first, T second) => second;
+
+    private static T Echo<T>(T value) => value;
+
+    private static Instruction CreateTypedIntrinsic(
+        IntrinsicSymbol symbol,
+        IReadOnlyList<IntrinsicTypeArgument>? typeArguments = null,
+        IReadOnlyList<object?>? dataOperands = null)
+    {
+        var invocation = new IntrinsicInvocation(
+            symbol,
+            typeArguments ?? [],
+            dataOperands ?? []);
+
+        return new Instruction(UOpCode.Intrinsic, [invocation]);
+    }
+
+    private static IAbstractIR BuildIr(params Instruction[] instructions)
+    {
+        var ir = new AbstractIR();
+        ir.AppendInstructions(instructions);
+        return ir;
+    }
+
+    private static CilCompilationOutput Compile(IAbstractIR ir)
+    {
+        var compiler = new AbstractMethodsCompilerImpl();
+        var input = new CompilationInput { SourceText = string.Empty };
+        return compiler.Compile(ir, input);
+    }
+
+    private static object Execute(CilCompilationOutput output)
+    {
+        var executor = new DynamicMethodExecutor();
+        return executor.Execute(output, new ExecutionEnvironment([]));
+    }
+
+    private static object CompileAndExecute(IAbstractIR ir) => Execute(Compile(ir));
+
+    private sealed class ReflectionTarget(int seed)
+    {
+        public int IncrementBy(int value) => seed + value;
+    }
+
+    private sealed class ReferenceConstant(string value)
+    {
+        public string Value { get; } = value;
+    }
+
+    private sealed record ValueEqualConstant(int Value);
+
+    private sealed class ConstantProvider
+    {
+        public int Get() => 37;
+    }
+}
