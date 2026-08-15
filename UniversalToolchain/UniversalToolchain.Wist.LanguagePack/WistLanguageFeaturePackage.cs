@@ -99,8 +99,6 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage, ILan
     private static readonly BackendId Cil = new("cil");
     private static readonly BackendId Interpreter = new("interpreter");
     private static readonly BackendId[] BothBackends = [Cil, Interpreter];
-    private static readonly LanguageSlotId CanonicalSemanticFeatureSlot = new("wist.semantics.features");
-    private static readonly LanguageSlotId CanonicalLoweringFeatureSlot = new("wist.lowering.features");
     private static readonly LanguageSlotId BytecodeToAirSlot = new("wist.lowering.bytecode-to-air");
     private readonly LanguageRouteComponentCatalog _components;
 
@@ -202,11 +200,11 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage, ILan
                 transformation: new ArtifactTransformationDescriptor(WistArtifactKinds.BytecodeContract, WistArtifactKinds.AirContract, 10)),
             new(
                 WistContributionIds.CanonicalAddSemantics,
-                CanonicalSemanticFeatureSlot,
+                WistModulePhaseSlots.Semantics,
                 metadata: new Dictionary<string, string> { ["wist.phase"] = "semantics", ["wist.semantic"] = "arithmetic.add" }),
             new(
                 WistContributionIds.CanonicalAddLowering,
-                CanonicalLoweringFeatureSlot,
+                WistModulePhaseSlots.Lowering,
                 requiresContributions: [WistContributionIds.CanonicalAddSemantics],
                 metadata: new Dictionary<string, string> { ["wist.phase"] = "lowering", ["wist.semantic"] = "arithmetic.add" }),
             new(
@@ -246,6 +244,8 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage, ILan
         };
 
         contributions.AddRange(WistRuntimeComponentCatalog.Modules.Select(Module));
+        contributions.AddRange(WistRuntimeComponentCatalog.Modules.SelectMany(component =>
+            WistModulePhaseOwnership.CreatePhaseContributions(component, BothBackends)));
         contributions.AddRange(WistRuntimeComponentCatalog.Optimizers.Select(Optimizer));
         return contributions;
     }
@@ -256,7 +256,7 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage, ILan
         id,
         requires: GetRequiredFeatures(id),
         supportedBackends: BothBackends,
-        contributions: contributions);
+        contributions: WistModulePhaseOwnership.ExpandFeatureContributions(contributions));
 
     private static LanguageFeatureDescriptor PolicyFeature(LanguageFeatureId id, params LanguageFeatureId[] conflicts) => new(id, conflicts: conflicts, supportedBackends: BothBackends);
 
@@ -280,10 +280,8 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage, ILan
         return [];
     }
 
-    private static LanguageContributionDescriptor Module(WistRuntimeComponentDescriptor component)
-    {
-        var isPilotSyntax = component.ContributionId == WistContributionIds.ArithmeticModule || component.ContributionId == WistContributionIds.TextualAdditionModule;
-        return new LanguageContributionDescriptor(
+    private static LanguageContributionDescriptor Module(WistRuntimeComponentDescriptor component) =>
+        new(
             component.ContributionId,
             LanguageSlots.FrontendSyntax,
             requiresCapabilities: [new LanguageCapabilityId("frontend:wist")],
@@ -293,9 +291,9 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage, ILan
             {
                 ["wist.moduleAlias"] = component.Alias,
                 ["wist.phase"] = "syntax",
-                ["wist.compatibility"] = isPilotSyntax ? "none" : "legacy-cross-phase-lowering-adapter"
+                ["wist.compatibility"] = "none",
+                ["wist.owner"] = "language-plan"
             });
-    }
 
     private static LanguageContributionDescriptor Optimizer(WistRuntimeComponentDescriptor component) => new(
         component.ContributionId,
