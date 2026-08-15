@@ -248,7 +248,7 @@ internal static class WistDirectRuntimeComponents
                 optimizer.InitIntrinsicCapabilityContext(CreateCapabilityContext(plan, context.Request.Backend));
                 var result = optimizer.Optimize(source.Air) ?? throw new InvalidOperationException($"Wist optimizer '{ContributionId.Value}' returned null AIR.");
                 if (capture?.Report is { } published) report = published;
-                return new WistAirArtifact(source.Input, result, report);
+                return new WistAirArtifact(source.Input, result, report, source.AppliedOptimizerContracts);
             }
             finally { capture?.Dispose(); }
         }
