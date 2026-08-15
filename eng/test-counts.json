@@ -24,7 +24,7 @@
       "runner": "project",
       "path": "UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj",
       "timeoutSeconds": 600,
-      "expectedPassed": 241
+      "expectedPassed": 233
     },
     {
       "label": "LanguageSdk.Generic",
@@ -33,7 +33,7 @@
       "path": "UniversalToolchain/UniversalToolchain.LanguageSdk.Generic.Tests/UniversalToolchain.LanguageSdk.Generic.Tests.csproj",
       "buildBeforeTest": true,
       "timeoutSeconds": 600,
-      "expectedPassed": 54
+      "expectedPassed": 62
     },
     {
       "label": "LanguageSdk",
