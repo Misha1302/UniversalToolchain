@@ -26,3 +26,20 @@ jobs:
           git diff --check "${base}..HEAD"
       - name: Validate ownership graph
         run: python3 Tools/check-project-ownership.py --root .
+      - name: Ownership validator rejects hidden Wist friend edge
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="UniversalToolchain/UniversalToolchain.Runtime/AssemblyInternals.cs"
+          cp "$target" "$RUNNER_TEMP/AssemblyInternals.cs"
+          trap 'cp "$RUNNER_TEMP/AssemblyInternals.cs" "$target"' EXIT
+          printf '\n[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("UniversalToolchain.LanguageSdk.Tests")]\n' >> "$target"
+          if python3 Tools/check-project-ownership.py --root . >"$RUNNER_TEMP/ownership-mutant.out" 2>&1; then
+            cat "$RUNNER_TEMP/ownership-mutant.out"
+            echo "ownership validator accepted forbidden UNIVERSAL -> WIST_PRODUCT friend edge" >&2
+            exit 1
+          fi
+          grep -F "package/assembly/friend/build edge is forbidden" "$RUNNER_TEMP/ownership-mutant.out"
+          cp "$RUNNER_TEMP/AssemblyInternals.cs" "$target"
+          trap - EXIT
+          python3 Tools/check-project-ownership.py --root .
