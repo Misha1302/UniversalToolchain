@@ -35,7 +35,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p artifacts/packages artifacts/evidence
+          # UniversalToolchain/NuGet.config declares the repository-local
+          # "packages" feed. The canonical build entrypoint provisions this
+          # directory even when the feed is empty; direct package verification
+          # must preserve the same bootstrap invariant before NuGet evaluates it.
+          mkdir -p UniversalToolchain/packages artifacts/packages artifacts/evidence
           dotnet pack UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj -c Release -o artifacts/packages --nologo
           package="$(find artifacts/packages -maxdepth 1 -name 'UniversalToolchain.Wist.0.1.0-alpha.7.nupkg' -print -quit)"
           test -n "$package"
