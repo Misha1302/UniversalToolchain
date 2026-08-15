@@ -51,6 +51,36 @@ public sealed class GenericLanguageSdkOwnershipTests
     }
 
     [Test]
+    public void Runtime_PublicRouteListenerObservesAlreadyPlannedRouteOnly()
+    {
+        var package = CreatePackage();
+        var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package))
+            .Compile(CreateDefinition())
+            .GetRequiredPlan();
+        var listener = new RecordingRouteListener();
+        var options = new LanguageRuntimeOptions().AddRouteListener(listener);
+        using var runtime = LanguageRuntime.Create(
+            plan,
+            new ILanguageRouteComponentSource[] { package },
+            options);
+
+        var result = runtime.Run(new LanguageExecutionRequest("21", Backend));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value, Is.EqualTo(42));
+            Assert.That(listener.Observations, Has.Count.EqualTo(1));
+            Assert.That(listener.Observations[0].Plan, Is.SameAs(plan));
+            Assert.That(listener.Observations[0].Backend, Is.EqualTo(Backend));
+            Assert.That(listener.Observations[0].StepIndex, Is.Zero);
+            Assert.That(listener.Observations[0].Step.ContributionId.Value, Is.EqualTo("generic.parse"));
+            Assert.That(listener.Observations[0].RouteSteps.Select(static step => step.ContributionId.Value),
+                Is.EqualTo(new[] { "generic.parse" }));
+            Assert.That(listener.Observations[0].Artifact, Is.TypeOf<LanguageArtifact<int>>());
+        });
+    }
+
+    [Test]
     public void Runtime_FailsClosedWhenExactPlannedTransformerIsMissing()
     {
         var package = CreatePackage();
@@ -99,4 +129,12 @@ public sealed class GenericLanguageSdkOwnershipTests
             .UseFeature("generic.core")
             .EnableBackend(Backend)
             .Build();
+
+    private sealed class RecordingRouteListener : ILanguageArtifactRouteListener
+    {
+        public List<LanguageArtifactRouteObservationContext> Observations { get; } = [];
+
+        public void AfterTransformation(LanguageArtifactRouteObservationContext observation) =>
+            Observations.Add(observation);
+    }
 }
