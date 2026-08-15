@@ -3,6 +3,7 @@ using AbstractIrConverters;
 using ArithmeticModule.Module;
 using ArithmeticModule.Visitors;
 using BasicCodeTranslator;
+using BasicCore.Binding;
 using BasicCore.Contracts;
 using BasicCore.Core;
 using BasicCore.ParserWrapper;
