@@ -55,7 +55,7 @@ internal static class WistDirectRuntimeComponents
         ArgumentNullException.ThrowIfNull(package);
         var registry = new LanguageRouteComponentRegistry();
         registry.AddTransformer(CreateFrontendRegistration(package));
-        registry.AddTransformer(CreateSemanticRegistration());
+        registry.AddTransformer(CreateSemanticRegistration(package));
         registry.AddTransformer(CreateBytecodeRegistration(package));
         registry.AddTransformer(CreateAirRegistration());
         foreach (var optimizer in WistRuntimeComponentCatalog.Optimizers)
@@ -72,25 +72,71 @@ internal static class WistDirectRuntimeComponents
             WistContributionIds.Frontend, StandardLanguageArtifactKinds.SourceText, WistDirectArtifactKinds.Syntax, DirectTraits,
             context =>
             {
-                var (services, moduleFactories) = CreateModuleActivation(package, context.Plan, context.Options);
-                var stageFactory = CreateStageFactory(context.Plan, moduleFactories);
-                return new OwnedFrontendTransformer(stageFactory.CreateFrontend(), services, DirectTraits);
+                var activation = CreateActivationServices(context.Plan, context.Options);
+                try
+                {
+                    var factories = WistFrontendModuleActivation.CreateOrderedFactories(
+                        context.Plan,
+                        [WistFrontendModuleActivation.CreateBuiltInSource(package)],
+                        activation.Services);
+                    var stageFactory = CreateStageFactory(context.Plan, syntaxFactories: factories);
+                    return new OwnedFrontendTransformer(stageFactory.CreateFrontend(), activation.Services, DirectTraits);
+                }
+                catch
+                {
+                    activation.Services.Dispose();
+                    throw;
+                }
             });
 
-    private static LanguageTransformerRegistration CreateSemanticRegistration() =>
+    private static LanguageTransformerRegistration CreateSemanticRegistration(WistLanguageFeaturePackage package) =>
         LanguageTransformerRegistration.Create<WistSyntaxArtifact, WistSemanticArtifact>(
             WistContributionIds.SemanticBinding, WistDirectArtifactKinds.Syntax, WistDirectArtifactKinds.Semantic,
             LanguageRuntimeComponentTraits.DeterministicNoHostInterop,
-            _ => new WistDirectSemanticTransformer());
+            context =>
+            {
+                var activation = CreateActivationServices(context.Plan, context.Options);
+                try
+                {
+                    var factories = WistPlannedModulePhaseActivation.CreateOrderedFactories(
+                        package,
+                        context.Plan,
+                        activation.Services,
+                        WistPlannedModulePhase.Semantics);
+                    var stageFactory = CreateStageFactory(context.Plan, semanticFactories: factories);
+                    return new OwnedSemanticTransformer(
+                        stageFactory.CreateSemanticBinding(),
+                        activation.Services,
+                        LanguageRuntimeComponentTraits.DeterministicNoHostInterop);
+                }
+                catch
+                {
+                    activation.Services.Dispose();
+                    throw;
+                }
+            });
 
     private static LanguageTransformerRegistration CreateBytecodeRegistration(WistLanguageFeaturePackage package) =>
         LanguageTransformerRegistration.Create<WistSemanticArtifact, WistBytecodeArtifact>(
             WistContributionIds.LoweringToBytecode, WistDirectArtifactKinds.Semantic, WistDirectArtifactKinds.Bytecode, DirectTraits,
             context =>
             {
-                var (services, moduleFactories) = CreateModuleActivation(package, context.Plan, context.Options);
-                var stageFactory = CreateStageFactory(context.Plan, moduleFactories);
-                return new OwnedBytecodeTransformer(stageFactory.CreateBytecodeLowering(), services, DirectTraits);
+                var activation = CreateActivationServices(context.Plan, context.Options);
+                try
+                {
+                    var factories = WistPlannedModulePhaseActivation.CreateOrderedFactories(
+                        package,
+                        context.Plan,
+                        activation.Services,
+                        WistPlannedModulePhase.Lowering);
+                    var stageFactory = CreateStageFactory(context.Plan, loweringFactories: factories);
+                    return new OwnedBytecodeTransformer(stageFactory.CreateBytecodeLowering(), activation.Services, DirectTraits);
+                }
+                catch
+                {
+                    activation.Services.Dispose();
+                    throw;
+                }
             });
 
     private static LanguageTransformerRegistration CreateAirRegistration() =>
@@ -98,11 +144,23 @@ internal static class WistDirectRuntimeComponents
             WistContributionIds.LoweringToAir, WistDirectArtifactKinds.Bytecode, WistDirectArtifactKinds.Air, DirectTraits,
             _ => new TraitsOverrideTransformer<WistBytecodeArtifact, WistAirArtifact>(new WistDirectAirTransformer(CreateMethodsTranslator), DirectTraits));
 
-    private static WistDirectArtifactStageFactory CreateStageFactory(LanguagePlan plan, IReadOnlyList<Func<IFrontendCoreModule>> moduleFactories) =>
-        new(static () => new BasicLexerImpl(), static () => new BasicParserImpl(), static () => new BasicAstToBytecodeTranslatorImpl(), CreateMethodsTranslator, moduleFactories, new WistHostBindingAdapter(plan));
+    private static WistDirectArtifactStageFactory CreateStageFactory(
+        LanguagePlan plan,
+        IReadOnlyList<Func<IFrontendCoreModule>>? syntaxFactories = null,
+        IReadOnlyList<Func<IFrontendCoreModule>>? semanticFactories = null,
+        IReadOnlyList<Func<IFrontendCoreModule>>? loweringFactories = null) =>
+        new(
+            static () => new BasicLexerImpl(),
+            static () => new BasicParserImpl(),
+            static () => new BasicAstToBytecodeTranslatorImpl(),
+            CreateMethodsTranslator,
+            syntaxFactories ?? [],
+            semanticFactories ?? [],
+            loweringFactories ?? [],
+            HasPlannedContribution(plan, WistContributionIds.CanonicalAddLowering),
+            new WistHostBindingAdapter(plan));
 
-    private static (ServiceProvider Services, IReadOnlyList<Func<IFrontendCoreModule>> ModuleFactories) CreateModuleActivation(
-        WistLanguageFeaturePackage package, LanguagePlan plan, LanguageRuntimeOptions options)
+    private static WistActivationServices CreateActivationServices(LanguagePlan plan, LanguageRuntimeOptions options)
     {
         var exposedAssemblies = options.AllowedAssemblies.Append(typeof(BasicStdLib.Main).Assembly).Distinct().ToArray();
         var capabilityCatalog = new SelectedCapabilityCatalogBuilder().Build(WistRuntimeComponentCatalog.GetSelectedImplementationTypes(plan));
@@ -113,10 +171,11 @@ internal static class WistDirectRuntimeComponents
         serviceCollection.AddSingleton<ITypeCatalog>(TypeCatalogFactory.Create(exposedAssemblies));
         serviceCollection.AddSingleton<IMethodResolver, DeterministicMethodResolver>();
         serviceCollection.AddSingleton(capabilityCatalog);
-        var services = serviceCollection.BuildServiceProvider();
-        var factories = WistFrontendModuleActivation.CreateOrderedFactories(plan, [WistFrontendModuleActivation.CreateBuiltInSource(package)], services);
-        return (services, factories);
+        return new WistActivationServices(serviceCollection.BuildServiceProvider());
     }
+
+    private static bool HasPlannedContribution(LanguagePlan plan, LanguageContributionId contributionId) =>
+        plan.Contributions.Any(contribution => contribution.Contribution.Id == contributionId);
 
     private static LanguageTransformerRegistration CreateOptimizerRegistration(WistRuntimeComponentDescriptor component) =>
         LanguageTransformerRegistration.Create<WistAirArtifact, WistAirArtifact>(component.ContributionId, WistDirectArtifactKinds.Air, WistDirectArtifactKinds.Air, DirectTraits,
@@ -204,6 +263,8 @@ internal static class WistDirectRuntimeComponents
         public TTarget Transform(TSource source, LanguageArtifactTransformationContext context) => inner.Transform(source, context);
     }
 
+    private sealed record WistActivationServices(ServiceProvider Services);
+
     private sealed class OwnedFrontendTransformer(WistDirectFrontendTransformer inner, ServiceProvider owner, LanguageRuntimeComponentTraits traits) : ILanguageArtifactTransformer<string, WistSyntaxArtifact>, ILanguageArtifactBuildTransformer, IDisposable
     {
         public LanguageContributionId ContributionId => inner.ContributionId;
@@ -212,6 +273,16 @@ internal static class WistDirectRuntimeComponents
         public LanguageRuntimeComponentTraits TypedTraits { get; } = traits;
         public WistSyntaxArtifact Transform(string source, LanguageArtifactTransformationContext context) => inner.Transform(source, context);
         public LanguageArtifact TransformForBuild(LanguageArtifact source, LanguageArtifactBuildContext context) => inner.TransformForBuild(source, context);
+        public void Dispose() => owner.Dispose();
+    }
+
+    private sealed class OwnedSemanticTransformer(WistDirectSemanticTransformer inner, ServiceProvider owner, LanguageRuntimeComponentTraits traits) : ILanguageArtifactTransformer<WistSyntaxArtifact, WistSemanticArtifact>, IDisposable
+    {
+        public LanguageContributionId ContributionId => inner.ContributionId;
+        public LanguageArtifactKind<WistSyntaxArtifact> TypedSourceKind => inner.TypedSourceKind;
+        public LanguageArtifactKind<WistSemanticArtifact> TypedTargetKind => inner.TypedTargetKind;
+        public LanguageRuntimeComponentTraits TypedTraits { get; } = traits;
+        public WistSemanticArtifact Transform(WistSyntaxArtifact source, LanguageArtifactTransformationContext context) => inner.Transform(source, context);
         public void Dispose() => owner.Dispose();
     }
 
