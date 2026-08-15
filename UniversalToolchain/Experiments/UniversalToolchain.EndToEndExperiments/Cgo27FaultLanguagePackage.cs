@@ -78,15 +78,9 @@ internal sealed class Cgo27FaultLanguagePackage : ILanguageExtensionPackage, ILa
         {
             ArgumentNullException.ThrowIfNull(source);
             ArgumentNullException.ThrowIfNull(context);
-            var optimizer = new Cgo27FaultOptimizer();
-            var result = optimizer.Optimize(source.Air)
+            var result = new Cgo27FaultOptimizer().Optimize(source.Air)
                 ?? throw new InvalidOperationException("CGO27 fault optimizer returned null AIR.");
-            return new WistAirArtifact(
-                source.Input,
-                result,
-                source.FrontendModules,
-                source.Optimizers.Append(optimizer).ToArray(),
-                source.SsaReport);
+            return new WistAirArtifact(source.Input, result, source.SsaReport);
         }
     }
 }
