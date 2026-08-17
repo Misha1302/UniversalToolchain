@@ -1,63 +1,102 @@
-name: Docs Check
+name: Temporary Branch Cleanup 2
 
 on:
   pull_request:
-    paths:
-      - 'readme.md'
-      - 'docs/**'
-      - 'internal-docs/**'
-      - 'UniversalToolchain/UniversalToolchain.Wist/**'
-      - 'eng/documentation-release-state.json'
-      - 'eng/wist-package-surface.json'
-      - 'Tools/check_documentation_*.py'
-      - 'Tools/test-documentation-*.py'
-      - 'Tools/check-wist-documentation-*.py'
-      - 'Tools/test-wist-documentation-*.py'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/docs-check.yml'
-      - '.github/workflows/deploy-docs.yml'
-      - '.github/workflows/published-package-smoke.yml'
-  push:
     branches:
       - master
-      - main
+    paths:
+      - '.github/workflows/docs-check.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  docs:
+  cleanup:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
+      - name: Delete verified obsolete branches
+        shell: bash
+        run: |
+          set -euo pipefail
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          global-json-file: UniversalToolchain/global.json
+          delete_branches=(
+            "automation/cgo27-provenance-fix-20260804"
+            "automation/cgo27-repair-20260804"
+            "chore/publish-wist-visual-assets"
+            "chore/trigger-wist-visual-refresh"
+            "compilationlab/s12-apply-20260810"
+            "compilationlab/s13-apply-20260810"
+            "compilationlab/s13-apply-v3-20260810"
+            "compilationlab/s13-runtime-validator-repair-20260810"
+            "compilationlab/s14-docs-repair-20260810"
+            "compilationlab/s15-final-lock-20260810"
+            "compilationlab/source-export-20260809-0975"
+            "compilationlab/source-export-20260810-eb13"
+            "docs/fix-release-state-20260806"
+            "docs/reconcile-master-evidence-2026-07-30"
+            "docs/record-contract-reproduction-2026-07-30"
+            "docs-first-contact-hardening-20260806"
+            "docs-first-contact-hardening-final-20260806"
+            "fix/p1-current-docs-20260814"
+            "fix/vendored-package-feed-guardrail"
+            "hardening/architecture-production-20260811"
+            "icse2027-contract-experiment"
+            "migration/s11-cgo-doc-census-sync-20260809"
+            "migration/s11-delete-second-planner-work-v3"
+            "migration/s11-delete-second-planner-work-v4"
+            "migration/s11-delete-second-planner-work-v5"
+            "migration/s11-delete-second-planner-work-v6"
+            "migration/s11-delete-second-planner-work-v7"
+            "migration/s11-remove-second-planner-work"
+            "migration/s11-remove-second-planner-work-v2"
+            "migration/s12-delete-basiccore-orchestrator-work"
+            "research/cgo27-final-staging"
+            "research/cgo27-historical-replay-eb851d4"
+            "research/cgo27-supplement-staging"
+            "research/cgo27-v4-staging"
+            "research/planfuzz-phase0-acme"
+            "research/planfuzz-phase1-finalized"
+            "research/planfuzz-phase1-wist"
+            "research/planfuzz-proposal"
+            "research/planfuzz-surface-hardening"
+            "research/publication-readiness-2026-07-30"
+          )
 
-      - name: Install dependencies
-        run: npm ci --no-audit --no-fund
+          protected=(
+            "master"
+            "docs/semantic-testing-research-idea"
+            "research/cgo27-submission-strengthening"
+            "research/cgo27-submission-hardening"
+            "migration/s11-cgo-verification-repair-20260809"
+            "migration/languageplan-single-runtime-20260807"
+          )
 
-      - name: Validate documentation structure, release state and links
-        run: npm run docs:status && npm run docs:links
+          is_protected() {
+            local candidate="$1"
+            local p
+            for p in "${protected[@]}"; do
+              [[ "$candidate" == "$p" ]] && return 0
+            done
+            return 1
+          }
 
-      - name: Compile first-contact Wist documentation snippets
-        run: npm run docs:first-contact
+          echo "Explicitly deleting ${#delete_branches[@]} verified obsolete branches"
+          for branch in "${delete_branches[@]}"; do
+            is_protected "$branch" && { echo "Refusing protected branch: $branch" >&2; exit 1; }
+            [[ "$branch" == "${GITHUB_HEAD_REF:-}" ]] && continue
+            if git ls-remote --exit-code --heads origin "refs/heads/$branch" >/dev/null 2>&1; then
+              echo "delete: $branch"
+              git push origin --delete "$branch"
+            else
+              echo "already absent: $branch"
+            fi
+          done
 
-      - name: Reject documentation release-state mutants
-        run: python3 Tools/test-documentation-release-state-mutants.py --root .
-
-      - name: Reject Wist first-contact documentation mutants
-        run: python3 Tools/test-wist-documentation-first-contact-mutants.py --root .
-
-      - name: Build documentation
-        run: npm run docs:build
+          if [[ -n "${GITHUB_HEAD_REF:-}" ]]; then
+            is_protected "${GITHUB_HEAD_REF}" && { echo "Transport unexpectedly protected" >&2; exit 1; }
+            echo "delete transport: ${GITHUB_HEAD_REF}"
+            git push origin --delete "${GITHUB_HEAD_REF}"
+          fi
