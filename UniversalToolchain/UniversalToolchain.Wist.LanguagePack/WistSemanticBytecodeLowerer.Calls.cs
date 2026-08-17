@@ -33,7 +33,7 @@ internal sealed partial class WistSemanticBytecodeLowerer
             $"CallFunction_{node.FunctionName}_{argumentCount}",
             (il, context) => EmitFunctionCall(
                 il,
-                context,
+                context.Stack.ToArray(),
                 node.FunctionName,
                 argumentCount,
                 localPrefix))));
@@ -41,14 +41,14 @@ internal sealed partial class WistSemanticBytecodeLowerer
 
     private void EmitFunctionCall(
         IAbstractIR il,
-        IAbstractMethodConvertable.Context context,
+        IReadOnlyList<Type> stackTypes,
         string functionName,
         int argumentCount,
         string localPrefix)
     {
-        if (context.Stack.Count < argumentCount)
+        if (stackTypes.Count < argumentCount)
             Thrower.InvalidOpEx($"Function call '{functionName}' requires {argumentCount} stack argument(s).");
-        var sourceTypes = context.Stack.TakeLast(argumentCount).ToList();
+        var sourceTypes = stackTypes.TakeLast(argumentCount).ToList();
         var plan = _functionCallPlanner.PlanOrThrow(functionName, sourceTypes);
         var localNames = Enumerable.Range(0, argumentCount)
             .Select(index => $"{localPrefix}_arg_{index}")
