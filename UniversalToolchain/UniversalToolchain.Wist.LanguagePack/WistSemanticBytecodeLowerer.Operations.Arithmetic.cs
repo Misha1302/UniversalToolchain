@@ -147,7 +147,7 @@ internal sealed partial class WistSemanticBytecodeLowerer
     {
         bytecode.Instructions.Add(new BytecodeInstruction(new AbstractMethodImpl(
             instructionName,
-            (il, context) => il.CallCSharp(context.Stack[^1].GetMethod(methodName).NotNull())));
+            (il, context) => il.CallCSharp(context.Stack[^1].GetMethod(methodName).NotNull()))));
     }
 
     private void LowerNativeBinary(WistSemanticOperationNode operation, Bytecode bytecode, string methodName)
