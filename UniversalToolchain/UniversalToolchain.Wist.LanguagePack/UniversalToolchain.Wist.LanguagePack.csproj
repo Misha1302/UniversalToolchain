@@ -29,7 +29,6 @@
     <ProjectReference Include="..\BasicCore\BasicCore.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\BasicLexer\BasicLexer.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\BasicParser\BasicParser.csproj" PrivateAssets="all" />
-    <ProjectReference Include="..\BasicCodeTranslator\BasicCodeTranslator.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\AbstractIrConverters\AbstractIrConverters.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\BasicInterpreter\BasicInterpreter.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\BasicCilCompiler\BasicCilCompiler.csproj" PrivateAssets="all" />
