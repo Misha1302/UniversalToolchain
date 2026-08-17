@@ -68,9 +68,7 @@ public class DialectDefinitionBindingTests
         builder.SetOptimizerPolicy(new OptimizerPolicy());
         builder.SetSecurityPolicy(null);
 
-        Assert.That(
-            () => builder.Build(),
-            Throws.TypeOf<InvalidOperationException>());
+        Assert.That(() => builder.Build(), Throws.TypeOf<InvalidOperationException>());
     }
 
     [Test]
@@ -233,27 +231,16 @@ public class DialectDefinitionBindingTests
         }
 
         public DialectBindingInputKind InputKind => DialectBindingInputKind.Syntax;
-
         public string Name { get; }
-
         public string? Version { get; }
-
         public string? BaseDialectName { get; }
-
         public IReadOnlyList<string> UseModules { get; } = [];
-
         public IReadOnlyList<string> ExcludeModules { get; } = [];
-
         public IReadOnlyList<OrderBindingDirectiveRecord> OrderRules { get; } = [];
-
         public IReadOnlyList<BackendBindingDirectiveRecord> BackendDirectives { get; } = [];
-
         public IReadOnlyList<IntrinsicBindingDirectiveRecord> IntrinsicDirectives { get; } = [];
-
         public IReadOnlyList<OptimizerBindingDirectiveRecord> OptimizerDirectives { get; } = [];
-
         public SecurityProfile? SecurityProfile => null;
-
         public IReadOnlyList<KeyValuePair<string, bool>> Capabilities { get; } = [];
     }
 }

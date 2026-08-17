@@ -15,7 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\UniversalToolchain.LanguageSdk\UniversalToolchain.LanguageSdk.csproj" />
     <ProjectReference Include="..\UniversalToolchain.LanguageAuthoring\UniversalToolchain.LanguageAuthoring.csproj" />
-<ProjectReference Include="..\UniversalToolchain.Runtime\UniversalToolchain.Runtime.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Runtime\UniversalToolchain.Runtime.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Testing\UniversalToolchain.Testing.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Wist.LanguagePack\UniversalToolchain.Wist.LanguagePack.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Ssa.Abstractions\UniversalToolchain.Ssa.Abstractions.csproj" />
@@ -26,6 +26,7 @@
     <ProjectReference Include="..\AbstractIrConverters\AbstractIrConverters.csproj" />
     <ProjectReference Include="..\ArithmeticModule\ArithmeticModule.csproj" />
     <ProjectReference Include="..\NumbersModule\NumbersModule.csproj" />
+    <ProjectReference Include="..\ScopesModule\ScopesModule.csproj" />
     <ProjectReference Include="..\WhitespacesModule\WhitespacesModule.csproj" />
     <ProjectReference Include="..\CommonExceptions\CommonExceptions.csproj" />
   </ItemGroup>

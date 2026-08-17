@@ -9,7 +9,6 @@ import shutil
 import signal
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 from verify_trx_count import verify_trx
@@ -34,13 +33,16 @@ def run_entry(root: Path, dotnet: str, configuration: str, results: Path, entry:
         trx.unlink()
 
     if runner == 'project':
-        command = [
-            dotnet, 'test', str(path), '-c', configuration,
-            '--no-build', '--no-restore', '--disable-build-servers',
+        build_before_test = bool(entry.get('buildBeforeTest', False))
+        command = [dotnet, 'test', str(path), '-c', configuration]
+        if not build_before_test:
+            command.extend(['--no-build', '--no-restore'])
+        command.extend([
+            '--disable-build-servers',
             '--logger', f'trx;LogFileName={trx.name}',
             '--results-directory', str(results),
             '-p:UseSharedCompilation=false', '-p:NuGetAudit=false',
-        ]
+        ])
     elif runner in {'assembly', 'filter'}:
         command = [
             dotnet, 'vstest', str(path),
@@ -108,6 +110,11 @@ def validate_manifest(document: dict) -> list[dict]:
         labels.add(label)
         if int(entry['timeoutSeconds']) < 1 or int(entry['expectedPassed']) < 1:
             raise ContractError(f'{label}: timeout and expected count must be positive')
+        build_before_test = entry.get('buildBeforeTest', False)
+        if not isinstance(build_before_test, bool):
+            raise ContractError(f'{label}: buildBeforeTest must be a boolean when present')
+        if build_before_test and str(entry['runner']) != 'project':
+            raise ContractError(f'{label}: buildBeforeTest is supported only for project runner entries')
     expected_total = sum(int(entry['expectedPassed']) for entry in entries)
     if int(document.get('totalPassed', -1)) != expected_total:
         raise ContractError(

@@ -1,4 +1,5 @@
 using ArithmeticModule.Module;
+using BasicCore.Binding;
 using BasicCore.Builtins;
 using BasicCore.Contracts;
 using CommentsModule;
@@ -40,7 +41,8 @@ internal sealed record WistRuntimeComponentDescriptor(
     int Order,
     WistRuntimeComponentKind Kind,
     Func<Type> ImplementationTypeFactory,
-    Func<IServiceProvider, object>? ModuleFactory = null)
+    Func<IServiceProvider, object>? ModuleFactory = null,
+    Func<IServiceProvider, IReadOnlyList<IAstBindingRule>>? SemanticBindingRulesFactory = null)
 {
     public Type ImplementationType => ImplementationTypeFactory();
 }
@@ -115,7 +117,8 @@ internal static class WistRuntimeComponentCatalog
             static services => ActivatorUtilities.CreateInstance<TextualAdditionModuleImpl>(services)),
         Module(WistContributionIds.VariablesModule, WistFeatureIds.Variables, "Variables", 200,
             static () => typeof(VariablesModuleImpl),
-            static services => ActivatorUtilities.CreateInstance<VariablesModuleImpl>(services)),
+            static services => ActivatorUtilities.CreateInstance<VariablesModuleImpl>(services),
+            static _ => VariablesSemanticBindingProvider.CreateRules()),
         Module(WistContributionIds.WhitespacesModule, WistFeatureIds.Whitespaces, "Whitespaces", 210,
             static () => typeof(WhitespaceModuleImpl),
             static services => ActivatorUtilities.CreateInstance<WhitespaceModuleImpl>(services))
@@ -239,7 +242,8 @@ internal static class WistRuntimeComponentCatalog
         string alias,
         int order,
         Func<Type> implementationTypeFactory,
-        Func<IServiceProvider, object> moduleFactory) =>
+        Func<IServiceProvider, object> moduleFactory,
+        Func<IServiceProvider, IReadOnlyList<IAstBindingRule>>? semanticBindingRulesFactory = null) =>
         new(
             contributionId,
             featureId,
@@ -247,7 +251,8 @@ internal static class WistRuntimeComponentCatalog
             order,
             WistRuntimeComponentKind.Module,
             implementationTypeFactory,
-            moduleFactory);
+            moduleFactory,
+            semanticBindingRulesFactory);
 
     private static WistRuntimeComponentDescriptor Optimizer(
         LanguageContributionId contributionId,

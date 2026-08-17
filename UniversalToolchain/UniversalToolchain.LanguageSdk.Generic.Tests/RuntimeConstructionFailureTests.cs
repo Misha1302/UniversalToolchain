@@ -1,6 +1,6 @@
 using UniversalToolchain.Runtime;
 
-namespace UniversalToolchain.LanguageSdk.Tests;
+namespace UniversalToolchain.LanguageSdk.Generic.Tests;
 
 [TestFixture]
 public sealed class RuntimeConstructionFailureTests

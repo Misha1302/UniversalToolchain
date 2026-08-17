@@ -1,5 +1,14 @@
+using System.Reflection;
 using System.Reflection.Emit;
+using BasicCilCompiler.Execution;
 using BasicCore.Builtins;
+using BasicCore.Compilation;
+using BasicCore.Contracts;
+using BasicCore.Core;
+using BasicCore.Execution;
+using BytecodeDynamicMethodsCompiler.Compilers;
+using IntermediateRepresentationAbstractions;
+using UniversalIntermediateRepresentation;
 
 namespace Tests.Backends;
 
@@ -389,7 +398,6 @@ public class CilBackendAbstractIrCompilationTests
         Assert.That(result, Is.EqualTo(1056));
     }
 
-
     [Test]
     public void TypedArithmeticIntrinsicI32_ProducesCorrectResult()
     {
@@ -539,7 +547,6 @@ public class CilBackendAbstractIrCompilationTests
     private static T KeepSecond<T>(T first, T second) => second;
 
     private static T Echo<T>(T value) => value;
-
 
     private static Instruction CreateTypedIntrinsic(
         IntrinsicSymbol symbol,

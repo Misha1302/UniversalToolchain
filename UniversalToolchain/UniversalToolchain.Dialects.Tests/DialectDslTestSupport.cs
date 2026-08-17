@@ -95,12 +95,6 @@ internal static class DialectDslTestSupport
         });
     }
 
-    public static DialectDefinition BuildDefinition(DialectDefinitionSlice slice, out List<DialectDiagnostic> diagnostics)
-    {
-        diagnostics = [];
-        return DialectDefinitionSemanticBinder.Bind(slice, diagnostics);
-    }
-
     public static ServiceProvider CreateFrontendCompilerServices(DialectDslFrontendModule module)
     {
         var services = new ServiceCollection();

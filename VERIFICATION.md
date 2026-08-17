@@ -2,7 +2,7 @@
 
 ## Environment and authority
 
-- Record refreshed: 2026-08-12.
+- Record refreshed: 2026-08-15.
 - Target CI environment: GitHub Actions Ubuntu 24.04, Linux x64.
 - SDK policy: `UniversalToolchain/global.json` with .NET 10 feature-band roll-forward.
 - Ordinary integration command: `./build.sh --skip-docs --skip-pack`.
@@ -20,6 +20,8 @@ The repository implements and continuously verifies:
 - deterministic language/package planning, schema-v6 locks and exact package-manifest binding;
 - exact `(contribution, backend, input contract)` executor resolution;
 - strict selected-module contract enforcement in the Wist composition path;
+- explicit Wist syntax, semantic-binding and bytecode-lowering ownership selected from the immutable `LanguagePlan`;
+- data-only phase artifacts with stage-local module activation and disposal;
 - production Bytecode metadata reading plus declared/observed emission verification;
 - mandatory producer-module and source-node identity for every contract-annotated Bytecode emission;
 - AIR structural, stack and backend-capability verification;
@@ -35,6 +37,8 @@ The repository implements and continuously verifies:
 - explicit Wist source-retention and diagnostic-exposure policies;
 - explicit non-concurrent same-instance `WistEngine` contract;
 - interpreter/CIL parity on the shared supported surface;
+- fail-closed UNIVERSAL/WIST ownership validation including project, package, assembly, friend and build edges;
+- Wist-free generic implementation tests whose internal friend edges remain `UNIVERSAL -> UNIVERSAL`;
 - PlanFuzz fresh-process replay, evidence-complete classification and exact-fingerprint reduction;
 - a separate production-boundary B0/B1/B2 contract experiment;
 - a separately reported post-freeze review-derived holdout set.
@@ -47,7 +51,7 @@ The retained product boundary remains a contribution/pass/route/runtime SDK rath
 ./build.sh --skip-docs --skip-pack
 ```
 
-This gate restores and builds `UniversalToolchain/Wist.sln`, `UniversalToolchain/PlanFuzz.sln` and the runnable samples, then executes the exact test manifest and architecture/documentation-status guards.
+This gate restores and builds `UniversalToolchain/Wist.sln`, `UniversalToolchain/PlanFuzz.sln` and the runnable samples, then executes the exact test manifest and architecture/documentation-status guards. A project-runner entry may explicitly declare `buildBeforeTest: true`; this is used for the Wist-free `UniversalToolchain.LanguageSdk.Generic.Tests` project because it is an independent ownership proof rather than a Wist solution member. The same Python contract runner is used by Linux and Windows entrypoints.
 
 Parallel graph traversal and shared compilation are the default. `--jobs`, `--serial` and `--no-build-servers` provide explicit diagnostic fallbacks. The two solutions are still invoked sequentially because they share output directories.
 
@@ -55,15 +59,16 @@ Parallel graph traversal and shared compilation are the default. `--jobs`, `--se
 
 | Test project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
-| `Tests` | 524 | 0 | 0 |
+| `Tests` | 500 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
-| `UniversalToolchain.Dialects.Tests` | 262 | 0 | 0 |
-| `UniversalToolchain.LanguageSdk.Tests` | 161 | 0 | 0 |
+| `UniversalToolchain.Dialects.Tests` | 233 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Generic.Tests` | 62 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Tests` | 167 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,290** | **0** | **0** |
+| **Total** | **1,305** | **0** | **0** |
 
-The hardening delta is 14 targeted tests: nine Wist facade failure/privacy/concurrency regressions and five runtime construction/capability regressions. The exact manifest is owned by `eng/test-counts.json`; provider-backed exact-head results are recorded against their commit/run identities rather than inferred from an older local TRX snapshot.
+The current candidate adds focused regressions for the real `Syntax -> Semantic -> Bytecode` boundary, syntax-mutation isolation, canonical Add convergence, independent stage-local activation, exact planned lowering fail-closed behavior, phase-owned module ordering, detached optimizer-contract provenance and hidden `UNIVERSAL -> WIST_PRODUCT` friend edges. Fifty-eight implementation-internal generic tests were moved out of mixed Wist-owned test assemblies rather than regaining forbidden friendship; together with the four existing generic ownership tests they form the 62-test Wist-free suite. The exact manifest is owned by `eng/test-counts.json`; provider-backed exact-head results are recorded against their commit/run identities rather than inferred from an older local TRX snapshot.
 
 ## Production-boundary contract experiment
 

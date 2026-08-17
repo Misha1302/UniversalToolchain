@@ -3,7 +3,7 @@ using UniversalToolchain.Dialects.Core.Binding;
 using UniversalToolchain.Dialects.Frontend;
 using UniversalToolchain.Dialects.Parsing;
 
-namespace UniversalToolchain.Dialects.Tests;
+namespace UniversalToolchain.LanguageSdk.Generic.Tests;
 
 public class DialectBindingSourceMetadataTests
 {

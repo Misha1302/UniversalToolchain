@@ -1,6 +1,6 @@
 # UniversalToolchain.Wist 0.1.0-alpha.7 — architecture & production hardening candidate
 
-Дата candidate source: 2026-08-12.
+Дата candidate source: 2026-08-15.
 
 `0.1.0-alpha.7` — новая **неопубликованная** candidate identity поверх канонической LanguagePlan/LanguageRuntime архитектуры из migration #332. Эта работа не выполняет publish, release promotion или merge в `master`.
 
@@ -15,6 +15,8 @@
 - добавлены source-retention policies `Full`, `HashAndIdentity`, `None` и отдельные developer/safe consumer diagnostics;
 - required CI workflow set вынесен в единый machine-readable owner и aggregate работает fail-closed;
 - physical Wist runtime closure классифицирован по фактическому package artifact; package graph не дробился без доказанной выгоды;
+- Wist feature ownership разделён по фактическим syntax / semantic-binding / lowering обязанностям, runtime materializes эти роли только из exact `LanguagePlan`, а DSL ordering распространяется на соответствующие phase-owned contributions;
+- generic Dialects/CIL/runtime implementation tests перенесены из mixed Wist-owned suites в `UniversalToolchain.LanguageSdk.Generic.Tests`, поэтому UT internal friend edges остаются только `UNIVERSAL -> UNIVERSAL`, а Wist-free proof стал содержательнее;
 - flaky percentage performance gate не добавлялся: сохранён benchmark smoke и добавлен artifact/trend collection.
 
 ## Матрица candidate packages
@@ -37,7 +39,7 @@
 
 ## Проверка
 
-Exact test manifest текущей ветки: **1,290 тестов**. Увеличение на 14 тестов соответствует targeted architecture/production hardening regressions: 9 Wist facade tests и 5 runtime construction/capability tests. Canonical build/test gate обязан подтвердить 0 failed и 0 skipped на exact candidate revision; более старые workflow receipts не подменяют exact-head verification.
+Exact test manifest текущей ветки: **1,305 тестов**: Core 500, Modules 292, Dialects 233, LanguageSdk.Generic 62, LanguageSdk 167, PlanFuzz 41 и 10 isolated integration cases. Перенос 58 generic implementation tests между owner-specific suites не уменьшает покрытие; 4 ранее существовавших Wist-free generic tests вместе с ними образуют 62-test canonical generic suite в Linux/Windows contract. Дополнительные regressions фиксируют реальную `Syntax -> Semantic -> Bytecode` границу, stage-local lifetime, plan-owned lowering/fail-closed activation, phase-owned module ordering, detached optimizer-contract provenance и скрытые `UNIVERSAL -> WIST_PRODUCT` friend edges. Canonical build/test gate обязан подтвердить 0 failed и 0 skipped на exact candidate revision; более старые workflow receipts не подменяют exact-head verification.
 
 Baseline-bearing package gate проверяет девять package identities, exact `.nuspec` metadata, monotonic version/content provenance, Wist public API delta, physical package surface, clean external consumers и detached integrity manifest. GitHub aggregate CI остаётся отдельным обязательным gate.
 

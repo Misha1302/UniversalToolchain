@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "owners": {
+    "WIST_PRODUCT": [
+      "UniversalToolchain/ArithmeticModule/ArithmeticModule.csproj",
+      "UniversalToolchain/BasicStdLib/BasicStdLib.csproj",
+      "UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj",
+      "UniversalToolchain/CSharpInteropModule/CSharpInteropModule.csproj",
+      "UniversalToolchain/CommentsModule/CommentsModule.csproj",
+      "UniversalToolchain/ConditionsModule/ConditionsModule.csproj",
+      "UniversalToolchain/EqualityModule/EqualityModule.csproj",
+      "UniversalToolchain/Example/Example.csproj",
+      "UniversalToolchain/Experiments/UniversalToolchain.EndToEndExperiments/UniversalToolchain.EndToEndExperiments.csproj",
+      "UniversalToolchain/FunctionCallsModule/FunctionCallsModule.csproj",
+      "UniversalToolchain/GenericMath/GenericMath.csproj",
+      "UniversalToolchain/IdentifierModule/IdentifierModule.csproj",
+      "UniversalToolchain/InternalPreprocessorLexemesModule/InternalPreprocessorLexemesModule.csproj",
+      "UniversalToolchain/LabelsModule/LabelsModule.csproj",
+      "UniversalToolchain/LoopsModule/LoopsModule.csproj",
+      "UniversalToolchain/NativeMathModule/NativeMathModule.csproj",
+      "UniversalToolchain/NumbersModule/NumbersModule.csproj",
+      "UniversalToolchain/ParametersSetterModule/ParametersSetterModule.csproj",
+      "UniversalToolchain/ParserConfigurationModule/ParserConfigurationModule.csproj",
+      "UniversalToolchain/SafeMathFunctionsModule/SafeMathFunctionsModule.csproj",
+      "UniversalToolchain/ScopesModule/ScopesModule.csproj",
+      "UniversalToolchain/SemicolonAsNewLineModule/SemicolonAsNewLineModule.csproj",
+      "UniversalToolchain/SettableGettableModule/SettableGettableModule.csproj",
+      "UniversalToolchain/Tests/Tests.csproj",
+      "UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj",
+      "UniversalToolchain/UniversalToolchain.LanguageSdk.Tests/UniversalToolchain.LanguageSdk.Tests.csproj",
+      "UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolchain.Modules.Tests.csproj",
+      "UniversalToolchain/UniversalToolchain.PlanFuzz.Adapter.Wist/UniversalToolchain.PlanFuzz.Adapter.Wist.csproj",
+      "UniversalToolchain/UniversalToolchain.PlanFuzz.Cli/UniversalToolchain.PlanFuzz.Cli.csproj",
+      "UniversalToolchain/UniversalToolchain.PlanFuzz.IntegrationTests/UniversalToolchain.PlanFuzz.IntegrationTests.csproj",
+      "UniversalToolchain/UniversalToolchain.PlanFuzz.Tests/UniversalToolchain.PlanFuzz.Tests.csproj",
+      "UniversalToolchain/UniversalToolchain.Testing.Infrastructure/UniversalToolchain.Testing.Infrastructure.csproj",
+      "UniversalToolchain/UniversalToolchain.Wist.Contracts/UniversalToolchain.Wist.Contracts.csproj",
+      "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/UniversalToolchain.Wist.LanguagePack.csproj",
+      "UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj",
+      "UniversalToolchain/VariablesModule/VariablesModule.csproj",
+      "UniversalToolchain/WhitespacesModule/WhitespacesModule.csproj",
+      "UniversalToolchain/Wistc/Wistc.csproj",
+      "samples/Wist.RolloutScoring/Wist.RolloutScoring.csproj"
+    ],
+    "UNIVERSAL": [
+      "UniversalToolchain/**/*.csproj",
+      "samples/Acme.PricingLanguage/Acme.PricingLanguage.csproj"
+    ]
+  },
+  "classification": {
+    "precedence": ["WIST_PRODUCT", "UNIVERSAL"],
+    "requireTotalCoverage": true
+  },
+  "forbiddenUniversalSourceTokens": [
+    "WistFeatureIds",
+    "WistArtifactKinds",
+    "WistContributionIds",
+    "UniversalToolchain.Wist"
+  ],
+  "legacyArtifactFieldAllowlist": []
+}

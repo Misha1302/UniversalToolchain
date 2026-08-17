@@ -1,0 +1,81 @@
+name: Ownership and Package Verification
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  universal-only:
+    name: UniversalToolchain without Wist ownership
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+      - name: Validate ownership graph
+        run: python3 Tools/check-project-ownership.py --root .
+      - name: Build and test UNIVERSAL projects only
+        run: python3 Tools/verify-universal-only.py --root .
+
+  wist-package-consumer:
+    name: Packed Wist clean consumer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+      - name: Pack facade from source
+        shell: bash
+        run: |
+          set -euo pipefail
+          # UniversalToolchain/NuGet.config declares the repository-local
+          # "packages" feed. The canonical build entrypoint provisions this
+          # directory even when the feed is empty; direct package verification
+          # must preserve the same bootstrap invariant before NuGet evaluates it.
+          mkdir -p UniversalToolchain/packages artifacts/packages artifacts/evidence
+          dotnet pack UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj -c Release -o artifacts/packages --nologo
+          package="$(find artifacts/packages -maxdepth 1 -name 'UniversalToolchain.Wist.0.1.0-alpha.7.nupkg' -print -quit)"
+          test -n "$package"
+          python3 Tools/verify-wist-package.py "$package" --write-closure artifacts/evidence/wist-package-closure.txt
+      - name: Build and run package-only consumer
+        shell: bash
+        run: |
+          set -euo pipefail
+          consumer="$RUNNER_TEMP/wist-package-consumer"
+          mkdir -p "$consumer"
+          cd "$consumer"
+          dotnet new console --framework net10.0 --force
+          cat > NuGet.Config <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <packageSources>
+              <clear />
+              <add key="candidate" value="$GITHUB_WORKSPACE/artifacts/packages" />
+              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+            </packageSources>
+          </configuration>
+          EOF
+          dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.7
+          cat > Program.cs <<'EOF'
+          using UniversalToolchain.Wist;
+
+          using var wist = WistEngine.CreateRestrictedArithmetic();
+          var value = wist.Evaluate<double>("2 + 3 * 4");
+          if (Math.Abs(value - 14.0) > 1e-9)
+              throw new InvalidOperationException($"Unexpected Wist package result: {value}");
+          Console.WriteLine($"WIST_PACKAGE_CONSUMER=PASS value={value}");
+          EOF
+          dotnet run -c Release --nologo
+      - name: Upload measured package closure
+        uses: actions/upload-artifact@v4
+        with:
+          name: wist-package-closure
+          path: artifacts/evidence/wist-package-closure.txt
+          if-no-files-found: error

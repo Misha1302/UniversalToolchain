@@ -71,6 +71,22 @@ def main() -> int:
         (ValueError,),
     )
 
+    invalid_build_type = copy.deepcopy(document)
+    invalid_build_type["main"][0]["buildBeforeTest"] = "true"
+    expect_rejected(
+        "test-contract-build-before-test-type",
+        lambda: runner.validate_manifest(invalid_build_type),
+        (runner.ContractError,),
+    )
+
+    invalid_build_runner = copy.deepcopy(document)
+    invalid_build_runner["main"][0]["buildBeforeTest"] = True
+    expect_rejected(
+        "test-contract-build-before-test-runner",
+        lambda: runner.validate_manifest(invalid_build_runner),
+        (runner.ContractError,),
+    )
+
     with tempfile.TemporaryDirectory(prefix="test-contract-mutants-") as temp:
         temp_path = Path(temp)
         skipped = temp_path / "skipped.trx"
@@ -100,7 +116,7 @@ def main() -> int:
             (runner.ContractError,),
         )
 
-    print(f"test-contract mutants rejected: 4; canonical entries={len(entries)}")
+    print(f"test-contract mutants rejected: 6; canonical entries={len(entries)}")
     return 0
 
 

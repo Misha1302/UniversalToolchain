@@ -5,7 +5,7 @@ using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Core.Binding;
 using UniversalToolchain.Dialects.Frontend;
 
-namespace UniversalToolchain.Dialects.Tests;
+namespace UniversalToolchain.LanguageSdk.Generic.Tests;
 
 public class DialectDefinitionSliceAirReaderMetadataTests
 {

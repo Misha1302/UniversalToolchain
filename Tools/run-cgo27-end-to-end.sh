@@ -13,6 +13,12 @@ if [[ ! "$commit" =~ ^[0-9a-f]{40}$ ]]; then
   echo "exact 40-hex source commit could not be resolved" >&2
   exit 2
 fi
+
+# Child records must describe the exact checked-out source revision, not the
+# synthetic pull-request merge SHA supplied by GitHub Actions.
+export GITHUB_SHA="$commit"
+export CGO27_EXPERIMENT_COMMIT="$commit"
+
 rm -rf "$output"
 mkdir -p "$output/source-snapshot" "$root/UniversalToolchain/packages"
 

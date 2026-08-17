@@ -80,6 +80,48 @@ public sealed class WistDslPlanParityTests
         });
     }
 
+    [Test]
+    public void DialectModuleOrder_IsPropagatedToOwnedLoweringPhase()
+    {
+        const string source = """
+            dialect PhaseOwnedOrder
+            use Arithmetic,Numbers,Scopes,Whitespaces
+            before Scopes,Arithmetic
+            backend interpreter
+            """;
+        var definition = WistFacadeLanguageDefinitionFactory.FromDialectText(
+            source,
+            "inline:phase-owned-order",
+            "interpreter",
+            WistFacadeSsaPolicy.Disabled);
+        var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(new WistLanguageFeaturePackage()))
+            .Compile(definition)
+            .GetRequiredPlan();
+
+        var syntax = plan.Contributions
+            .Where(static item => item.Contribution.Slot == LanguageSlots.FrontendSyntax)
+            .Select(static item => item.Contribution.Id)
+            .ToArray();
+        var lowering = plan.Contributions
+            .Where(static item => item.Contribution.Slot == WistModulePhaseSlots.Lowering)
+            .Select(static item => item.Contribution.Id)
+            .ToArray();
+        var loweringScopes = WistModulePhaseOwnership.LoweringContributionId(WistContributionIds.ScopesModule);
+        var loweringArithmetic = WistModulePhaseOwnership.LoweringContributionId(WistContributionIds.ArithmeticModule);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(Array.IndexOf(syntax, WistContributionIds.ScopesModule), Is.GreaterThanOrEqualTo(0));
+            Assert.That(Array.IndexOf(syntax, WistContributionIds.ArithmeticModule), Is.GreaterThanOrEqualTo(0));
+            Assert.That(Array.IndexOf(syntax, WistContributionIds.ScopesModule), Is.LessThan(Array.IndexOf(syntax, WistContributionIds.ArithmeticModule)),
+                "The explicit DSL order must own the syntax-stage order.");
+            Assert.That(Array.IndexOf(lowering, loweringScopes), Is.GreaterThanOrEqualTo(0));
+            Assert.That(Array.IndexOf(lowering, loweringArithmetic), Is.GreaterThanOrEqualTo(0));
+            Assert.That(Array.IndexOf(lowering, loweringScopes), Is.LessThan(Array.IndexOf(lowering, loweringArithmetic)),
+                "The same plan-owned module order must be propagated to lowering owners instead of reverting to catalog order.");
+        });
+    }
+
     private static string SemanticProjection(LanguagePlan plan)
     {
         var projection = new

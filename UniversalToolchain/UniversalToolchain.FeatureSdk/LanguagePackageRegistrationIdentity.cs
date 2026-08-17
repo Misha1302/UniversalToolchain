@@ -38,13 +38,21 @@ public sealed class LanguagePackageRegistrationIdentity
         return ImplementationType == expectedType;
     }
 
-    internal bool IsImplementationInstance(object expectedImplementation)
+    /// <summary>
+    /// Returns whether this opaque registration identity is bound to the exact supplied package instance.
+    /// This is a provenance check only; it does not perform discovery or substitute another implementation.
+    /// </summary>
+    public bool IsImplementationInstance(object expectedImplementation)
     {
         ArgumentNullException.ThrowIfNull(expectedImplementation);
         return ReferenceEquals(_implementation, expectedImplementation);
     }
 
-    internal TImplementation GetRequiredImplementation<TImplementation>()
+    /// <summary>
+    /// Returns the exact implementation captured when this registration identity was issued.
+    /// Descriptor-only registrations and registrations of a different concrete type fail closed.
+    /// </summary>
+    public TImplementation GetRequiredImplementation<TImplementation>()
         where TImplementation : class
     {
         if (_implementation is TImplementation implementation && _implementation.GetType() == typeof(TImplementation))

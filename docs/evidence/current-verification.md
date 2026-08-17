@@ -19,21 +19,22 @@ The canonical non-release GitHub Actions gate runs:
 ./build.sh --skip-docs --skip-pack
 ```
 
-It restores and builds both `UniversalToolchain/Wist.sln` and `UniversalToolchain/PlanFuzz.sln`, builds runnable samples, executes the shared test manifest and runs architecture/documentation-status guards. Parallel project-graph traversal and shared compilation are the defaults; serial/no-build-server modes remain explicit diagnostics.
+It restores and builds both `UniversalToolchain/Wist.sln` and `UniversalToolchain/PlanFuzz.sln`, builds runnable samples, executes the shared test manifest and runs architecture/documentation-status guards. `UniversalToolchain.LanguageSdk.Generic.Tests` is an independent Wist-free owner proof and is therefore built by its explicit `buildBeforeTest` test-contract entry on both Linux and Windows. Parallel project-graph traversal and shared compilation are the defaults; serial/no-build-server modes remain explicit diagnostics.
 
 The documentation guard requires this table to mirror the repository's current exact test manifest even though the workflow receipt immediately below remains tied to the pinned snapshot commit.
 
 | Project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
-| `Tests` | 524 | 0 | 0 |
+| `Tests` | 500 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
-| `UniversalToolchain.Dialects.Tests` | 262 | 0 | 0 |
-| `UniversalToolchain.LanguageSdk.Tests` | 161 | 0 | 0 |
+| `UniversalToolchain.Dialects.Tests` | 233 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Generic.Tests` | 62 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Tests` | 167 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,290** | **0** | **0** |
+| **Total** | **1,305** | **0** | **0** |
 
-The exact manifest belongs to `eng/test-counts.json`. The hardening delta is 14 targeted tests: nine Wist facade failure/privacy/concurrency regressions and five runtime construction/capability regressions. `.NET CI` run `31049607823` completed the canonical entrypoint for the pinned commit; that historical receipt still corresponds to its own earlier manifest. A current revision is green only when its own exact manifest is verified.
+The exact manifest belongs to `eng/test-counts.json`. The current candidate adds focused regressions for the real syntax/semantic/lowering boundary, stage-local lifetime, plan-owned lowering activation, phase-owned module ordering, detached optimizer-contract provenance and hidden ownership edges. Fifty-eight generic implementation tests were moved from mixed Wist-owned suites into the Wist-free generic project rather than restoring forbidden friend edges; together with its four existing ownership tests the canonical generic suite now contains 62 tests. `.NET CI` run `31049607823` completed the canonical entrypoint for the pinned historical commit; that receipt corresponds only to its own earlier manifest. A current revision is green only when its own exact manifest is verified.
 
 ## Workflow set
 
@@ -86,7 +87,7 @@ npm run docs:build
 python3 .github/scripts/run-markdown-bash-blocks.py
 ```
 
-Current documentation also carries the typed runtime-capability, Wist failure-taxonomy, source-retention and same-engine concurrency contracts introduced by the hardening work.
+Current documentation also carries the typed runtime-capability, Wist failure-taxonomy, source-retention, same-engine concurrency and Wist phase-ownership contracts introduced by the hardening work.
 
 ## Package/release boundary
 
@@ -116,6 +117,6 @@ Verified PlanFuzz behavior includes the language-neutral core, Acme and Wist ada
 
 The preserved Wist pilot included the regression corpus. Its violating-case count is not clean discovery yield, and its normalized classes are not unique-defect counts. Current bounded discovery and surface-oracle smokes are regression/stability evidence only.
 
-Schedule reduction, lifecycle/concurrency campaigns, equal-budget baselines, a third adapter and publication novelty remain unverified future work.
+Schedule reduction, lifecycle/session/concurrency campaigns, equal-budget baselines, a third adapter and publication novelty remain unverified future work.
 
 The root `VERIFICATION.md` remains the detailed authority for commands, package boundaries, claim limits and artifact requirements.

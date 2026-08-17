@@ -81,12 +81,12 @@ internal sealed class Cgo27FaultLanguagePackage : ILanguageExtensionPackage, ILa
             var optimizer = new Cgo27FaultOptimizer();
             var result = optimizer.Optimize(source.Air)
                 ?? throw new InvalidOperationException("CGO27 fault optimizer returned null AIR.");
+            var contractSnapshot = WistOptimizerContractSnapshot.Capture(ContributionId, optimizer);
             return new WistAirArtifact(
                 source.Input,
                 result,
-                source.FrontendModules,
-                source.Optimizers.Append(optimizer).ToArray(),
-                source.SsaReport);
+                source.SsaReport,
+                source.AppliedOptimizerContracts.Append(contractSnapshot).ToArray());
         }
     }
 }

@@ -32,9 +32,7 @@ public class DialectDirectiveHandlerTests
     [Test]
     public void Registry_RejectsNullHandler()
     {
-        Assert.That(
-            () => new DialectDirectiveHandlerRegistry([new IntrinsicDirectiveHandler(), null!]),
-            Throws.TypeOf<ArgumentNullException>());
+        Assert.That(() => new DialectDirectiveHandlerRegistry([new IntrinsicDirectiveHandler(), null!]), Throws.TypeOf<ArgumentNullException>());
     }
 
     [Test]
@@ -227,7 +225,6 @@ public class DialectDirectiveHandlerTests
     public void BindCore_FullPipelineAppliesCoreRulesAndDirectiveHandlers()
     {
         var diagnostics = new List<DialectDiagnostic>();
-
         var definition = DialectDefinitionSemanticBinder.BindCore(CreateFullSource(), diagnostics);
 
         Assert.Multiple(() =>
@@ -314,63 +311,37 @@ public class DialectDirectiveHandlerTests
     private sealed class TestBindingSource : IDialectBindingSource
     {
         public DialectBindingInputKind InputKind { get; init; } = DialectBindingInputKind.Syntax;
-
         public string Name { get; init; } = "dialect";
-
         public string? Version { get; init; }
-
         public string? BaseDialectName { get; init; }
-
         public IReadOnlyList<string> UseModules { get; init; } = [];
-
         public IReadOnlyList<string> ExcludeModules { get; init; } = [];
-
         public IReadOnlyList<OrderBindingDirectiveRecord> OrderRules { get; init; } = [];
-
         public IReadOnlyList<BackendBindingDirectiveRecord> BackendDirectives { get; init; } = [];
-
         public IReadOnlyList<IntrinsicBindingDirectiveRecord> IntrinsicDirectives { get; init; } = [];
-
         public IReadOnlyList<OptimizerBindingDirectiveRecord> OptimizerDirectives { get; init; } = [];
-
         public SecurityProfile? SecurityProfile { get; init; }
-
         public IReadOnlyList<KeyValuePair<string, bool>> Capabilities { get; init; } = [];
     }
 
     private sealed class RecordingDirectiveHandlerA(List<string> applied) : IDialectDirectiveHandler
     {
         public int Order => 0;
-
         public string Name => "A";
-
-        public void Apply(DialectDirectiveBindingContext context)
-        {
-            applied.Add("A");
-        }
+        public void Apply(DialectDirectiveBindingContext context) => applied.Add("A");
     }
 
     private sealed class RecordingDirectiveHandlerB(List<string> applied) : IDialectDirectiveHandler
     {
         public int Order => 0;
-
         public string Name => "B";
-
-        public void Apply(DialectDirectiveBindingContext context)
-        {
-            applied.Add("B");
-        }
+        public void Apply(DialectDirectiveBindingContext context) => applied.Add("B");
     }
 
     private sealed class RecordingDirectiveHandlerLate(List<string> applied) : IDialectDirectiveHandler
     {
         public int Order => 10;
-
         public string Name => "Late";
-
-        public void Apply(DialectDirectiveBindingContext context)
-        {
-            applied.Add("Late");
-        }
+        public void Apply(DialectDirectiveBindingContext context) => applied.Add("Late");
     }
 }

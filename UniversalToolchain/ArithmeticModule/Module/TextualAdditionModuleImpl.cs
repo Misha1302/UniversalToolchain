@@ -17,5 +17,9 @@ public class TextualAdditionModuleImpl : IFrontendCoreModule
 
     public void InitParser(IParser parser) => parser.AddNodeCreators(_nodeCreatorRegistrations);
 
-    public void InitAstTranslator(IAstToBytecodeTranslator translator) => translator.AddVisitors(new TextualAdditionAstVisitor());
+    // Textual addition is syntax-only. Its lowering is owned by the canonical semantic Add lowerer.
+    public void InitAstTranslator(IAstToBytecodeTranslator translator)
+    {
+        ArgumentNullException.ThrowIfNull(translator);
+    }
 }

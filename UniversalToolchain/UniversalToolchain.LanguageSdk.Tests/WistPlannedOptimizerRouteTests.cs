@@ -59,6 +59,7 @@ public sealed class WistPlannedOptimizerRouteTests
             var expected = new[]
             {
                 WistContributionIds.Frontend,
+                WistContributionIds.SemanticBinding,
                 WistContributionIds.LoweringToBytecode,
                 WistContributionIds.LoweringToAir
             }
