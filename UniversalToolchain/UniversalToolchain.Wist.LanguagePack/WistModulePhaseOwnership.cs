@@ -12,50 +12,28 @@ internal static class WistModulePhaseSlots
 }
 
 /// <summary>
-/// Declares which phase responsibilities are actually implemented by the historical combined Wist modules.
-/// The mapping is package metadata only: runtime stages consume the explicit phase contributions captured by
-/// <see cref="LanguagePlan"/> and never infer lowering from a syntax artifact or syntax contribution identity.
+/// Materializes the explicit phase responsibilities declared by the canonical Wist runtime component descriptors.
+/// Runtime stages consume only the phase contributions captured by <see cref="LanguagePlan"/> and never infer
+/// lowering from a syntax artifact or from the historical combined module implementation shape.
 /// </summary>
 internal static class WistModulePhaseOwnership
 {
     private const string ModulePrefix = "wist.module.";
 
-    private static readonly IReadOnlySet<LanguageContributionId> SemanticModules =
-        new HashSet<LanguageContributionId>
-        {
-            WistContributionIds.VariablesModule
-        };
-
-    private static readonly IReadOnlySet<LanguageContributionId> LoweringModules =
-        new HashSet<LanguageContributionId>
-        {
-            WistContributionIds.ArithmeticModule,
-            WistContributionIds.BooleanLogicModule,
-            WistContributionIds.CSharpInteropModule,
-            WistContributionIds.ComparisonsModule,
-            WistContributionIds.ConditionalControlFlowModule,
-            WistContributionIds.EqualityModule,
-            WistContributionIds.FunctionCallsModule,
-            WistContributionIds.LabelsModule,
-            WistContributionIds.LoopsModule,
-            WistContributionIds.NativeTypesModule,
-            WistContributionIds.NumbersModule,
-            WistContributionIds.ScopesModule,
-            WistContributionIds.VariablesModule
-        };
-
     private static readonly IReadOnlyDictionary<LanguageContributionId, WistRuntimeComponentDescriptor> ModulesBySyntaxId =
-        WistRuntimeComponentCatalog.Modules.ToDictionary(static component => component.ContributionId);
+        WistRuntimeComponentCatalog.Modules
+            .Where(static component => OwnsPhase(component, WistFrontendPhaseRoles.Syntax))
+            .ToDictionary(static component => component.ContributionId);
 
     private static readonly IReadOnlyDictionary<LanguageContributionId, WistRuntimeComponentDescriptor> ModulesBySemanticId =
         WistRuntimeComponentCatalog.Modules
-            .Where(component => SemanticModules.Contains(component.ContributionId))
-            .ToDictionary(component => SemanticContributionId(component.ContributionId));
+            .Where(static component => OwnsPhase(component, WistFrontendPhaseRoles.Semantics))
+            .ToDictionary(static component => SemanticContributionId(component.ContributionId));
 
     private static readonly IReadOnlyDictionary<LanguageContributionId, WistRuntimeComponentDescriptor> ModulesByLoweringId =
         WistRuntimeComponentCatalog.Modules
-            .Where(component => LoweringModules.Contains(component.ContributionId))
-            .ToDictionary(component => LoweringContributionId(component.ContributionId));
+            .Where(static component => OwnsPhase(component, WistFrontendPhaseRoles.Lowering))
+            .ToDictionary(static component => LoweringContributionId(component.ContributionId));
 
     public static IReadOnlyList<LanguageContributionId> ExpandFeatureContributions(
         IEnumerable<LanguageContributionId> contributions)
@@ -65,11 +43,11 @@ internal static class WistModulePhaseOwnership
         foreach (var contribution in contributions)
         {
             expanded.Add(contribution);
-            if (!ModulesBySyntaxId.ContainsKey(contribution))
+            if (!ModulesBySyntaxId.TryGetValue(contribution, out var component))
                 continue;
-            if (SemanticModules.Contains(contribution))
+            if (OwnsPhase(component, WistFrontendPhaseRoles.Semantics))
                 expanded.Add(SemanticContributionId(contribution));
-            if (LoweringModules.Contains(contribution))
+            if (OwnsPhase(component, WistFrontendPhaseRoles.Lowering))
                 expanded.Add(LoweringContributionId(contribution));
         }
         return expanded.Distinct().ToArray();
@@ -82,7 +60,8 @@ internal static class WistModulePhaseOwnership
         ArgumentNullException.ThrowIfNull(component);
         ArgumentNullException.ThrowIfNull(supportedBackends);
 
-        if (SemanticModules.Contains(component.ContributionId))
+        var ownsSemantics = OwnsPhase(component, WistFrontendPhaseRoles.Semantics);
+        if (ownsSemantics)
         {
             yield return new LanguageContributionDescriptor(
                 SemanticContributionId(component.ContributionId),
@@ -94,9 +73,9 @@ internal static class WistModulePhaseOwnership
                 metadata: PhaseMetadata(component, "semantics"));
         }
 
-        if (LoweringModules.Contains(component.ContributionId))
+        if (OwnsPhase(component, WistFrontendPhaseRoles.Lowering))
         {
-            var requires = SemanticModules.Contains(component.ContributionId)
+            var requires = ownsSemantics
                 ? new[] { SemanticContributionId(component.ContributionId) }
                 : new[] { component.ContributionId };
             yield return new LanguageContributionDescriptor(
@@ -125,6 +104,11 @@ internal static class WistModulePhaseOwnership
 
     public static LanguageContributionId LoweringContributionId(LanguageContributionId syntaxContributionId) =>
         PhaseContributionId(syntaxContributionId, "lowering");
+
+    private static bool OwnsPhase(
+        WistRuntimeComponentDescriptor component,
+        WistFrontendPhaseRoles phase) =>
+        (component.FrontendPhaseRoles & phase) != 0;
 
     private static LanguageContributionId PhaseContributionId(LanguageContributionId syntaxContributionId, string phase)
     {
