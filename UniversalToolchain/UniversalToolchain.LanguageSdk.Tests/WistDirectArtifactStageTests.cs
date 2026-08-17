@@ -74,6 +74,36 @@ public sealed class WistDirectArtifactStageTests
     }
 
     [Test]
+    public void SemanticProgramGraph_DoesNotRetainSyntaxBindingOrLegacyLoweringObjects()
+    {
+        var semanticTypes = typeof(WistSemanticProgram).Assembly
+            .GetTypes()
+            .Where(static type => type == typeof(WistSemanticProgram)
+                                  || typeof(WistSemanticNode).IsAssignableFrom(type))
+            .ToArray();
+
+        var violations = semanticTypes
+            .SelectMany(static type => type
+                .GetFields(System.Reflection.BindingFlags.Instance
+                           | System.Reflection.BindingFlags.Public
+                           | System.Reflection.BindingFlags.NonPublic)
+                .Select(field => $"{type.Name}.{field.Name}: {field.FieldType.FullName}"))
+            .Where(static description =>
+                description.Contains("AstNode", StringComparison.Ordinal)
+                || description.Contains("BasicCore.Binding", StringComparison.Ordinal)
+                || description.Contains("IAstVisitor", StringComparison.Ordinal)
+                || description.Contains("IFrontendCoreModule", StringComparison.Ordinal)
+                || description.Contains("IAstToBytecodeTranslator", StringComparison.Ordinal))
+            .ToArray();
+
+        Assert.That(
+            violations,
+            Is.Empty,
+            "The semantic artifact must be a data-only ownership boundary; forbidden retained members:" +
+            Environment.NewLine + string.Join(Environment.NewLine, violations));
+    }
+
+    [Test]
     public void DirectArtifacts_AreDataOnlyAcrossPhaseBoundaries()
     {
         var forbidden = new[] { typeof(IFrontendCoreModule), typeof(IAirOptimizer) };
