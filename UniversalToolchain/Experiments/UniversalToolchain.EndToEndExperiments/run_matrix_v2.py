@@ -17,7 +17,7 @@ BASELINE_FAILURES: dict[str, dict[str, str]] = {
         "classification": "late-failure",
         "firstDetectionBoundary": "runtime-or-backend",
         "diagnosticCode": "System.InvalidOperationException",
-        "messageFragment": "Assertion failed: leftType == rightType",
+        "messageFragment": "Native arithmetic requires matching operand types.",
     }
 }
 
