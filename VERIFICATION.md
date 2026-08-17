@@ -63,12 +63,12 @@ Parallel graph traversal and shared compilation are the default. `--jobs`, `--se
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 233 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Generic.Tests` | 62 | 0 | 0 |
-| `UniversalToolchain.LanguageSdk.Tests` | 165 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Tests` | 167 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,303** | **0** | **0** |
+| **Total** | **1,305** | **0** | **0** |
 
-The current candidate adds focused regressions for the real `Syntax -> Semantic -> Bytecode` boundary, syntax-mutation isolation, canonical Add convergence, independent stage-local activation, exact planned lowering fail-closed behavior, phase-owned module ordering and hidden `UNIVERSAL -> WIST_PRODUCT` friend edges. Fifty-eight implementation-internal generic tests were moved out of mixed Wist-owned test assemblies rather than regaining forbidden friendship; together with the four existing generic ownership tests they form the 62-test Wist-free suite. The exact manifest is owned by `eng/test-counts.json`; provider-backed exact-head results are recorded against their commit/run identities rather than inferred from an older local TRX snapshot.
+The current candidate adds focused regressions for the real `Syntax -> Semantic -> Bytecode` boundary, syntax-mutation isolation, canonical Add convergence, independent stage-local activation, exact planned lowering fail-closed behavior, phase-owned module ordering, detached optimizer-contract provenance and hidden `UNIVERSAL -> WIST_PRODUCT` friend edges. Fifty-eight implementation-internal generic tests were moved out of mixed Wist-owned test assemblies rather than regaining forbidden friendship; together with the four existing generic ownership tests they form the 62-test Wist-free suite. The exact manifest is owned by `eng/test-counts.json`; provider-backed exact-head results are recorded against their commit/run identities rather than inferred from an older local TRX snapshot.
 
 ## Production-boundary contract experiment
 
