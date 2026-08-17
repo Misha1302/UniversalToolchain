@@ -14,11 +14,12 @@ jobs:
   cleanup:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Delete superseded S10 work branch
         shell: bash
         run: |
           set -euo pipefail
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" --delete migration/s10-direct-dialect-dsl-work
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" --delete "${GITHUB_HEAD_REF}"
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+          git push origin --delete migration/s10-direct-dialect-dsl-work
+          git push origin --delete "${GITHUB_HEAD_REF}"
