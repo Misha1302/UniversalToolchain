@@ -89,8 +89,8 @@ internal sealed class WistOptimizerContractSnapshot : IModuleContractDescriptorP
         IReadOnlyList<IModuleContractFacet> facets)
     {
         ContributionId = contributionId;
-        NamespaceOwners = namespaceOwners.ToArray();
-        _facets = facets.ToArray();
+        NamespaceOwners = WistModuleContractSnapshotter.CaptureNamespaceOwners(namespaceOwners);
+        _facets = WistModuleContractSnapshotter.CaptureFacets(facets);
     }
 
     public LanguageContributionId ContributionId { get; }
