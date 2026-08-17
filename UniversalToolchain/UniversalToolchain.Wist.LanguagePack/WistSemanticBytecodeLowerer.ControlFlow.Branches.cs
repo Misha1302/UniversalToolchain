@@ -136,7 +136,7 @@ internal sealed partial class WistSemanticBytecodeLowerer
         LowerNode(node.Condition, bytecode);
         bytecode.Instructions.Add(new BytecodeInstruction(new AbstractMethodImpl(
             $"IfExpression_RequireBooleanCondition_{sequence}",
-            (_, context) => RequireBooleanCondition(context))));
+            (_, context) => RequireBooleanCondition(context.Stack.ToArray()))));
         bytecode.Instructions.Add(new BytecodeInstruction(new AbstractMethodImpl(
             $"IfExpression_JmpIfNot_{falseLabel}",
             (il, _) => il.JmpIfNot(falseLabel))));
@@ -144,7 +144,7 @@ internal sealed partial class WistSemanticBytecodeLowerer
         LowerNode(node.WhenTrue, bytecode);
         bytecode.Instructions.Add(new BytecodeInstruction(new AbstractMethodImpl(
             $"IfExpression_StoreTrueResult_{resultLocalName}",
-            (il, context) => StoreBranchResult(il, context, resultLocalName, ref resultType))));
+            (il, context) => StoreBranchResult(il, context.Stack.ToArray(), resultLocalName, ref resultType))));
         bytecode.Instructions.Add(new BytecodeInstruction(new AbstractMethodImpl(
             $"IfExpression_Jmp_{endLabel}",
             (il, _) => il.Jmp(endLabel))));
@@ -155,7 +155,7 @@ internal sealed partial class WistSemanticBytecodeLowerer
         LowerNode(node.WhenFalse, bytecode);
         bytecode.Instructions.Add(new BytecodeInstruction(new AbstractMethodImpl(
             $"IfExpression_StoreFalseResult_{resultLocalName}",
-            (il, context) => StoreBranchResult(il, context, resultLocalName, ref resultType))));
+            (il, context) => StoreBranchResult(il, context.Stack.ToArray(), resultLocalName, ref resultType))));
         bytecode.Instructions.Add(new BytecodeInstruction(new AbstractMethodImpl(
             $"IfExpression_Label_{endLabel}",
             (il, _) => il.SetLabel(endLabel))));
