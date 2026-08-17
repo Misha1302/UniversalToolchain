@@ -1,25 +1,10 @@
-using System.Collections.Concurrent;
-using AbstractIrConverters;
-using ArithmeticModule.Module;
-using ArithmeticModule.Visitors;
-using BasicCodeTranslator;
-using BasicCore.Binding;
 using BasicCore.Contracts;
 using BasicCore.Core;
 using BasicCore.ParserWrapper;
-using BasicCore.Registration;
-using BasicLexer.Core;
-using BasicParser.Core;
-using BasicTypesExtensions;
-using IntermediateRepresentationAbstractions;
-using Microsoft.Extensions.DependencyInjection;
-using NumbersModule.Module;
-using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
 using UniversalToolchain.LanguageSdk;
 using UniversalToolchain.Runtime;
 using UniversalToolchain.Wist.LanguagePack;
-using WhitespacesModule;
 
 namespace UniversalToolchain.LanguageSdk.Tests;
 
@@ -29,75 +14,15 @@ public sealed class WistDirectArtifactStageTests
     private static readonly BackendId Interpreter = new("interpreter");
 
     [Test]
-    public void DirectStages_UseExplicitSemanticBoundary_AndProduceAir()
+    public void CanonicalRuntime_ExecutesArithmeticThroughNativeSemanticPath()
     {
-        const string source = "2 + 3 * 4";
-        var plan = CreatePlan();
-        var factory = CreateDirectFactory(
-            CreateCanonicalModuleFactories(),
-            semanticFactories: [],
-            loweringFactories: CreateCanonicalModuleFactories(),
-            plan);
-        var context = CreateContext(plan, source);
+        var package = new WistLanguageFeaturePackage();
+        var plan = CreatePlan(package);
+        using var runtime = LanguageRuntime.Create(plan, new ILanguageRouteComponentSource[] { package });
 
-        var syntax = factory.CreateFrontend().Transform(source, context);
-        var semantic = factory.CreateSemanticBinding().Transform(syntax, context);
-        var bytecode = factory.CreateBytecodeLowering().Transform(semantic, context);
-        var air = factory.CreateAirLowering().Transform(bytecode, context);
+        var result = runtime.Run(new LanguageExecutionRequest("2 + 3 * 4", Interpreter));
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(semantic.Program.Root, Is.Not.Null);
-            Assert.That(bytecode.Bytecode.Instructions, Is.Not.Empty);
-            Assert.That(air.Air.Instructions, Is.Not.Empty);
-            Assert.That(WistDirectArtifactKinds.Semantic.Contract, Is.EqualTo(WistArtifactKinds.SemanticProgramContract));
-        });
-    }
-
-    [Test]
-    public void SyntaxStage_DoesNotExecuteSemanticBindingRules()
-    {
-        var bindingRuleRequests = 0;
-        var syntaxFactories = CreateCanonicalModuleFactories(() => new BindingProbeModule(() => bindingRuleRequests++));
-        var semanticFactories = new Func<IFrontendCoreModule>[]
-        {
-            () => new BindingProbeModule(() => bindingRuleRequests++)
-        };
-        var plan = CreatePlan();
-        var factory = CreateDirectFactory(syntaxFactories, semanticFactories, CreateCanonicalModuleFactories(), plan);
-        var context = CreateContext(plan, "2 + 3");
-
-        var syntax = factory.CreateFrontend().Transform("2 + 3", context);
-        Assert.That(bindingRuleRequests, Is.Zero, "Syntax must stop before semantic binding.");
-
-        _ = factory.CreateSemanticBinding().Transform(syntax, context);
-        Assert.That(bindingRuleRequests, Is.EqualTo(1), "Binding rules must be requested only by the semantic stage.");
-    }
-
-    [Test]
-    public void LoweringStage_MaterializesItsOwnFactories_NotSyntaxFactories()
-    {
-        var syntaxInstances = 0;
-        var loweringInstances = 0;
-        var plan = CreatePlan();
-        var factory = CreateDirectFactory(
-            CreateCanonicalModuleFactories(() => new SessionMarkerModule(() => Interlocked.Increment(ref syntaxInstances))),
-            semanticFactories: [],
-            loweringFactories: CreateCanonicalModuleFactories(() => new SessionMarkerModule(() => Interlocked.Increment(ref loweringInstances))),
-            plan);
-        var context = CreateContext(plan, "2 + 3");
-
-        var syntax = factory.CreateFrontend().Transform("2 + 3", context);
-        var afterSyntax = syntaxInstances;
-        var semantic = factory.CreateSemanticBinding().Transform(syntax, context);
-        _ = factory.CreateBytecodeLowering().Transform(semantic, context);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(afterSyntax, Is.EqualTo(1));
-            Assert.That(syntaxInstances, Is.EqualTo(afterSyntax), "Lowering must not recreate syntax-owned modules.");
-            Assert.That(loweringInstances, Is.EqualTo(1), "Lowering must create its own stage-local module instance.");
-        });
+        Assert.That(result.Value, Is.EqualTo(14d));
     }
 
     [Test]
@@ -119,48 +44,30 @@ public sealed class WistDirectArtifactStageTests
             Assert.That(textualOperation!.Operation, Is.EqualTo(WistSemanticOperations.Add));
             Assert.That(symbolicOperation.Operation, Is.EqualTo(textualOperation.Operation));
         });
-
-        var projectedSymbolic = WistSemanticNormalizer.ProjectForLegacyLowering(symbolicProgram);
-        var projectedTextual = WistSemanticNormalizer.ProjectForLegacyLowering(textualProgram);
-        Assert.Multiple(() =>
-        {
-            Assert.That(projectedSymbolic.NodeType, Is.EqualTo(ArithmeticSemanticLowering.AddNodeType));
-            Assert.That(projectedTextual.NodeType, Is.EqualTo(ArithmeticSemanticLowering.AddNodeType));
-            Assert.That(projectedSymbolic.LexemeValue, Is.Null);
-            Assert.That(projectedTextual.LexemeValue, Is.Null);
-        });
     }
 
     [Test]
-    public void LegacySemanticCompatibility_SnapshotsMutableAstState()
+    public void SemanticNormalization_SnapshotsMeaningWithoutRetainingMutableAst()
     {
-        var originalRootType = ExtensibleEnum<AstNodeTag>.CreateOrGet("LegacySnapshot.Root");
-        var originalChildType = ExtensibleEnum<AstNodeTag>.CreateOrGet("LegacySnapshot.Child");
-        var source = new AstNode(
-            originalRootType,
-            null,
-            [new AstNode(originalChildType, null, [])]);
-        source.AddTag("snapshot-before");
-
+        var source = new AstNode(ExtensibleEnum<AstNodeTag>.CreateOrGet("Addition"), null, []);
         var program = WistSemanticNormalizer.Normalize(source);
 
-        source.NodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("LegacySnapshot.MutatedRoot");
-        source.AddTag("snapshot-after");
-        source[0] = new AstNode(ExtensibleEnum<AstNodeTag>.CreateOrGet("LegacySnapshot.MutatedChild"), null, []);
+        source.NodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Subtraction");
 
-        var projected = WistSemanticNormalizer.ProjectForLegacyLowering(program);
-
+        var operation = program.Root as WistSemanticOperationNode;
         Assert.Multiple(() =>
         {
-            Assert.That(projected.NodeType, Is.EqualTo(originalRootType));
-            Assert.That(projected[0].NodeType, Is.EqualTo(originalChildType));
-            Assert.That(projected.CurrentTags, Does.Contain("snapshot-before"));
-            Assert.That(projected.CurrentTags, Does.Not.Contain("snapshot-after"));
+            Assert.That(operation, Is.Not.Null);
+            Assert.That(operation!.Operation, Is.EqualTo(WistSemanticOperations.Add));
             Assert.That(
-                typeof(WistLegacySemanticNode).GetProperties()
+                typeof(WistSemanticNode).Assembly
+                    .GetTypes()
+                    .Where(static type => type.Namespace == typeof(WistSemanticNode).Namespace)
+                    .Where(static type => typeof(WistSemanticNode).IsAssignableFrom(type))
+                    .SelectMany(static type => type.GetProperties())
                     .Any(static property => typeof(AstNode).IsAssignableFrom(property.PropertyType)),
                 Is.False,
-                "Semantic compatibility nodes must not expose live mutable AST nodes.");
+                "Semantic nodes must not expose live mutable AST nodes.");
         });
     }
 
@@ -179,39 +86,30 @@ public sealed class WistDirectArtifactStageTests
         foreach (var artifact in artifacts)
         foreach (var property in artifact.GetProperties())
         {
-            Assert.That(forbidden.Any(type => type.IsAssignableFrom(property.PropertyType)), Is.False,
+            Assert.That(
+                forbidden.Any(type => type.IsAssignableFrom(property.PropertyType)),
+                Is.False,
                 $"{artifact.Name}.{property.Name} exposes an executable component.");
             if (property.PropertyType.IsGenericType)
             {
-                Assert.That(property.PropertyType.GetGenericArguments().Any(argument => forbidden.Any(type => type.IsAssignableFrom(argument))), Is.False,
+                Assert.That(
+                    property.PropertyType.GetGenericArguments()
+                        .Any(argument => forbidden.Any(type => type.IsAssignableFrom(argument))),
+                    Is.False,
                     $"{artifact.Name}.{property.Name} exposes an executable component collection.");
             }
         }
     }
 
     [Test]
-    public void DirectFrontend_ConcurrentTransformsOwnIndependentStageLocalModuleInstances()
+    public void SemanticArtifact_ContainsSemanticProgramAndNoAstPayload()
     {
-        var instances = new ConcurrentBag<SessionMarkerModule>();
-        var factories = CreateCanonicalModuleFactories(() =>
-        {
-            var module = new SessionMarkerModule();
-            instances.Add(module);
-            return module;
-        });
-        var plan = CreatePlan();
-        var frontend = CreateDirectFactory(factories, [], [], plan).CreateFrontend();
-
-        var tasks = Enumerable.Range(0, 24)
-            .Select(index => Task.Run(() => frontend.Transform($"{index} + 1", CreateContext(plan, $"{index} + 1"))))
-            .ToArray();
-        Task.WaitAll(tasks);
+        var properties = typeof(WistSemanticArtifact).GetProperties();
 
         Assert.Multiple(() =>
         {
-            Assert.That(instances, Has.Count.EqualTo(24));
-            Assert.That(instances.Distinct().Count(), Is.EqualTo(24));
-            Assert.That(tasks.All(static task => task.Result.Root != null), Is.True);
+            Assert.That(properties.Any(static property => property.PropertyType == typeof(WistSemanticProgram)), Is.True);
+            Assert.That(properties.Any(static property => typeof(AstNode).IsAssignableFrom(property.PropertyType)), Is.False);
         });
     }
 
@@ -234,63 +132,8 @@ public sealed class WistDirectArtifactStageTests
         });
     }
 
-    private static WistDirectArtifactStageFactory CreateDirectFactory(
-        IReadOnlyList<Func<IFrontendCoreModule>> syntaxFactories,
-        IReadOnlyList<Func<IFrontendCoreModule>> semanticFactories,
-        IReadOnlyList<Func<IFrontendCoreModule>> loweringFactories,
-        LanguagePlan plan) => new(
-        static () => new BasicLexerImpl(),
-        static () => new BasicParserImpl(),
-        static () => new BasicAstToBytecodeTranslatorImpl(),
-        CreateMethodsTranslator,
-        syntaxFactories,
-        semanticFactories,
-        loweringFactories,
-        canonicalAddLowering: true,
-        new WistHostBindingAdapter(plan));
-
-    private static IAbstractMethodsTranslator CreateMethodsTranslator()
-    {
-        var services = new ServiceCollection();
-        services.AddCoreIntrinsicServices();
-        var provider = services.BuildServiceProvider();
-        return new BytecodeToAbstractIrConverterImpl(
-            provider.GetRequiredService<IInstructionIntrinsicReader>(),
-            provider.GetRequiredService<IIntrinsicTypeStackProcessor>());
-    }
-
-    private static LanguagePlan CreatePlan() =>
-        new LanguageCompiler(new LanguagePackageRegistry().AddPackage(new WistLanguageFeaturePackage()))
+    private static LanguagePlan CreatePlan(WistLanguageFeaturePackage package) =>
+        new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package))
             .Compile(WistLanguageDefinitions.Create(WistLanguageDefinitions.MinimalArithmeticId))
             .GetRequiredPlan();
-
-    private static LanguageArtifactTransformationContext CreateContext(LanguagePlan plan, string source) =>
-        new(plan, new LanguageExecutionRequest(source, Interpreter), new LanguageRuntimeOptions());
-
-    private static IReadOnlyList<Func<IFrontendCoreModule>> CreateCanonicalModuleFactories(Func<IFrontendCoreModule>? extra = null)
-    {
-        var factories = new List<Func<IFrontendCoreModule>>
-        {
-            static () => new ArithmeticModuleImpl(),
-            static () => new NumbersModuleImpl(),
-            static () => new WhitespaceModuleImpl()
-        };
-        if (extra != null)
-            factories.Add(extra);
-        return factories;
-    }
-
-    private sealed class BindingProbeModule(Action onBindingRules) : IFrontendCoreModule
-    {
-        public IReadOnlyList<IAstBindingRule> GetAstBindingRules()
-        {
-            onBindingRules();
-            return [];
-        }
-    }
-
-    private sealed class SessionMarkerModule : IFrontendCoreModule
-    {
-        public SessionMarkerModule(Action? onCreate = null) => onCreate?.Invoke();
-    }
 }
