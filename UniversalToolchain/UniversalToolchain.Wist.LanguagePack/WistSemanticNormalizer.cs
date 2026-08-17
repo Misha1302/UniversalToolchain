@@ -27,10 +27,10 @@ internal static class WistSemanticNormalizer
         {
             "Program" => new WistSemanticSequenceNode(
                 WistSemanticSequenceKind.Program,
-                node.Children.Select(NormalizeNode)),
+                NormalizeSequenceChildren(node)),
             "Scope" => new WistSemanticSequenceNode(
                 WistSemanticSequenceKind.Scope,
-                node.Children.Select(NormalizeNode)),
+                NormalizeSequenceChildren(node)),
             "Number" => new WistNumberNode(ParseRealNumber(node)),
             "NativeNumber" => new WistNativeNumberNode(
                 WistNativeLiteralValue.FromRuntimeValue(NativeTypesModuleImpl.ParseNumber(RequiredText(node)))),
@@ -70,6 +70,11 @@ internal static class WistSemanticNormalizer
                 $"Unsupported Wist semantic construct '{unsupported}'. No syntax node may cross the semantic boundary.")
         };
     }
+
+    private static IEnumerable<WistSemanticNode> NormalizeSequenceChildren(AstNode node) =>
+        node.Children
+            .Where(static child => child.NodeType.GetName() != "NewLine")
+            .Select(NormalizeNode);
 
     private static WistSemanticOperationNode Operation(WistSemanticOperationId operation, AstNode node) =>
         new(operation, node.Children.Select(NormalizeNode));
