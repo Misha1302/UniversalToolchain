@@ -114,10 +114,10 @@ internal static class WistSemanticNormalizer
     private static WistAssignmentNode NormalizeAssignment(AstNode node)
     {
         if (node.Children.Count != 2)
-            throw new InvalidOperationException("Wist assignment must contain exactly one target and one value.");
+            throw InvalidTree("Wist assignment must contain exactly one target and one value.");
 
         if (NormalizeNode(node.Children[0]) is not WistSymbolReferenceNode target)
-            throw new InvalidOperationException("Wist assignment target must resolve to a bound symbol reference.");
+            throw InvalidTree("Wist assignment target must resolve to a bound symbol reference.");
 
         return new WistAssignmentNode(target, NormalizeNode(node.Children[1]));
     }
@@ -125,7 +125,7 @@ internal static class WistSemanticNormalizer
     private static WistShortCircuitNode ShortCircuit(AstNode node, bool isAnd)
     {
         if (node.Children.Count != 2)
-            throw new InvalidOperationException($"Boolean {(isAnd ? "and" : "or")} requires exactly two operands.");
+            throw InvalidTree($"Boolean {(isAnd ? "and" : "or")} requires exactly two operands.");
 
         return new WistShortCircuitNode(
             isAnd,
@@ -139,7 +139,7 @@ internal static class WistSemanticNormalizer
     private static WistConditionalBranchNode NormalizeConditional(AstNode node)
     {
         if (node.Children.Count < 2)
-            throw new InvalidOperationException("Wist conditional branch requires a condition and body.");
+            throw InvalidTree("Wist conditional branch requires a condition and body.");
 
         return new WistConditionalBranchNode(
             NormalizeNode(node.Children[0]),
@@ -152,14 +152,14 @@ internal static class WistSemanticNormalizer
     private static WistElseNode NormalizeElse(AstNode node)
     {
         if (node.Children.Count != 1)
-            throw new InvalidOperationException("Wist else branch must contain exactly one body node.");
+            throw InvalidTree("Wist else branch must contain exactly one body node.");
         return new WistElseNode(NormalizeNode(node.Children[0]));
     }
 
     private static WistIfExpressionNode NormalizeIfExpression(AstNode node)
     {
         if (node.Children.Count != 3)
-            throw new InvalidOperationException("IfExpression node must contain condition, true branch, and false branch.");
+            throw InvalidTree("IfExpression node must contain condition, true branch, and false branch.");
         return new WistIfExpressionNode(
             NormalizeNode(node.Children[0]),
             NormalizeNode(node.Children[1]),
@@ -169,7 +169,7 @@ internal static class WistSemanticNormalizer
     private static WistWhileNode NormalizeWhile(AstNode node)
     {
         if (node.Children.Count != 2)
-            throw new InvalidOperationException("Wist while loop requires a condition and body.");
+            throw InvalidTree("Wist while loop requires a condition and body.");
         return new WistWhileNode(
             NormalizeNode(node.Children[0]),
             NormalizeNode(node.Children[1]),
@@ -180,7 +180,7 @@ internal static class WistSemanticNormalizer
     private static WistForNode NormalizeFor(AstNode node)
     {
         if (node.Children.Count != 4)
-            throw new InvalidOperationException("Wist for loop requires initialization, condition, step, and body.");
+            throw InvalidTree("Wist for loop requires initialization, condition, step, and body.");
         return new WistForNode(
             NormalizeNode(node.Children[0]),
             NormalizeNode(node.Children[1]),
@@ -193,17 +193,17 @@ internal static class WistSemanticNormalizer
     private static WistGotoNode NormalizeGoto(AstNode node)
     {
         if (node.Children.Count == 0)
-            throw new InvalidOperationException("Wist goto requires a label target.");
+            throw InvalidTree("Wist goto requires a label target.");
         return new WistGotoNode(RequiredText(node.Children[0]));
     }
 
     private static WistFunctionCallNode NormalizeFunctionCall(AstNode node)
     {
         if (string.IsNullOrWhiteSpace(node.Text))
-            throw new InvalidOperationException("Function call node must contain a function identifier.");
+            throw InvalidTree("Function call node must contain a function identifier.");
         var argumentsScope = node.Children.FirstOrDefault();
         if (argumentsScope?.NodeType.GetName() != "Scope")
-            throw new InvalidOperationException($"Function call '{node.Text}' must contain an argument scope.");
+            throw InvalidTree($"Function call '{node.Text}' must contain an argument scope.");
         return new WistFunctionCallNode(node.Text, NormalizeCallArguments(node.Text, argumentsScope));
     }
 
@@ -212,8 +212,12 @@ internal static class WistSemanticNormalizer
         var fullName = RequiredText(node);
         var argumentsScope = node.Children.FirstOrDefault();
         if (argumentsScope?.NodeType.GetName() != "Scope")
-            throw new InvalidOperationException($"C# function call '{fullName}' must contain an argument scope.");
-        return new WistCSharpCallNode(fullName, NormalizeCallArguments(fullName, argumentsScope));
+            throw InvalidTree($"C# function call '{fullName}' must contain an argument scope.");
+
+        // CSharpInterop's established AST contract stores each parsed argument directly as a child
+        // of the scope. Preserve that contract here instead of applying the FunctionCalls comma
+        // segmentation rule, which belongs to the separate builtin-function AST shape.
+        return new WistCSharpCallNode(fullName, argumentsScope.Children.Select(NormalizeNode));
     }
 
     private static IReadOnlyList<WistSemanticNode> NormalizeCallArguments(string functionName, AstNode argumentsScope)
@@ -239,7 +243,7 @@ internal static class WistSemanticNormalizer
         }
 
         if (previousWasSeparator)
-            throw new InvalidOperationException($"Function call '{functionName}' contains an empty argument.");
+            throw InvalidTree($"Function call '{functionName}' contains an empty argument.");
         AddArgument(functionName, arguments, currentSegment);
         return arguments;
     }
@@ -250,9 +254,9 @@ internal static class WistSemanticNormalizer
         IReadOnlyList<AstNode> segment)
     {
         if (segment.Count == 0)
-            throw new InvalidOperationException($"Function call '{functionName}' contains an empty argument.");
+            throw InvalidTree($"Function call '{functionName}' contains an empty argument.");
         if (segment.Count != 1)
-            throw new InvalidOperationException($"Function call '{functionName}' argument is not a single expression node.");
+            throw InvalidTree($"Function call '{functionName}' argument is not a single expression node.");
         arguments.Add(NormalizeNode(segment[0]));
     }
 
@@ -263,8 +267,11 @@ internal static class WistSemanticNormalizer
     }
 
     private static string RequiredText(AstNode node) =>
-        node.LexemeValue?.Text ?? node.Text ?? throw new InvalidOperationException(
+        node.LexemeValue?.Text ?? node.Text ?? throw InvalidTree(
             $"Wist syntax node '{node.NodeType}' does not contain required text.");
+
+    private static InvalidOperationException InvalidTree(string detail) =>
+        new($"Tree is invalid: {detail}");
 
     private static Guid CreateDeterministicControlFlowLabel(AstNode node, string prefix, string role)
     {
