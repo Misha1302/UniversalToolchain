@@ -12,7 +12,9 @@ using IntermediateRepresentationAbstractions;
 using NativeMathModule;
 using NumbersModule.Contracts;
 using NumbersModule.Core;
+using UniversalToolchain.Capabilities.Core;
 using UniversalToolchain.Language.Abstractions;
+using UniversalToolchain.LanguageSdk;
 using UniversalToolchain.ModuleContracts;
 using VariablesModule.Contracts;
 
@@ -157,5 +159,4 @@ internal sealed partial class WistSemanticBytecodeLowerer
         foreach (var child in sequence.Children)
             LowerNode(child, bytecode);
     }
-
 }
