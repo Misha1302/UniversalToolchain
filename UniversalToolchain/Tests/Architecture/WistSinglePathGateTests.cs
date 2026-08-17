@@ -1,8 +1,10 @@
 namespace Tests.Architecture;
 
-internal static class WistSinglePathGate
+[SetUpFixture]
+public sealed class WistSinglePathGateSetup
 {
-    public static void AssertCanonicalAndMutations()
+    [OneTimeSetUp]
+    public void AssertCanonicalAndMutations()
     {
         var clean = ReadGateInput();
         var cleanViolations = Analyze(clean);
