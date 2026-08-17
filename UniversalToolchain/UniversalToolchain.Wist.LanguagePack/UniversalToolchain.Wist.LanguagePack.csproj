@@ -27,6 +27,8 @@
     <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\AssemblyFinder\AssemblyFinder.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\BasicCore\BasicCore.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\AbstractIrExtensions\AbstractIrExtensions.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\DynamicMethodWrapper\DynamicMethodWrapper.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\BasicLexer\BasicLexer.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\BasicParser\BasicParser.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\AbstractIrConverters\AbstractIrConverters.csproj" PrivateAssets="all" />
