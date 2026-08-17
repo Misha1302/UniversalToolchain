@@ -1,4 +1,4 @@
-using BasicCore.Contracts;
+using BasicCore.Binding;
 using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
 using UniversalToolchain.LanguageSdk;
@@ -12,27 +12,23 @@ internal static class WistModulePhaseSlots
 }
 
 /// <summary>
-/// Materializes the explicit phase responsibilities declared by the canonical Wist runtime component descriptors.
-/// Runtime stages consume only the phase contributions captured by <see cref="LanguagePlan"/> and never infer
-/// lowering from a syntax artifact or from the historical combined module implementation shape.
+/// Derives Wist phase ownership from executable phase-specific implementations instead of manual role flags.
 /// </summary>
 internal static class WistModulePhaseOwnership
 {
     private const string ModulePrefix = "wist.module.";
 
     private static readonly IReadOnlyDictionary<LanguageContributionId, WistRuntimeComponentDescriptor> ModulesBySyntaxId =
-        WistRuntimeComponentCatalog.Modules
-            .Where(static component => OwnsPhase(component, WistFrontendPhaseRoles.Syntax))
-            .ToDictionary(static component => component.ContributionId);
+        WistRuntimeComponentCatalog.Modules.ToDictionary(static component => component.ContributionId);
 
     private static readonly IReadOnlyDictionary<LanguageContributionId, WistRuntimeComponentDescriptor> ModulesBySemanticId =
         WistRuntimeComponentCatalog.Modules
-            .Where(static component => OwnsPhase(component, WistFrontendPhaseRoles.Semantics))
+            .Where(static component => component.SemanticBindingRulesFactory != null)
             .ToDictionary(static component => SemanticContributionId(component.ContributionId));
 
     private static readonly IReadOnlyDictionary<LanguageContributionId, WistRuntimeComponentDescriptor> ModulesByLoweringId =
         WistRuntimeComponentCatalog.Modules
-            .Where(static component => OwnsPhase(component, WistFrontendPhaseRoles.Lowering))
+            .Where(static component => WistSemanticBytecodeLowerer.SupportsModuleContribution(component.ContributionId))
             .ToDictionary(static component => LoweringContributionId(component.ContributionId));
 
     public static IReadOnlyList<LanguageContributionId> ExpandFeatureContributions(
@@ -45,9 +41,9 @@ internal static class WistModulePhaseOwnership
             expanded.Add(contribution);
             if (!ModulesBySyntaxId.TryGetValue(contribution, out var component))
                 continue;
-            if (OwnsPhase(component, WistFrontendPhaseRoles.Semantics))
+            if (component.SemanticBindingRulesFactory != null)
                 expanded.Add(SemanticContributionId(contribution));
-            if (OwnsPhase(component, WistFrontendPhaseRoles.Lowering))
+            if (WistSemanticBytecodeLowerer.SupportsModuleContribution(contribution))
                 expanded.Add(LoweringContributionId(contribution));
         }
         return expanded.Distinct().ToArray();
@@ -60,7 +56,7 @@ internal static class WistModulePhaseOwnership
         ArgumentNullException.ThrowIfNull(component);
         ArgumentNullException.ThrowIfNull(supportedBackends);
 
-        var ownsSemantics = OwnsPhase(component, WistFrontendPhaseRoles.Semantics);
+        var ownsSemantics = component.SemanticBindingRulesFactory != null;
         if (ownsSemantics)
         {
             yield return new LanguageContributionDescriptor(
@@ -73,7 +69,7 @@ internal static class WistModulePhaseOwnership
                 metadata: PhaseMetadata(component, "semantics"));
         }
 
-        if (OwnsPhase(component, WistFrontendPhaseRoles.Lowering))
+        if (WistSemanticBytecodeLowerer.SupportsModuleContribution(component.ContributionId))
         {
             var requires = ownsSemantics
                 ? new[] { SemanticContributionId(component.ContributionId) }
@@ -105,11 +101,6 @@ internal static class WistModulePhaseOwnership
     public static LanguageContributionId LoweringContributionId(LanguageContributionId syntaxContributionId) =>
         PhaseContributionId(syntaxContributionId, "lowering");
 
-    private static bool OwnsPhase(
-        WistRuntimeComponentDescriptor component,
-        WistFrontendPhaseRoles phase) =>
-        (component.FrontendPhaseRoles & phase) != 0;
-
     private static LanguageContributionId PhaseContributionId(LanguageContributionId syntaxContributionId, string phase)
     {
         if (!syntaxContributionId.Value.StartsWith(ModulePrefix, StringComparison.Ordinal))
@@ -131,73 +122,77 @@ internal static class WistModulePhaseOwnership
         };
 }
 
-internal enum WistPlannedModulePhase
+internal static class WistPlannedSemanticBindingActivation
 {
-    Semantics,
-    Lowering
-}
-
-internal static class WistPlannedModulePhaseActivation
-{
-    public static IReadOnlyList<Func<IFrontendCoreModule>> CreateOrderedFactories(
+    public static IReadOnlyList<IAstBindingRule> CreateOrderedRules(
         WistLanguageFeaturePackage package,
         LanguagePlan plan,
-        IServiceProvider services,
-        WistPlannedModulePhase phase)
+        IServiceProvider services)
     {
         ArgumentNullException.ThrowIfNull(package);
         ArgumentNullException.ThrowIfNull(plan);
         ArgumentNullException.ThrowIfNull(services);
 
-        var slot = phase == WistPlannedModulePhase.Semantics
-            ? WistModulePhaseSlots.Semantics
-            : WistModulePhaseSlots.Lowering;
         var selected = plan.Contributions
-            .Where(contribution => contribution.Contribution.Slot == slot)
+            .Where(contribution => contribution.Contribution.Slot == WistModulePhaseSlots.Semantics)
             .ToArray();
-        var factories = new List<Func<IFrontendCoreModule>>(selected.Length);
+        var rules = new List<IAstBindingRule>();
 
         foreach (var contribution in selected)
         {
-            if (IsCanonicalPhaseContribution(contribution.Contribution.Id, phase))
+            if (contribution.Contribution.Id == WistContributionIds.CanonicalAddSemantics)
             {
                 ValidatePackageBinding(package, contribution);
                 continue;
             }
 
-            var found = phase == WistPlannedModulePhase.Semantics
-                ? WistModulePhaseOwnership.TryGetSemanticComponent(contribution.Contribution.Id, out var component)
-                : WistModulePhaseOwnership.TryGetLoweringComponent(contribution.Contribution.Id, out component);
-            if (!found || component == null)
+            if (!WistModulePhaseOwnership.TryGetSemanticComponent(contribution.Contribution.Id, out var component)
+                || component == null)
             {
                 throw new InvalidOperationException(
-                    $"Planned Wist {phase.ToString().ToLowerInvariant()} contribution '{contribution.Contribution.Id.Value}' " +
-                    "has no exact phase-owned module implementation.");
+                    $"Planned Wist semantics contribution '{contribution.Contribution.Id.Value}' " +
+                    "has no phase-specific binding implementation.");
             }
 
             ValidatePackageBinding(package, contribution);
-            var moduleFactory = component.ModuleFactory ?? throw new InvalidOperationException(
-                $"Canonical Wist module '{component.ContributionId.Value}' has no activation factory.");
-            factories.Add(() =>
+            var factory = component.SemanticBindingRulesFactory ?? throw new InvalidOperationException(
+                $"Wist semantics contribution '{contribution.Contribution.Id.Value}' has no binding-rule factory.");
+            var created = factory(services) ?? throw new InvalidOperationException(
+                $"Wist semantics contribution '{contribution.Contribution.Id.Value}' returned null binding rules.");
+            if (created.Any(static rule => rule == null))
             {
-                var instance = moduleFactory(services);
-                if (instance is not IFrontendCoreModule module)
-                {
-                    throw new InvalidOperationException(
-                        $"Wist {phase.ToString().ToLowerInvariant()} module factory '{contribution.Contribution.Id.Value}' returned " +
-                        $"'{instance.GetType().FullName}', which does not implement '{typeof(IFrontendCoreModule).FullName}'.");
-                }
-                return module;
-            });
+                throw new InvalidOperationException(
+                    $"Wist semantics contribution '{contribution.Contribution.Id.Value}' returned a null binding rule.");
+            }
+            rules.AddRange(created);
         }
 
-        return factories;
+        return rules;
     }
 
-    private static bool IsCanonicalPhaseContribution(LanguageContributionId contributionId, WistPlannedModulePhase phase) =>
-        phase == WistPlannedModulePhase.Semantics
-            ? contributionId == WistContributionIds.CanonicalAddSemantics
-            : contributionId == WistContributionIds.CanonicalAddLowering;
+    public static void ValidatePlannedLowering(
+        WistLanguageFeaturePackage package,
+        LanguagePlan plan)
+    {
+        ArgumentNullException.ThrowIfNull(package);
+        ArgumentNullException.ThrowIfNull(plan);
+
+        foreach (var contribution in plan.Contributions
+                     .Where(contribution => contribution.Contribution.Slot == WistModulePhaseSlots.Lowering))
+        {
+            ValidatePackageBinding(package, contribution);
+            if (contribution.Contribution.Id == WistContributionIds.CanonicalAddLowering)
+                continue;
+            if (!WistModulePhaseOwnership.TryGetLoweringComponent(contribution.Contribution.Id, out var component)
+                || component == null
+                || !WistSemanticBytecodeLowerer.SupportsModuleContribution(component.ContributionId))
+            {
+                throw new InvalidOperationException(
+                    $"Planned Wist lowering contribution '{contribution.Contribution.Id.Value}' " +
+                    "has no native semantic-to-bytecode implementation.");
+            }
+        }
+    }
 
     private static void ValidatePackageBinding(
         WistLanguageFeaturePackage package,

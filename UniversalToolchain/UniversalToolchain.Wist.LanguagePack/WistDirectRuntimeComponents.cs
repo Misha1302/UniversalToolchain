@@ -1,6 +1,5 @@
 using AbstractIrConverters;
 using BasicCilCompiler.Execution;
-using BasicCodeTranslator;
 using BasicCore.Capabilities;
 using BasicCore.Compilation;
 using BasicCore.Contracts;
@@ -79,8 +78,12 @@ internal static class WistDirectRuntimeComponents
                         context.Plan,
                         [WistFrontendModuleActivation.CreateBuiltInSource(package)],
                         activation.Services);
-                    var stageFactory = CreateStageFactory(context.Plan, syntaxFactories: factories);
-                    return new OwnedFrontendTransformer(stageFactory.CreateFrontend(), activation.Services, DirectTraits);
+                    var transformer = new WistDirectFrontendTransformer(
+                        static () => new BasicLexerImpl(),
+                        static () => new BasicParserImpl(),
+                        factories,
+                        new WistHostBindingAdapter(context.Plan));
+                    return new OwnedFrontendTransformer(transformer, activation.Services, DirectTraits);
                 }
                 catch
                 {
@@ -98,14 +101,12 @@ internal static class WistDirectRuntimeComponents
                 var activation = CreateActivationServices(context.Plan, context.Options);
                 try
                 {
-                    var factories = WistPlannedModulePhaseActivation.CreateOrderedFactories(
+                    var rules = WistPlannedSemanticBindingActivation.CreateOrderedRules(
                         package,
                         context.Plan,
-                        activation.Services,
-                        WistPlannedModulePhase.Semantics);
-                    var stageFactory = CreateStageFactory(context.Plan, semanticFactories: factories);
+                        activation.Services);
                     return new OwnedSemanticTransformer(
-                        stageFactory.CreateSemanticBinding(),
+                        new WistDirectSemanticTransformer(rules),
                         activation.Services,
                         LanguageRuntimeComponentTraits.DeterministicNoHostInterop);
                 }
@@ -124,13 +125,16 @@ internal static class WistDirectRuntimeComponents
                 var activation = CreateActivationServices(context.Plan, context.Options);
                 try
                 {
-                    var factories = WistPlannedModulePhaseActivation.CreateOrderedFactories(
-                        package,
+                    WistPlannedSemanticBindingActivation.ValidatePlannedLowering(package, context.Plan);
+                    var lowerer = new WistSemanticBytecodeLowerer(
                         context.Plan,
+                        activation.Services.GetRequiredService<CapabilityCatalog>(),
+                        activation.Services.GetRequiredService<IMethodResolver>(),
+                        activation.Services.GetRequiredService<ITypeCatalog>());
+                    return new OwnedBytecodeTransformer(
+                        new WistDirectBytecodeTransformer(lowerer),
                         activation.Services,
-                        WistPlannedModulePhase.Lowering);
-                    var stageFactory = CreateStageFactory(context.Plan, loweringFactories: factories);
-                    return new OwnedBytecodeTransformer(stageFactory.CreateBytecodeLowering(), activation.Services, DirectTraits);
+                        DirectTraits);
                 }
                 catch
                 {
@@ -143,22 +147,6 @@ internal static class WistDirectRuntimeComponents
         LanguageTransformerRegistration.Create<WistBytecodeArtifact, WistAirArtifact>(
             WistContributionIds.LoweringToAir, WistDirectArtifactKinds.Bytecode, WistDirectArtifactKinds.Air, DirectTraits,
             _ => new TraitsOverrideTransformer<WistBytecodeArtifact, WistAirArtifact>(new WistDirectAirTransformer(CreateMethodsTranslator), DirectTraits));
-
-    private static WistDirectArtifactStageFactory CreateStageFactory(
-        LanguagePlan plan,
-        IReadOnlyList<Func<IFrontendCoreModule>>? syntaxFactories = null,
-        IReadOnlyList<Func<IFrontendCoreModule>>? semanticFactories = null,
-        IReadOnlyList<Func<IFrontendCoreModule>>? loweringFactories = null) =>
-        new(
-            static () => new BasicLexerImpl(),
-            static () => new BasicParserImpl(),
-            static () => new BasicAstToBytecodeTranslatorImpl(),
-            CreateMethodsTranslator,
-            syntaxFactories ?? [],
-            semanticFactories ?? [],
-            loweringFactories ?? [],
-            HasPlannedContribution(plan, WistContributionIds.CanonicalAddLowering),
-            new WistHostBindingAdapter(plan));
 
     private static WistActivationServices CreateActivationServices(LanguagePlan plan, LanguageRuntimeOptions options)
     {
@@ -173,9 +161,6 @@ internal static class WistDirectRuntimeComponents
         serviceCollection.AddSingleton(capabilityCatalog);
         return new WistActivationServices(serviceCollection.BuildServiceProvider());
     }
-
-    private static bool HasPlannedContribution(LanguagePlan plan, LanguageContributionId contributionId) =>
-        plan.Contributions.Any(contribution => contribution.Contribution.Id == contributionId);
 
     private static LanguageTransformerRegistration CreateOptimizerRegistration(WistRuntimeComponentDescriptor component) =>
         LanguageTransformerRegistration.Create<WistAirArtifact, WistAirArtifact>(component.ContributionId, WistDirectArtifactKinds.Air, WistDirectArtifactKinds.Air, DirectTraits,
