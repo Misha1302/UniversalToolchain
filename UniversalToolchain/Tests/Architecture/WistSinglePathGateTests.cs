@@ -1,22 +1,12 @@
 namespace Tests.Architecture;
 
-[TestFixture]
-public sealed class WistSinglePathGateTests
+internal static class WistSinglePathGate
 {
-    [Test]
-    public void CanonicalWistRuntime_HasOneSemanticToBytecodeOwnerAndNoAstProjectionFallback()
-    {
-        var input = ReadGateInput();
-        var violations = Analyze(input);
-
-        Assert.That(violations, Is.Empty, string.Join(Environment.NewLine, violations));
-    }
-
-    [Test]
-    public void SinglePathGate_KillsRepresentativeProjectionFallbackAndDuplicateOwnerMutations()
+    public static void AssertCanonicalAndMutations()
     {
         var clean = ReadGateInput();
-        Assert.That(Analyze(clean), Is.Empty, "Mutation proof requires a clean canonical input first.");
+        var cleanViolations = Analyze(clean);
+        Assert.That(cleanViolations, Is.Empty, string.Join(Environment.NewLine, cleanViolations));
 
         var mutations = new (string Name, GateInput Input)[]
         {
