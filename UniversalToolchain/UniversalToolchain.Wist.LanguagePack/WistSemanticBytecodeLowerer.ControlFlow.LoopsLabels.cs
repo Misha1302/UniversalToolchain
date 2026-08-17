@@ -20,11 +20,11 @@ namespace UniversalToolchain.Wist.LanguagePack;
 
 internal sealed partial class WistSemanticBytecodeLowerer
 {
-    private static void RequireBooleanCondition(IAbstractMethodConvertable.Context context)
+    private static void RequireBooleanCondition(IReadOnlyList<Type> stackTypes)
     {
-        if (context.Stack.Count == 0)
+        if (stackTypes.Count == 0)
             Thrower.InvalidOpEx("IfExpression condition must leave a value on the stack.");
-        var conditionType = context.Stack[^1];
+        var conditionType = stackTypes[^1];
         if (conditionType != typeof(bool))
             Thrower.InvalidOpEx(
                 $"IfExpression condition must be boolean. Actual type: '{conditionType.FullName}'.");
@@ -32,13 +32,13 @@ internal sealed partial class WistSemanticBytecodeLowerer
 
     private static void StoreBranchResult(
         IAbstractIR il,
-        IAbstractMethodConvertable.Context context,
+        IReadOnlyList<Type> stackTypes,
         string resultLocalName,
         ref Type? resultType)
     {
-        if (context.Stack.Count == 0)
+        if (stackTypes.Count == 0)
             Thrower.InvalidOpEx("IfExpression branch must leave a value on the stack.");
-        var branchType = context.Stack[^1];
+        var branchType = stackTypes[^1];
         if (resultType == null)
             resultType = branchType;
         else if (resultType != branchType)
@@ -112,5 +112,4 @@ internal sealed partial class WistSemanticBytecodeLowerer
             LabelsContractIds.GotoNode,
             LabelsContractIds.Goto));
     }
-
 }
