@@ -56,7 +56,7 @@ public sealed class WistArchitectureRepairRegressionTests
     }
 
     [Test]
-    public void ModulePhaseOwnership_IsDerivedFromCanonicalComponentRoles()
+    public void ModulePhaseOwnership_IsDerivedFromExecutablePhaseImplementations()
     {
         var backend = new BackendId("interpreter");
 
@@ -64,8 +64,8 @@ public sealed class WistArchitectureRepairRegressionTests
         {
             var expanded = WistModulePhaseOwnership.ExpandFeatureContributions([component.ContributionId]);
             var declared = WistModulePhaseOwnership.CreatePhaseContributions(component, [backend]).ToArray();
-            var ownsSemantics = (component.FrontendPhaseRoles & WistFrontendPhaseRoles.Semantics) != 0;
-            var ownsLowering = (component.FrontendPhaseRoles & WistFrontendPhaseRoles.Lowering) != 0;
+            var ownsSemantics = component.SemanticBindingRulesFactory != null;
+            var ownsLowering = WistSemanticBytecodeLowerer.SupportsModuleContribution(component.ContributionId);
             var semanticId = WistModulePhaseOwnership.SemanticContributionId(component.ContributionId);
             var loweringId = WistModulePhaseOwnership.LoweringContributionId(component.ContributionId);
 
@@ -80,6 +80,14 @@ public sealed class WistArchitectureRepairRegressionTests
                     $"Semantic declaration drifted for '{component.ContributionId.Value}'.");
                 Assert.That(declared.Any(item => item.Id == loweringId), Is.EqualTo(ownsLowering),
                     $"Lowering declaration drifted for '{component.ContributionId.Value}'.");
+                Assert.That(
+                    WistModulePhaseOwnership.TryGetSemanticComponent(semanticId, out var semanticOwner),
+                    Is.EqualTo(ownsSemantics));
+                Assert.That(semanticOwner == component, Is.EqualTo(ownsSemantics));
+                Assert.That(
+                    WistModulePhaseOwnership.TryGetLoweringComponent(loweringId, out var loweringOwner),
+                    Is.EqualTo(ownsLowering));
+                Assert.That(loweringOwner == component, Is.EqualTo(ownsLowering));
             });
         }
     }
