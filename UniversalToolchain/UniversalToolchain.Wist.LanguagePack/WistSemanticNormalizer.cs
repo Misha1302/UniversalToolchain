@@ -131,9 +131,9 @@ internal static class WistSemanticNormalizer
             isAnd,
             NormalizeNode(node.Children[0]),
             NormalizeNode(node.Children[1]),
-            CreateLegacyCompatibleLabel(node, "conditions", "false"),
-            CreateLegacyCompatibleLabel(node, "conditions", "true"),
-            CreateLegacyCompatibleLabel(node, "conditions", "end"));
+            CreateDeterministicControlFlowLabel(node, "conditions", "false"),
+            CreateDeterministicControlFlowLabel(node, "conditions", "true"),
+            CreateDeterministicControlFlowLabel(node, "conditions", "end"));
     }
 
     private static WistConditionalBranchNode NormalizeConditional(AstNode node)
@@ -145,8 +145,8 @@ internal static class WistSemanticNormalizer
             NormalizeNode(node.Children[0]),
             NormalizeNode(node.Children[1]),
             node.Children.Skip(2).Select(NormalizeNode).ToArray(),
-            CreateLegacyCompatibleLabel(node, "conditions", "else"),
-            CreateLegacyCompatibleLabel(node, "conditions", "end"));
+            CreateDeterministicControlFlowLabel(node, "conditions", "else"),
+            CreateDeterministicControlFlowLabel(node, "conditions", "end"));
     }
 
     private static WistElseNode NormalizeElse(AstNode node)
@@ -173,8 +173,8 @@ internal static class WistSemanticNormalizer
         return new WistWhileNode(
             NormalizeNode(node.Children[0]),
             NormalizeNode(node.Children[1]),
-            CreateLegacyCompatibleLabel(node, "loops", "while-start"),
-            CreateLegacyCompatibleLabel(node, "loops", "while-end"));
+            CreateDeterministicControlFlowLabel(node, "loops", "while-start"),
+            CreateDeterministicControlFlowLabel(node, "loops", "while-end"));
     }
 
     private static WistForNode NormalizeFor(AstNode node)
@@ -186,8 +186,8 @@ internal static class WistSemanticNormalizer
             NormalizeNode(node.Children[1]),
             NormalizeNode(node.Children[2]),
             NormalizeNode(node.Children[3]),
-            CreateLegacyCompatibleLabel(node, "loops", "for-start"),
-            CreateLegacyCompatibleLabel(node, "loops", "for-end"));
+            CreateDeterministicControlFlowLabel(node, "loops", "for-start"),
+            CreateDeterministicControlFlowLabel(node, "loops", "for-end"));
     }
 
     private static WistGotoNode NormalizeGoto(AstNode node)
@@ -266,7 +266,7 @@ internal static class WistSemanticNormalizer
         node.LexemeValue?.Text ?? node.Text ?? throw new InvalidOperationException(
             $"Wist syntax node '{node.NodeType}' does not contain required text.");
 
-    private static Guid CreateLegacyCompatibleLabel(AstNode node, string prefix, string role)
+    private static Guid CreateDeterministicControlFlowLabel(AstNode node, string prefix, string role)
     {
         var path = new Stack<int>();
         for (var current = node; current.Parent is { } parent; current = parent)
