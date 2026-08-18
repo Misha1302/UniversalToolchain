@@ -7,6 +7,7 @@ public sealed class WistUseCaseRecipeTests
 {
     private const string DocumentedRolloutFormula =
         "usage * 0.7 + reliability * 0.3 - incidents * 15.0";
+    private const double DocumentedRolloutExpectedScore = 82.0;
 
     [Test]
     public void RolloutScoreRecipe_UsesDocumentedFormulaThroughPublicFacade()
@@ -33,7 +34,7 @@ public sealed class WistUseCaseRecipeTests
         {
             Assert.That(validation.IsValid, Is.True);
             Assert.That(validation.Diagnostics, Is.Empty);
-            Assert.That(score, Is.EqualTo(82.0).Within(1e-9));
+            Assert.That(score, Is.EqualTo(DocumentedRolloutExpectedScore).Within(1e-9));
         });
     }
 }
