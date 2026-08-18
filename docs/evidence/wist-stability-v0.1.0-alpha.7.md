@@ -3,7 +3,7 @@ title: Wist 0.1.0-alpha.7 Candidate Stability
 description: Source-candidate contract for Wist architecture and production hardening over the canonical LanguagePlan runtime.
 audience: wist-application-developer
 status: source-candidate
-lastVerifiedAgainst: architecture-production-hardening-2026-08-12
+lastVerifiedAgainst: wist-release-readiness-2026-08-18
 ---
 
 # Wist 0.1.0-alpha.7 candidate stability
@@ -68,7 +68,7 @@ One `WistEngine` instance is not advertised as concurrently reentrant. Overlappi
 
 ## Verification boundary
 
-The hardening branch declares an exact repository test manifest of 1,290 tests across the canonical suites and keeps the existing benchmark smoke, PlanFuzz regression, architecture guards/mutants, package-surface and clean-consumer gates. The baseline-bearing package gate is required because package payload identities changed.
+The source tree declares an exact repository test manifest of 1,306 tests across the canonical suites and keeps the existing benchmark smoke, PlanFuzz regression, architecture guards/mutants, package-surface and clean-consumer gates. The baseline-bearing package gate is required because package payload identities changed.
 
 This document does **not** claim those gates are green for the final revision until the exact final commit has completed them. The pinned [verification snapshot](/evidence/current-verification) and the integration-review report are authoritative for the exact revision that was actually checked.
 
