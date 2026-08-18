@@ -2,15 +2,12 @@
 param(
     [Parameter(Mandatory = $true, Position = 0)]
     [ValidateNotNullOrEmpty()]
-    [string]$PackageVersion,
-
-    [Parameter()]
-    [ValidateNotNullOrEmpty()]
-    [string]$NuGetSource = "https://api.nuget.org/v3/index.json"
+    [string]$PackageVersion
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+$NuGetSource = "https://api.nuget.org/v3/index.json"
 
 $smokeDir = Join-Path ([System.IO.Path]::GetTempPath()) ("wist-published-smoke-" + [Guid]::NewGuid().ToString("N"))
 
@@ -159,7 +156,7 @@ Console.WriteLine($"RESULT={score:R}");
     }
     $metadata = Get-Content -LiteralPath $metadataPath -Raw
     if (-not $metadata.Contains($NuGetSource, [StringComparison]::Ordinal)) {
-        throw "Published-package smoke failed at stage 'package-source': package metadata does not record the requested public feed."
+        throw "Published-package smoke failed at stage 'package-source': package metadata does not record the public NuGet.org feed."
     }
 
     Write-Host "Published UniversalToolchain.Wist $PackageVersion smoke passed."
