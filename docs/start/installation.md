@@ -3,7 +3,7 @@ title: Installation
 description: Install the published Wist package or prepare the current repository source safely.
 audience: wist-application-developer
 status: current
-lastVerifiedAgainst: wist-release-state-2026-08-12
+lastVerifiedAgainst: wist-release-readiness-2026-08-18
 ---
 
 # Installation
@@ -36,10 +36,18 @@ The package page is <https://www.nuget.org/packages/UniversalToolchain.Wist>.
 
 ### Clean-room published-package check
 
-The repository smoke script creates a temporary `net10.0` project, isolates NuGet caches, restores only from NuGet.org, compiles and evaluates formulas and verifies a rejected statement-style rule:
+The repository smoke scripts create a temporary `net10.0` project, isolate NuGet caches, restore only from NuGet.org, compile and evaluate formulas and verify a rejected statement-style rule. They test the published package boundary, not a sandbox/security boundary.
+
+Linux/macOS:
 
 ```bash ci-run=false
 ./Tools/smoke-published-wist-package.sh 0.1.0-alpha.1
+```
+
+Windows with PowerShell 7:
+
+```powershell
+pwsh -File .\Tools\smoke-published-wist-package.ps1 -PackageVersion 0.1.0-alpha.1
 ```
 
 Expected final line:
@@ -47,6 +55,8 @@ Expected final line:
 ```text
 Published UniversalToolchain.Wist 0.1.0-alpha.1 smoke passed.
 ```
+
+Both scripts require the exact version explicitly and use an isolated temporary NuGet cache plus the public NuGet.org feed. The PowerShell script reports the failing stage and removes its temporary project in `finally` on both success and failure.
 
 ## Current source candidate
 
