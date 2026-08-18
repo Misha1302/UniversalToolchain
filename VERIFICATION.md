@@ -2,7 +2,7 @@
 
 ## Environment and authority
 
-- Record refreshed: 2026-08-15.
+- Record refreshed: 2026-08-18.
 - Target CI environment: GitHub Actions Ubuntu 24.04, Linux x64.
 - SDK policy: `UniversalToolchain/global.json` with .NET 10 feature-band roll-forward.
 - Ordinary integration command: `./build.sh --skip-docs --skip-pack`.
@@ -41,7 +41,10 @@ The repository implements and continuously verifies:
 - Wist-free generic implementation tests whose internal friend edges remain `UNIVERSAL -> UNIVERSAL`;
 - PlanFuzz fresh-process replay, evidence-complete classification and exact-fingerprint reduction;
 - a separate production-boundary B0/B1/B2 contract experiment;
-- a separately reported post-freeze review-derived holdout set.
+- a separately reported post-freeze review-derived holdout set;
+- public Wist rollout-scoring recipe parity between documentation and focused facade regression;
+- Linux and Windows clean-room smoke coverage for the currently published Wist package;
+- release-evidence test-count drift detection with a negative mutant.
 
 The retained product boundary remains a contribution/pass/route/runtime SDK rather than a declarative grammar, binder or type-system workbench. PlanFuzz and the contract experiments are non-packable research layers and do not extend the public Wist NuGet surface.
 
@@ -61,14 +64,14 @@ Parallel graph traversal and shared compilation are the default. `--jobs`, `--se
 |---|---:|---:|---:|
 | `Tests` | 500 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
-| `UniversalToolchain.Dialects.Tests` | 233 | 0 | 0 |
+| `UniversalToolchain.Dialects.Tests` | 234 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Generic.Tests` | 62 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 167 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,305** | **0** | **0** |
+| **Total** | **1,306** | **0** | **0** |
 
-The current candidate adds focused regressions for the real `Syntax -> Semantic -> Bytecode` boundary, syntax-mutation isolation, canonical Add convergence, independent stage-local activation, exact planned lowering fail-closed behavior, phase-owned module ordering, detached optimizer-contract provenance and hidden `UNIVERSAL -> WIST_PRODUCT` friend edges. Fifty-eight implementation-internal generic tests were moved out of mixed Wist-owned test assemblies rather than regaining forbidden friendship; together with the four existing generic ownership tests they form the 62-test Wist-free suite. The exact manifest is owned by `eng/test-counts.json`; provider-backed exact-head results are recorded against their commit/run identities rather than inferred from an older local TRX snapshot.
+The current candidate adds focused regressions for the real `Syntax -> Semantic -> Bytecode` boundary, syntax-mutation isolation, canonical Add convergence, independent stage-local activation, exact planned lowering fail-closed behavior, phase-owned module ordering, detached optimizer-contract provenance, hidden `UNIVERSAL -> WIST_PRODUCT` friend edges and the documented rollout-scoring public-facade path. Fifty-eight implementation-internal generic tests were moved out of mixed Wist-owned test assemblies rather than regaining forbidden friendship; together with the four existing generic ownership tests they form the 62-test Wist-free suite. The exact manifest is owned by `eng/test-counts.json`; provider-backed exact-head results are recorded against their commit/run identities rather than inferred from an older local TRX snapshot.
 
 ## Production-boundary contract experiment
 
@@ -149,7 +152,7 @@ The baseline-aware package gate verifies:
 - clean Wist consumer, template consumer and cross-package consumer;
 - detached release-integrity manifest and mutation tests.
 
-The package candidate is not published by verification. NuGet publication, merge and release remain separately authorized actions.
+The package candidate is not published by verification. NuGet publication, GitHub Release and release-tag creation remain separately authorized actions.
 
 ## PlanFuzz evidence boundary
 

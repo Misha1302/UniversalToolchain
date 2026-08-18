@@ -13,6 +13,8 @@ on:
       - 'Tools/test-documentation-*.py'
       - 'Tools/check-wist-documentation-*.py'
       - 'Tools/test-wist-documentation-*.py'
+      - 'Tools/check-wist-release-readiness-docs.py'
+      - 'Tools/test-wist-release-readiness-doc-mutants.py'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/docs-check.yml'
@@ -49,6 +51,9 @@ jobs:
 
       - name: Validate documentation structure, release state and links
         run: npm run docs:status && npm run docs:links
+
+      - name: Reject Wist release-readiness documentation mutants
+        run: npm run docs:readiness-mutants
 
       - name: Compile first-contact Wist documentation snippets
         run: npm run docs:first-contact
