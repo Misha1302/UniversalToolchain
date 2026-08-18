@@ -3,7 +3,7 @@ title: First Program
 description: Run the smallest useful Wist program from a published package or repository checkout.
 audience: wist-application-developer
 status: current
-lastVerifiedAgainst: wist-release-state-2026-08-06
+lastVerifiedAgainst: wist-release-readiness-2026-08-18
 ---
 
 # First Program
@@ -44,6 +44,47 @@ Console.WriteLine(result); // 95
 `Compile<TDelegate>` validates and compiles once. For expected invalid author input, use `Validate` or `TryCompile` and keep the last-known-good program active.
 
 The repository source may define a newer candidate than the published package. That does not make the candidate installable from NuGet.org.
+
+## Structured diagnostics for invalid formulas
+
+For configuration or admin UIs, consume the stable public fields on `WistDiagnostic` instead of parsing exception text. This example intentionally submits statement-style syntax to the restricted arithmetic preset:
+
+```csharp
+using UniversalToolchain.Wist;
+
+using var wist = WistEngine.CreateRestrictedArithmetic();
+
+var validation = wist.Validate(
+    "let score = usage * 0.7\nscore",
+    new { usage = 100.0 });
+
+if (validation.IsValid)
+{
+    throw new InvalidOperationException("Expected the restricted formula to be rejected.");
+}
+
+foreach (var diagnostic in validation.Diagnostics)
+{
+    Console.WriteLine($"code: {diagnostic.Code}");
+    Console.WriteLine($"severity: {diagnostic.Severity}");
+    Console.WriteLine($"stage: {diagnostic.Stage}");
+    Console.WriteLine($"source: {diagnostic.SourceName}");
+
+    if (diagnostic.Span is { } span)
+    {
+        Console.WriteLine(
+            $"span: {span.StartLine}:{span.StartColumn}-{span.EndLine}:{span.EndColumn}");
+    }
+
+    Console.WriteLine($"message: {diagnostic.Message}");
+    foreach (var hint in diagnostic.Hints)
+    {
+        Console.WriteLine($"hint: {hint.Message}");
+    }
+}
+```
+
+A diagnostic may have no `Span`; treat location as optional in stored records and UI models. `Code`, `Severity`, `Stage`, `SourceName`, optional `Span`, `Message` and `Hints` are the public structured contract to preserve. Validation or policy rejection means the selected language surface rejected the input; it is **not** OS/process isolation and does not turn the preset into a security sandbox. See [Diagnostics](/reference/diagnostics) for the deeper contract.
 
 ## Trusted C# interop example
 
