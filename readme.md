@@ -4,7 +4,7 @@
 [![NuGet Downloads](https://img.shields.io/nuget/dt/UniversalToolchain.Wist.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist)
 
 <p align="center">
-  <img src="docs/assets/wist-readme-hero.svg" alt="Wist validates restricted formulas and compiles approved rules into typed .NET delegates." width="80%" />
+  <img src="docs/assets/universaltoolchain-readme-hero.webp" alt="UniversalToolchain builds languages from reusable compiler features." width="80%" />
 </p>
 
 **Validate restricted formulas, then compile approved rules into typed .NET delegates.**
@@ -248,7 +248,7 @@ Read [the contribution guide](docs/CONTRIBUTING.md). Small documentation, diagno
 
 - [Promotion kit](internal-docs/maintainers/promotion-kit.md)
 - [Repository settings and launch checklist](internal-docs/maintainers/repository-settings.md)
-- README hero: [`docs/assets/wist-readme-hero.svg`](docs/assets/wist-readme-hero.svg)
+- README hero: [`docs/assets/universaltoolchain-readme-hero.webp`](docs/assets/universaltoolchain-readme-hero.webp)
 - Ready-to-upload social preview: [`docs/assets/wist-social-preview.png`](docs/assets/wist-social-preview.png)
 - Editable visual sources: [`wist-readme-hero.svg`](docs/assets/wist-readme-hero.svg) and [`wist-social-preview.svg`](docs/assets/wist-social-preview.svg)
 
