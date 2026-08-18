@@ -13,6 +13,7 @@ on:
       - .github/workflows/published-package-smoke.yml
       - Tools/check_documentation_release_state.py
       - Tools/smoke-published-wist-package.sh
+      - Tools/smoke-published-wist-package.ps1
       - eng/documentation-release-state.json
       - UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj
       - UniversalToolchain/UniversalToolchain.Wist/README.md
@@ -46,3 +47,27 @@ jobs:
 
       - name: Install and execute the published package
         run: ./Tools/smoke-published-wist-package.sh "${{ steps.release-state.outputs.version }}"
+
+  smoke-windows:
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+
+      - name: Resolve published package version
+        id: release-state
+        shell: pwsh
+        run: |
+          $version = python Tools/check_documentation_release_state.py --print-published-version
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Install and execute the published package
+        shell: pwsh
+        run: ./Tools/smoke-published-wist-package.ps1 -PackageVersion "${{ steps.release-state.outputs.version }}"
