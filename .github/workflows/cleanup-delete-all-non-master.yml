@@ -1,0 +1,41 @@
+name: Cleanup all non-master branches
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Delete every remote branch except master
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -t branches < <(
+            git ls-remote --heads origin \
+              | awk '{sub("refs/heads/", "", $2); print $2}' \
+              | sort -u
+          )
+
+          transport="${GITHUB_HEAD_REF:-}"
+
+          for branch in "${branches[@]}"; do
+            if [[ "$branch" == "master" || "$branch" == "$transport" ]]; then
+              continue
+            fi
+            echo "Deleting $branch"
+            git push origin --delete "$branch"
+          done
+
+          if [[ -n "$transport" && "$transport" != "master" ]]; then
+            echo "Deleting transport branch $transport"
+            git push origin --delete "$transport"
+          fi
