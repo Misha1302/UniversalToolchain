@@ -3,7 +3,7 @@ title: Use-case Recipes
 description: Copy-ready Wist examples for pricing, rollout scoring and LMS scoring.
 audience: wist-application-developer
 status: current
-lastVerifiedAgainst: wist-release-state-2026-08-06
+lastVerifiedAgainst: wist-release-readiness-2026-08-18
 ---
 
 # Use-case Recipes
@@ -50,6 +50,9 @@ The rule returns a number. The host still owns payment creation, authorization, 
 
 Keep rollout policy configurable without letting the formula enable a feature directly:
 
+<!-- wist-rollout-formula-contract: usage * 0.7 + reliability * 0.3 - incidents * 15.0 -->
+<!-- wist-rollout-expected-score: 82.0 -->
+
 ```csharp
 using UniversalToolchain.Wist;
 
@@ -60,7 +63,7 @@ var rolloutScore = rules.Compile<Func<double, double, double, double>>(
     "usage",
     "reliability",
     "incidents");
-double score = rolloutScore.CompiledDelegate(100.0, 90.0, 1.0);
+double score = rolloutScore.CompiledDelegate(100.0, 90.0, 1.0); // 82
 bool enableNewDashboard = score >= 80.0;
 ```
 
@@ -126,4 +129,4 @@ Do not use the restricted arithmetic preset when you need arbitrary C# execution
 
 ## Next
 
-Read the [Wist `0.1.0-alpha.6` source-candidate stability record](/evidence/wist-stability-v0.1.0-alpha.6), the pinned [verification snapshot](/evidence/current-verification), the [Performance Model](/reference/performance-model) and [Security](/SECURITY) before moving beyond the currently published package.
+Read the [Wist `0.1.0-alpha.7` source-candidate stability record](/evidence/wist-stability-v0.1.0-alpha.7), the pinned [verification snapshot](/evidence/current-verification), the [Performance Model](/reference/performance-model) and [Security](/SECURITY) before moving beyond the currently published package.
