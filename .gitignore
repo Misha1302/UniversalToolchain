@@ -47,3 +47,6 @@ project_code_bundle.md
 
 # Local .NET CLI state
 .dotnet-home/
+
+# Local NuGet verification feed
+UniversalToolchain/packages/*.nupkg

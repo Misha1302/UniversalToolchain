@@ -5,8 +5,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>14</LangVersion>
+    <UniversalToolchainSourceRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../../..'))</UniversalToolchainSourceRoot>
+    <BuildingInsideUniversalToolchainSource Condition="Exists('$(UniversalToolchainSourceRoot)/UniversalToolchain.LanguageAuthoring/UniversalToolchain.LanguageAuthoring.csproj')">true</BuildingInsideUniversalToolchainSource>
   </PropertyGroup>
-  <ItemGroup>
+  <ItemGroup Condition="'$(BuildingInsideUniversalToolchainSource)' == 'true'">
+    <ProjectReference Include="../../../UniversalToolchain.LanguageAuthoring/UniversalToolchain.LanguageAuthoring.csproj" />
+    <ProjectReference Include="../../../UniversalToolchain.LanguageSdk/UniversalToolchain.LanguageSdk.csproj" />
+    <ProjectReference Include="../../../UniversalToolchain.Runtime/UniversalToolchain.Runtime.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(BuildingInsideUniversalToolchainSource)' != 'true'">
     <PackageReference Include="UniversalToolchain.LanguageAuthoring" Version="0.3.0-alpha.5" />
     <PackageReference Include="UniversalToolchain.LanguageSdk" Version="0.3.0-alpha.5" />
     <PackageReference Include="UniversalToolchain.Runtime" Version="0.3.0-alpha.5" />

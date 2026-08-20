@@ -54,7 +54,7 @@ internal static class Program
             Observations: observations.Count,
             SelectiveAlwaysParity: cases.Count,
             PublicSdkBoundary: true,
-            WistReferences: 0,
+            CrossLanguageReferences: 0,
             Cases: cases,
             Results: observations);
         File.WriteAllText(Path.Combine(output, "results.json"), JsonSerializer.Serialize(result, JsonOptions) + "\n");
@@ -217,7 +217,7 @@ internal enum TensorPolicy { P0_STRUCTURAL, P1_INVALIDATION, P2_SELECTIVE, P3_AL
 internal enum CaseRole { Valid, Invalid, Fault }
 internal sealed record TensorCase(string Id, CaseRole Role, string Source, string? ExpectedOutput, string FaultId, string? ExpectedDiagnostic);
 internal sealed record Observation(string CaseId, TensorPolicy Policy, string Classification, string? Output, string? DiagnosticCode, int VerifierInvocations);
-internal sealed record StudyResult(int ValidExamples, int InvalidExamples, int FaultCases, int Observations, int SelectiveAlwaysParity, bool PublicSdkBoundary, int WistReferences, IReadOnlyList<TensorCase> Cases, IReadOnlyList<Observation> Results);
+internal sealed record StudyResult(int ValidExamples, int InvalidExamples, int FaultCases, int Observations, int SelectiveAlwaysParity, bool PublicSdkBoundary, int CrossLanguageReferences, IReadOnlyList<TensorCase> Cases, IReadOnlyList<Observation> Results);
 internal sealed record TensorSyntax(int LeftRows, int Inner, int RightRows, int RightColumns, string Layout)
 {
     public static TensorSyntax Parse(string source)

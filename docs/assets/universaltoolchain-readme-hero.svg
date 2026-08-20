@@ -7,41 +7,33 @@
     <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#a855f7"/></marker>
     <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#f59e0b"/></marker>
   </defs>
-
   <rect width="1600" height="800" fill="#000"/>
-
   <g font-family="Inter, Segoe UI, Arial, sans-serif">
     <text x="55" y="260" fill="#fff" font-size="80" font-weight="760" letter-spacing="-4">UniversalToolchain</text>
     <text x="56" y="374" fill="#4a8df6" font-size="58" font-weight="700">Build languages</text>
     <text x="56" y="450" fill="#4a8df6" font-size="58" font-weight="700">from reusable features.</text>
     <text x="56" y="542" fill="#b9bcc3" font-size="34" font-weight="500">Modular compiler framework for .NET</text>
   </g>
-
   <g font-family="Inter, Segoe UI, Arial, sans-serif">
     <rect x="820" y="165" width="245" height="96" rx="14" fill="none" stroke="#3b82f6" stroke-width="3"/>
     <text x="842" y="224" fill="#3b82f6" font-size="44" font-weight="700">+−</text>
     <text x="842" y="253" fill="#3b82f6" font-size="38" font-weight="700">×÷</text>
     <text x="920" y="225" fill="#fff" font-size="25">arithmetic</text>
-
     <rect x="820" y="278" width="245" height="96" rx="14" fill="none" stroke="#38c76f" stroke-width="3"/>
     <circle cx="866" cy="302" r="8" fill="none" stroke="#38c76f" stroke-width="3"/>
     <path d="M866 311V347M866 325H846V345M866 325H886V345M846 345H838M886 345H894" fill="none" stroke="#38c76f" stroke-width="3" stroke-linecap="round"/>
     <text x="920" y="335" fill="#fff" font-size="25">control flow</text>
-
     <rect x="820" y="391" width="245" height="96" rx="14" fill="none" stroke="#a855f7" stroke-width="3"/>
     <text x="842" y="449" fill="#a855f7" font-size="40" font-style="italic">f(x)</text>
     <text x="920" y="449" fill="#fff" font-size="25">functions</text>
-
     <rect x="820" y="504" width="245" height="96" rx="14" fill="none" stroke="#f59e0b" stroke-width="3"/>
     <text x="842" y="565" fill="#f59e0b" font-size="56" font-weight="300">+</text>
     <text x="920" y="562" fill="#fff" font-size="25">your feature</text>
   </g>
-
   <path d="M1065 213H1110Q1130 213 1138 234L1146 254" fill="none" stroke="#3b82f6" stroke-width="3" stroke-dasharray="6 7" marker-end="url(#arrow-blue)"/>
   <path d="M1065 326H1148" fill="none" stroke="#38c76f" stroke-width="3" stroke-dasharray="6 7" marker-end="url(#arrow-green)"/>
   <path d="M1065 439H1110Q1130 439 1138 421L1148 397" fill="none" stroke="#a855f7" stroke-width="3" stroke-dasharray="6 7" marker-end="url(#arrow-purple)"/>
   <path d="M1065 552H1110Q1130 552 1138 530L1147 509" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="6 7" marker-end="url(#arrow-orange)"/>
-
   <rect x="1150" y="230" width="198" height="344" rx="16" fill="#030303" stroke="#f5f5f5" stroke-width="3"/>
   <g transform="translate(1198 272)" fill="none" stroke="#f2f2f2" stroke-width="3">
     <path d="M0 30L46 2L92 28L46 55Z" stroke-dasharray="6 6"/>
@@ -54,14 +46,11 @@
     <text x="1249" y="526" fill="#c8c8c8" font-size="19">compose features</text>
     <text x="1249" y="552" fill="#c8c8c8" font-size="19">into a language</text>
   </g>
-
   <path d="M1348 334H1380Q1395 334 1395 317V260Q1395 245 1410 245H1436" fill="none" stroke="#3b82f6" stroke-width="3" marker-end="url(#arrow-blue)"/>
   <path d="M1348 470H1436" fill="none" stroke="#38c76f" stroke-width="3" marker-end="url(#arrow-green)"/>
-
   <rect x="1442" y="186" width="110" height="110" rx="16" fill="none" stroke="#3b82f6" stroke-width="3"/>
   <text x="1497" y="255" text-anchor="middle" fill="#4a8df6" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="46" font-weight="800">CIL</text>
   <text x="1497" y="342" text-anchor="middle" fill="#fff" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22">CIL Backend</text>
-
   <rect x="1442" y="414" width="110" height="110" rx="16" fill="none" stroke="#38c76f" stroke-width="3"/>
   <path d="M1474 451L1500 470L1474 491" fill="none" stroke="#38c76f" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M1514 493H1538" stroke="#38c76f" stroke-width="5" stroke-linecap="round"/>

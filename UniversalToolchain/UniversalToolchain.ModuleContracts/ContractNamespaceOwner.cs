@@ -17,7 +17,6 @@ public sealed record ContractNamespaceOwner
     }
 
     public static ContractNamespaceOwner Core { get; } = Reserved("core", "core");
-    public static ContractNamespaceOwner Wist { get; } = Reserved("wist", "wist");
     public static ContractNamespaceOwner Backend { get; } = Reserved("backend", "backend");
     public static ContractNamespaceOwner Optimizer { get; } = Reserved("optimizer", "optimizer");
     public static ContractNamespaceOwner ThirdParty { get; } = External("third-party");

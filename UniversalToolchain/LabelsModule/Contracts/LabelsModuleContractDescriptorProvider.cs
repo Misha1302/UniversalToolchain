@@ -4,7 +4,7 @@ namespace LabelsModule.Contracts;
 
 public sealed class LabelsModuleContractDescriptorProvider : IModuleContractDescriptorProvider
 {
-    public IReadOnlyList<ContractNamespaceOwner> NamespaceOwners => [ContractNamespaceOwner.Wist];
+    public IReadOnlyList<ContractNamespaceOwner> NamespaceOwners => [ContractNamespaceOwner.Reserved("wist", "wist")];
 
     public IReadOnlyList<IModuleContractFacet> GetFacets() =>
     [

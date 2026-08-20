@@ -432,19 +432,27 @@ public sealed class RuntimeLifecycleAndCanonicalizationTests
     public void CanonicalValidationManifests_ContainAllSdkTestsAndPackages()
     {
         var root = FindRepositoryRoot();
-        var tests = ReadTestProjects(Path.Combine(root, "eng", "test-counts.json"));
-        var packages = ReadManifest(Path.Combine(root, "eng", "package-projects.txt"));
+        var componentManifest = Path.Combine(root, "eng", "component.json");
+        var splitManifest = Path.Combine(root, "eng", "tests", "wist.json");
+        var tests = File.Exists(componentManifest)
+            ? ReadJsonStringArray(componentManifest, "tests")
+            : File.Exists(splitManifest)
+                ? ReadJsonStringArray(splitManifest, "projects")
+                : ReadTestProjects(Path.Combine(root, "eng", "test-counts.json"));
+        var packages = File.Exists(componentManifest)
+            ? ReadJsonStringArray(componentManifest, "packProjects")
+            : ReadManifest(Path.Combine(root, "eng", "package-projects.txt"))
+                .Where(static path => path.Contains("UniversalToolchain.Wist", StringComparison.Ordinal))
+                .ToArray();
 
         Assert.Multiple(() =>
         {
-            Assert.That(tests, Has.Count.EqualTo(7));
-            Assert.That(tests, Does.Contain("UniversalToolchain/UniversalToolchain.LanguageSdk.Generic.Tests/UniversalToolchain.LanguageSdk.Generic.Tests.csproj"));
+            Assert.That(tests, Has.Count.EqualTo(4));
             Assert.That(tests, Does.Contain("UniversalToolchain/UniversalToolchain.LanguageSdk.Tests/UniversalToolchain.LanguageSdk.Tests.csproj"));
-            Assert.That(tests, Does.Contain("UniversalToolchain/UniversalToolchain.PlanFuzz.Tests/UniversalToolchain.PlanFuzz.Tests.csproj"));
-            Assert.That(tests, Does.Contain("UniversalToolchain/UniversalToolchain.PlanFuzz.IntegrationTests/UniversalToolchain.PlanFuzz.IntegrationTests.csproj"));
-            Assert.That(packages, Has.Count.EqualTo(9));
+            Assert.That(tests, Does.Contain("UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolchain.Modules.Tests.csproj"));
+            Assert.That(packages, Has.Count.EqualTo(2));
             Assert.That(packages, Does.Contain("UniversalToolchain/UniversalToolchain.Wist.LanguagePack/UniversalToolchain.Wist.LanguagePack.csproj"));
-            Assert.That(packages, Does.Contain("UniversalToolchain/UniversalToolchain.Templates/UniversalToolchain.Templates.csproj"));
+            Assert.That(packages, Does.Contain("UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj"));
         });
     }
 
@@ -526,6 +534,16 @@ public sealed class RuntimeLifecycleAndCanonicalizationTests
         return $"{projectDirectory}/{projectName}.csproj";
     }
 
+    private static IReadOnlyList<string> ReadJsonStringArray(string path, string propertyName)
+    {
+        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        return document.RootElement.GetProperty(propertyName)
+            .EnumerateArray()
+            .Select(static entry => entry.GetString()!)
+            .OrderBy(static path => path, StringComparer.Ordinal)
+            .ToArray();
+    }
+
     private static IReadOnlyList<string> ReadManifest(string path) =>
         File.ReadAllLines(path)
             .Select(static line => line.Trim())
@@ -535,19 +553,24 @@ public sealed class RuntimeLifecycleAndCanonicalizationTests
     private static string FindRepositoryRoot()
     {
         var configured = Environment.GetEnvironmentVariable("UT_REPOSITORY_ROOT");
-        if (!string.IsNullOrWhiteSpace(configured) && File.Exists(Path.Combine(configured, "readme.md")))
+        if (!string.IsNullOrWhiteSpace(configured) && IsRepositoryRoot(configured))
             return Path.GetFullPath(configured);
 
         foreach (var start in new[] { AppContext.BaseDirectory, Environment.CurrentDirectory, TestContext.CurrentContext.WorkDirectory })
         {
             var current = new DirectoryInfo(start);
-            while (current != null && !File.Exists(Path.Combine(current.FullName, "readme.md")))
+            while (current != null && !IsRepositoryRoot(current.FullName))
                 current = current.Parent;
             if (current != null)
                 return current.FullName;
         }
         throw new InvalidOperationException("Repository root not found.");
     }
+
+    private static bool IsRepositoryRoot(string path) =>
+        File.Exists(Path.Combine(path, "readme.md")) ||
+        File.Exists(Path.Combine(path, "README.md")) ||
+        File.Exists(Path.Combine(path, "eng", "component.json"));
 
     private sealed record LifecycleFixture(AuthoredLanguagePackage Package, LanguagePlan Plan);
 

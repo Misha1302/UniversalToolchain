@@ -1,20 +1,17 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-    <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <LangVersion>14</LangVersion>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
-        <ProjectReference Include="..\CommonExceptions\CommonExceptions.csproj"/>
-        <ProjectReference Include="..\DotnetHelper\DotnetHelper.csproj"/>
-        <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
-        <ProjectReference Include="..\IntermediateRepresentationAbstractions\IntermediateRepresentationAbstractions.csproj"/>
-        <ProjectReference Include="..\ObjectExtensions\ObjectExtensions.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.ModuleContracts\UniversalToolchain.ModuleContracts.csproj"/>
-    </ItemGroup>
-
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>14</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BasicCore\BasicCore.csproj" />
+    <ProjectReference Include="../UniversalToolchain.Exceptions/UniversalToolchain.Exceptions.csproj" />
+    <ProjectReference Include="..\DotnetHelper\DotnetHelper.csproj" />
+    <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" />
+    <ProjectReference Include="..\IntermediateRepresentationAbstractions\IntermediateRepresentationAbstractions.csproj" />
+    <ProjectReference Include="..\ObjectExtensions\ObjectExtensions.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.ModuleContracts\UniversalToolchain.ModuleContracts.csproj" />
+  </ItemGroup>
 </Project>

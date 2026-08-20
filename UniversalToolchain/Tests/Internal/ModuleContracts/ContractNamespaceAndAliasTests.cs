@@ -26,7 +26,7 @@ public sealed class ContractNamespaceAndAliasTests
     {
         var id = CreateId("core.labels", "label");
 
-        var diagnostics = ContractNamespacePolicy.ValidateOwnership(id, ContractNamespaceOwner.Wist);
+        var diagnostics = ContractNamespacePolicy.ValidateOwnership(id, ContractNamespaceOwner.Reserved("wist", "wist"));
 
         Assert.That(diagnostics, Has.Count.EqualTo(1));
         Assert.That(diagnostics[0].Code, Is.EqualTo(ModuleContractDiagnosticCodes.InvalidNamespaceOwnership));
@@ -64,7 +64,7 @@ public sealed class ContractNamespaceAndAliasTests
     {
         var diagnostics = ContractNamespacePolicy.ValidateOwnership(
             "wist",
-            ContractNamespaceOwner.Wist);
+            ContractNamespaceOwner.Reserved("wist", "wist"));
 
         Assert.That(diagnostics, Is.Empty);
     }
@@ -77,7 +77,7 @@ public sealed class ContractNamespaceAndAliasTests
             .AddFacet(new BackendCapabilityFacet(
                 module,
                 [new BackendCapabilityContract(new BackendCapabilityId("core.backend.invalid-owner"), [])]))
-            .AddNamespaceOwners(module, [ContractNamespaceOwner.Wist])
+            .AddNamespaceOwners(module, [ContractNamespaceOwner.Reserved("wist", "wist")])
             .Build();
 
         Assert.That(

@@ -23,12 +23,16 @@ lastVerifiedAgainst: languageplan-single-runtime-s11
 Run from repository root:
 
 ```bash ci-run=false
-dotnet restore UniversalToolchain/Wist.sln
-dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
-dotnet test UniversalToolchain/Wist.sln -c Release --no-build
+./build.sh --component universal
+./build.sh --component wist
+./build.sh --component planfuzz
+# or, in dependency order:
+./build.sh --all
 ```
 
-The canonical repository gate is stricter than this convenience block: `build.sh`/`build.ps1` also enforce the exact test manifest, architecture guards and related repository contracts. Historical or quarantined tests must not be hidden from the active contract through project-file exclusions.
+The three checked-in static solutions are `UniversalToolchain/UniversalToolchain.sln`, `UniversalToolchain/Wist.sln`, and `UniversalToolchain/PlanFuzz.sln`. Solution membership is a development/build surface, not ownership: ownership is declared explicitly in `eng/project-ownership.json` and file ownership in `eng/repository-partitions.json`.
+
+The canonical repository gate is stricter than a direct solution build: `build.sh`/`build.ps1` also enforce the exact component test manifests, architecture guards and related repository contracts. Historical or quarantined tests must not be hidden from the active contract through project-file exclusions.
 
 ## Change expectations
 

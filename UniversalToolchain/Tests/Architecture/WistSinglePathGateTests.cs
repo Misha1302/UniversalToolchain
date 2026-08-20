@@ -127,7 +127,8 @@ public sealed class WistSinglePathGateSetup
                 violations.Add($"Canonical Wist runtime contains projection/fallback marker '{marker}'.");
         }
 
-        if (input.ProjectSource.Contains("BasicCodeTranslator", StringComparison.Ordinal))
+        if (input.ProjectSource.Contains("BasicCodeTranslator\\BasicCodeTranslator.csproj", StringComparison.Ordinal) ||
+            input.ProjectSource.Contains("BasicCodeTranslator/BasicCodeTranslator.csproj", StringComparison.Ordinal))
             violations.Add("Wist LanguagePack still depends on the retired AST-to-bytecode translator project.");
 
         var lowererConstructionCount = CountOccurrences(

@@ -23,6 +23,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <SourceRoot Include="$(CanonicalRepositoryRoot)/" />
+    </ItemGroup>
+
+    <ItemGroup>
         <Compile Include="$(MSBuildThisFileDirectory)BuildSupport/JetBrainsAnnotations.cs"
                  Link="BuildSupport/JetBrainsAnnotations.cs"
                  Condition="Exists('$(MSBuildThisFileDirectory)BuildSupport/JetBrainsAnnotations.cs')" />

@@ -4,7 +4,7 @@ namespace IdentifierModule.Contracts;
 
 public sealed class IdentifierModuleContractDescriptorProvider : IModuleContractDescriptorProvider
 {
-    public IReadOnlyList<ContractNamespaceOwner> NamespaceOwners => [ContractNamespaceOwner.Wist];
+    public IReadOnlyList<ContractNamespaceOwner> NamespaceOwners => [ContractNamespaceOwner.Reserved("wist", "wist")];
 
     public IReadOnlyList<IModuleContractFacet> GetFacets() =>
     [

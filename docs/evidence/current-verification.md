@@ -13,13 +13,15 @@ This page is a pinned evidence record, not a live claim about whichever commit i
 
 ## Ordinary integration gate
 
+> Historical snapshot note: the commands and two-solution topology in this section describe the pinned `99d9c81...` baseline only. The current split architecture uses the three static solutions `UniversalToolchain.sln`, `Wist.sln`, and `PlanFuzz.sln` with component test manifests under `eng/tests/`.
+
 The canonical non-release GitHub Actions gate runs:
 
 ```bash ci-run=false
 ./build.sh --skip-docs --skip-pack
 ```
 
-It restores and builds both `UniversalToolchain/Wist.sln` and `UniversalToolchain/PlanFuzz.sln`, builds runnable samples, executes the shared test manifest and runs architecture/documentation-status guards. `UniversalToolchain.LanguageSdk.Generic.Tests` is an independent Wist-free owner proof and is therefore built by its explicit `buildBeforeTest` test-contract entry on both Linux and Windows. Parallel project-graph traversal and shared compilation are the defaults; serial/no-build-server modes remain explicit diagnostics.
+At the pinned snapshot, that command restored and built `UniversalToolchain/Wist.sln` and `UniversalToolchain/PlanFuzz.sln`, built runnable samples, executed the then-shared test manifest and ran architecture/documentation-status guards. This is historical evidence, not the current canonical build topology. `UniversalToolchain.LanguageSdk.Generic.Tests` is an independent Wist-free owner proof and is therefore built by its explicit `buildBeforeTest` test-contract entry on both Linux and Windows. Parallel project-graph traversal and shared compilation are the defaults; serial/no-build-server modes remain explicit diagnostics.
 
 The documentation guard requires this table to mirror the repository's current exact test manifest even though the workflow receipt immediately below remains tied to the pinned snapshot commit.
 

@@ -1,6 +1,6 @@
 namespace CommonExceptions;
 
-public class WistException : Exception
+public class WistException : ToolchainException
 {
     public WistException(string message) : base(message)
     {
@@ -10,8 +10,8 @@ public class WistException : Exception
     {
     }
 
-    public string? Stage { get; protected set; }
-    public SourceLocation? Location { get; protected set; }
+    public new string? Stage { get; protected set; }
+    public new SourceLocation? Location { get; protected set; }
 
     public override string ToString()
     {

@@ -438,7 +438,7 @@ internal static class Program
                     .AddFacet(new BackendCapabilityFacet(
                         module,
                         [new BackendCapabilityContract(new BackendCapabilityId("core.backend.challenge"), [])]))
-                    .AddNamespaceOwners(module, [ContractNamespaceOwner.Wist])
+                    .AddNamespaceOwners(module, [ContractNamespaceOwner.Reserved("wist", "wist")])
                     .Build()
                     .Diagnostics;
             },

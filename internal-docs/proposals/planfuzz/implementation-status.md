@@ -23,7 +23,7 @@ The implementation remains non-packable and does not extend the public `Universa
 | `UniversalToolchain.PlanFuzz.Tests` | deterministic contracts, serialization, oracle behavior, evidence-completeness checks, class-fingerprint separation, reduction transforms and direct adapter tests |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | fresh-process Acme/Wist replay, exact-fingerprint reduction and CLI outcome-boundary tests |
 
-The configuration-complete research graph is declared in `UniversalToolchain/PlanFuzz.sln`. Canonical Bash and PowerShell entrypoints build it alongside `Wist.sln` and use the shared test manifest.
+The configuration-complete research graph is declared in the static `UniversalToolchain/PlanFuzz.sln`. Canonical Bash and PowerShell entrypoints use the PlanFuzz component surface (`--component planfuzz`) and `eng/tests/planfuzz.json`; `--all` runs UniversalToolchain, Wist, then PlanFuzz in dependency order.
 
 ## Current contracts
 

@@ -222,11 +222,12 @@ semantic parity coverage.
 
 ## Build note
 
-All projects currently target `net10.0`. The canonical entrypoints build
-`Wist.sln` and `PlanFuzz.sln` sequentially because the solutions share projects
-and output directories, but MSBuild traverses each solution graph in parallel.
-`--jobs N` / `-Jobs N` caps the node count; `--serial --no-build-servers` /
-`-Serial -NoBuildServers` preserves an isolated diagnostic path.
+All projects currently target `net10.0`. The repository has three checked-in
+static build surfaces: `UniversalToolchain.sln`, `Wist.sln`, and `PlanFuzz.sln`.
+Canonical component entrypoints build them in dependency order when `--all` is
+used. Solution membership is not ownership; explicit ownership and dependency
+closure are validated independently. `--serial --no-build-servers` preserves a
+deterministic isolated diagnostic path.
 
 This build policy does not change runtime references or IR routing behavior. New
 SSA/AIR projects should still declare every project whose public types they

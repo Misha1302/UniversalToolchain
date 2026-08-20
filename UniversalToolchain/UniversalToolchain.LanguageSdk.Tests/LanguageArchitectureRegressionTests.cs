@@ -564,9 +564,15 @@ public sealed class LanguageArchitectureRegressionTests
     private static string FindRepositoryRoot()
     {
         var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current != null && !File.Exists(Path.Combine(current.FullName, "readme.md")))
+        while (current != null)
+        {
+            if (File.Exists(Path.Combine(current.FullName, "readme.md")) ||
+                File.Exists(Path.Combine(current.FullName, "README.md")) ||
+                File.Exists(Path.Combine(current.FullName, "eng", "component.json")))
+                return current.FullName;
             current = current.Parent;
-        return current?.FullName ?? throw new InvalidOperationException("Repository root not found.");
+        }
+        throw new InvalidOperationException("Repository root not found.");
     }
 
 

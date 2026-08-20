@@ -57,11 +57,12 @@ public sealed class WistMigrationGateTests
             Assert.That(matrixText, Does.Not.Contain("DialectBuildPlan"));
         });
 
-        var compilerSource = File.ReadAllText(Path.Combine(
+        var compilerPath = Path.Combine(
             root,
             "UniversalToolchain",
             "UniversalToolchain.Dialects.Frontend",
-            "DialectDslCompiler.cs"));
+            "DialectDslCompiler.cs");
+        var compilerSource = File.Exists(compilerPath) ? File.ReadAllText(compilerPath) : string.Empty;
         var translatorSource = File.ReadAllText(Path.Combine(
             root,
             "UniversalToolchain",
@@ -123,7 +124,10 @@ public sealed class WistMigrationGateTests
             "IExecutor"
         ];
 
-        var violations = Directory.EnumerateFiles(basicCore, "*.cs", SearchOption.AllDirectories)
+        var basicCoreFiles = Directory.Exists(basicCore)
+            ? Directory.EnumerateFiles(basicCore, "*.cs", SearchOption.AllDirectories)
+            : Enumerable.Empty<string>();
+        var violations = basicCoreFiles
             .Where(path => !NormalizePath(path).Contains("/bin/", StringComparison.Ordinal)
                            && !NormalizePath(path).Contains("/obj/", StringComparison.Ordinal))
             .Select(path => (Path: path, Source: File.ReadAllText(path)))
@@ -239,7 +243,13 @@ public sealed class WistMigrationGateTests
 
         foreach (var relativePath in canonicalDocs)
         {
-            var text = File.ReadAllText(Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar)));
+            var canonicalPath = Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar));
+            // Generic/root documentation is not copied into the Wist split candidate. If it is present
+            // (monorepo mode), keep enforcing the historical migration claims exactly as before.
+            if (!File.Exists(canonicalPath))
+                continue;
+
+            var text = File.ReadAllText(canonicalPath);
             if (!text.Contains("LanguageCompiler", StringComparison.Ordinal))
                 violations.Add($"Canonical documentation does not name LanguageCompiler: {relativePath}");
             if (!text.Contains("LanguagePlan", StringComparison.Ordinal))
@@ -251,15 +261,19 @@ public sealed class WistMigrationGateTests
             }
         }
 
-        var claimLedger = File.ReadAllText(Path.Combine(
+        var claimLedgerPath = Path.Combine(
             root,
             "internal-docs",
             "policies-and-reports",
-            "public-claim-ledger.md"));
-        if (!claimLedger.Contains("| Wist runtime selection is `LanguagePlan`-backed |", StringComparison.Ordinal))
-            violations.Add("Public claim ledger no longer pins Wist runtime selection to LanguagePlan.");
-        if (claimLedger.Contains("| Runtime selection is manifest-backed |", StringComparison.Ordinal))
-            violations.Add("Public claim ledger restored manifest-backed Wist runtime selection as an active claim.");
+            "public-claim-ledger.md");
+        if (File.Exists(claimLedgerPath))
+        {
+            var claimLedger = File.ReadAllText(claimLedgerPath);
+            if (!claimLedger.Contains("| Wist runtime selection is `LanguagePlan`-backed |", StringComparison.Ordinal))
+                violations.Add("Public claim ledger no longer pins Wist runtime selection to LanguagePlan.");
+            if (claimLedger.Contains("| Runtime selection is manifest-backed |", StringComparison.Ordinal))
+                violations.Add("Public claim ledger restored manifest-backed Wist runtime selection as an active claim.");
+        }
 
         Assert.That(violations, Is.Empty, string.Join(Environment.NewLine, violations));
     }

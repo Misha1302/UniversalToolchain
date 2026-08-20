@@ -115,7 +115,10 @@ public sealed class StaticStateGuardrailTests
 
         var source = string.Join(
             Environment.NewLine,
-            relevantFiles.Select(path => File.ReadAllText(Path.Combine(root, path.Replace('/', Path.DirectorySeparatorChar)))));
+            relevantFiles
+                .Select(path => Path.Combine(root, path.Replace('/', Path.DirectorySeparatorChar)))
+                .Where(File.Exists)
+                .Select(File.ReadAllText));
 
         Assert.Multiple(() =>
         {

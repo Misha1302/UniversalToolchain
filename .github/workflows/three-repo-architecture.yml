@@ -1,0 +1,15 @@
+name: Three-repository architecture
+on:
+  push:
+  pull_request:
+jobs:
+  architecture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.x' }
+      - run: python3 Tools/check-three-repo-architecture.py
+      - run: python3 Tools/check-three-repo-test-inventory.py
+      - run: python3 Tools/check-three-repo-docs.py
+      - run: python3 Tools/test-three-repo-architecture-mutants.py

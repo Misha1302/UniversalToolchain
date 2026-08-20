@@ -5,7 +5,6 @@ public static class ContractNamespacePolicy
     private static readonly IReadOnlyList<ContractNamespaceOwner> BuiltInReservations =
     [
         ContractNamespaceOwner.Core,
-        ContractNamespaceOwner.Wist,
         ContractNamespaceOwner.Backend,
         ContractNamespaceOwner.Optimizer
     ];

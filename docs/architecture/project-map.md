@@ -35,7 +35,7 @@ This page maps conceptual architecture to the repository. It is a navigation aid
 
 These projects are non-packable experimental research tooling. They do not extend the public Wist package surface.
 
-They are grouped in `UniversalToolchain/PlanFuzz.sln`; `build.sh` and `build.ps1` build this configuration-complete research solution alongside `Wist.sln` before executing the exact entries in `eng/test-counts.json`.
+They are grouped in the static `UniversalToolchain/PlanFuzz.sln`. The canonical component entrypoint is `./build.sh --component planfuzz`; `./build.sh --all` runs UniversalToolchain, then Wist, then PlanFuzz in dependency order. PlanFuzz tests are declared in `eng/tests/planfuzz.json`.
 
 ## Wist compiler/runtime stack
 

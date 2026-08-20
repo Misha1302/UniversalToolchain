@@ -1,4 +1,7 @@
 param(
+    [ValidateSet("universal", "wist", "planfuzz")]
+    [string]$Component,
+    [switch]$All,
     [ValidateSet("Debug", "Release")]
     [string]$Configuration = "Release",
     [switch]$SkipDocs,
@@ -13,6 +16,16 @@ param(
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $root
+
+if ($Component -or $All) {
+    $argsList = @()
+    if ($All) { $argsList += "--all" } else { $argsList += @("--component", $Component) }
+    $argsList += @("--configuration", $Configuration)
+    if ($Serial) { $argsList += "--serial" }
+    if ($NoBuildServers) { $argsList += "--no-build-servers" }
+    & python3 (Join-Path $root "Tools/run-three-repo-component.py") @argsList
+    exit $LASTEXITCODE
+}
 
 # NuGet.config declares this repository-local feed. It is optional in clean
 # checkouts, but NuGet requires every configured local source path to exist.

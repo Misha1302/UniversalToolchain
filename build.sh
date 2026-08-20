@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Three-repository canonical component entrypoints.
+if [[ "${1:-}" == "--component" || "${1:-}" == "--all" ]]; then
+  exec python3 "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/Tools/run-three-repo-component.py" "$@"
+fi
+
 configuration="Release"
 skip_docs=false
 skip_pack=false

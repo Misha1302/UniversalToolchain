@@ -1,6 +1,6 @@
 namespace CommonExceptions;
 
-public sealed class LexerException : WistException
+public sealed class LexerException : ToolchainException
 {
     public LexerException(string message, SourceLocation location) : base(message)
     {
@@ -14,7 +14,7 @@ public sealed class LexerException : WistException
     }
 }
 
-public sealed class ParserException : WistException
+public sealed class ParserException : ToolchainException
 {
     public ParserException(string message) : base(message)
     {
@@ -33,7 +33,7 @@ public sealed class ParserException : WistException
     }
 }
 
-public sealed class BindingException : WistException
+public sealed class BindingException : ToolchainException
 {
     public BindingException(string message) : base(message)
     {
@@ -46,7 +46,7 @@ public sealed class BindingException : WistException
     }
 }
 
-public sealed class BytecodeGenerationException : WistException
+public sealed class BytecodeGenerationException : ToolchainException
 {
     public BytecodeGenerationException(string message) : base(message)
     {
@@ -59,7 +59,7 @@ public sealed class BytecodeGenerationException : WistException
     }
 }
 
-public sealed class RuntimeExecutionException : WistException
+public sealed class RuntimeExecutionException : ToolchainException
 {
     public RuntimeExecutionException(string message) : base(message)
     {
@@ -72,7 +72,7 @@ public sealed class RuntimeExecutionException : WistException
     }
 }
 
-public sealed class TypeSystemException : WistException
+public sealed class TypeSystemException : ToolchainException
 {
     public TypeSystemException(string message) : base(message)
     {
@@ -85,7 +85,7 @@ public sealed class TypeSystemException : WistException
     }
 }
 
-public sealed class ImportException : WistException
+public sealed class ImportException : ToolchainException
 {
     public ImportException(string message) : base(message)
     {
@@ -98,7 +98,7 @@ public sealed class ImportException : WistException
     }
 }
 
-public sealed class InternalCompilerException : WistException
+public sealed class InternalCompilerException : ToolchainException
 {
     public InternalCompilerException(string message) : base(message)
     {

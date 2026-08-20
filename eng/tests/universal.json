@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "component": "UNIVERSAL",
+  "projects": [
+    "UniversalToolchain/UniversalToolchain.LanguageSdk.Generic.Tests/UniversalToolchain.LanguageSdk.Generic.Tests.csproj"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "component": "PLANFUZZ",
+  "projects": [
+    "UniversalToolchain/UniversalToolchain.PlanFuzz.Tests/UniversalToolchain.PlanFuzz.Tests.csproj",
+    "UniversalToolchain/UniversalToolchain.PlanFuzz.IntegrationTests/UniversalToolchain.PlanFuzz.IntegrationTests.csproj"
+  ]
+}

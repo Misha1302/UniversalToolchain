@@ -159,6 +159,9 @@ public sealed class HardcodeBoundaryGuardrailTests
     private static IReadOnlyList<string> ProductionFiles(string root, string relativeDirectory)
     {
         var directory = Path.Combine(root, relativeDirectory.Replace('/', Path.DirectorySeparatorChar));
+        if (!Directory.Exists(directory))
+            return Array.Empty<string>();
+
         return Directory.GetFiles(directory, "*.cs", SearchOption.AllDirectories)
             .Where(static path => !Normalize(path).Contains("/bin/", StringComparison.Ordinal))
             .Where(static path => !Normalize(path).Contains("/obj/", StringComparison.Ordinal))
@@ -172,6 +175,11 @@ public sealed class HardcodeBoundaryGuardrailTests
         var violations = new List<string>();
         foreach (var file in files)
         {
+            // In a physical split repository, upstream generic production source is intentionally absent.
+            // Absence is a stronger satisfaction of a negative dependency/source guard.
+            if (!File.Exists(file))
+                continue;
+
             var content = File.ReadAllText(file);
             foreach (var pattern in forbiddenPatterns)
             {
@@ -188,13 +196,15 @@ public sealed class HardcodeBoundaryGuardrailTests
         var directory = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
         while (directory != null)
         {
-            if (File.Exists(Path.Combine(directory.FullName, "UniversalToolchain", "Wist.sln")))
+            if (File.Exists(Path.Combine(directory.FullName, "UniversalToolchain", "Wist.sln")) ||
+                File.Exists(Path.Combine(directory.FullName, "Wist.sln")) &&
+                File.Exists(Path.Combine(directory.FullName, "eng", "component.json")))
                 return directory.FullName;
 
             directory = directory.Parent;
         }
 
-        throw new DirectoryNotFoundException("Repository root with UniversalToolchain/Wist.sln was not found.");
+        throw new DirectoryNotFoundException("Wist repository root was not found.");
     }
 
     private static string Normalize(string path) => path.Replace(Path.DirectorySeparatorChar, '/');

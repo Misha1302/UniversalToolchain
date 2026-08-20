@@ -412,7 +412,12 @@ public sealed class ExternalLanguageAuthoringTests
         };
         foreach (var project in projects)
         {
-            var text = File.ReadAllText(Path.Combine(root, "UniversalToolchain", project, $"{project}.csproj"));
+            var projectPath = Path.Combine(root, "UniversalToolchain", project, $"{project}.csproj");
+            // In the Wist split repository generic SDK source projects are intentionally absent;
+            // absence is stronger than a negative source dependency assertion.
+            if (!File.Exists(projectPath))
+                continue;
+            var text = File.ReadAllText(projectPath);
             Assert.That(text, Does.Not.Contain("Dialects.Wist"), project);
             Assert.That(text, Does.Not.Contain("UniversalToolchain.Wist.csproj"), project);
         }
@@ -549,9 +554,15 @@ public sealed class ExternalLanguageAuthoringTests
     private static string FindRepositoryRoot()
     {
         var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current != null && !File.Exists(Path.Combine(current.FullName, "readme.md")))
+        while (current != null)
+        {
+            if (File.Exists(Path.Combine(current.FullName, "readme.md")) ||
+                File.Exists(Path.Combine(current.FullName, "README.md")) ||
+                File.Exists(Path.Combine(current.FullName, "eng", "component.json")))
+                return current.FullName;
             current = current.Parent;
-        return current?.FullName ?? throw new InvalidOperationException("Repository root not found.");
+        }
+        throw new InvalidOperationException("Repository root not found.");
     }
 
     private sealed class TestPackage(LanguagePackageDescriptor descriptor) : ILanguageExtensionPackage
