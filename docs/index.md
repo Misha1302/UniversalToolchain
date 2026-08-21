@@ -18,31 +18,31 @@ Wist is the reference language and compatibility proving ground. It is not the m
 ## Choose your role
 
 <div class="ut-paths">
-  <a class="ut-path" href="/Wist2/start/">
+  <a class="ut-path" href="/UniversalToolchain/start/">
     <span class="ut-path-title">Wist application developer</span>
     <span class="ut-path-text">Install the package, validate formulas, compile typed delegates and integrate rule updates into a .NET host.</span>
   </a>
-  <a class="ut-path" href="/Wist2/language-authoring/">
+  <a class="ut-path" href="/UniversalToolchain/language-authoring/">
     <span class="ut-path-title">External language author</span>
     <span class="ut-path-text">Build an independent non-Wist language package with typed artifacts, deterministic planning and exact backend routing.</span>
   </a>
-  <a class="ut-path" href="/Wist2/build-dsls/">
+  <a class="ut-path" href="/UniversalToolchain/build-dsls/">
     <span class="ut-path-title">Wist dialect author</span>
     <span class="ut-path-text">Compose a smaller Wist language/runtime profile from shipped modules, optimizers and backends.</span>
   </a>
-  <a class="ut-path" href="/Wist2/write-modules/">
+  <a class="ut-path" href="/UniversalToolchain/write-modules/">
     <span class="ut-path-title">Wist compiler contributor</span>
     <span class="ut-path-text">Add syntax, AST translation, Bytecode/AIR behavior, intrinsics or backend support to the reference language.</span>
   </a>
-  <a class="ut-path" href="/Wist2/architecture/learning-path">
+  <a class="ut-path" href="/UniversalToolchain/architecture/learning-path">
     <span class="ut-path-title">Framework contributor or learner</span>
     <span class="ut-path-text">Choose a 30-minute, two-hour or subsystem-specific route before opening implementation internals.</span>
   </a>
-  <a class="ut-path" href="/Wist2/SECURITY">
+  <a class="ut-path" href="/UniversalToolchain/SECURITY">
     <span class="ut-path-title">Security or platform reviewer</span>
     <span class="ut-path-text">Review trust boundaries, source retention, trace limitations, component lifecycle and process-isolation requirements.</span>
   </a>
-  <a class="ut-path" href="/Wist2/evidence/maintainer-guide">
+  <a class="ut-path" href="/UniversalToolchain/evidence/maintainer-guide">
     <span class="ut-path-title">Maintainer or evaluator</span>
     <span class="ut-path-text">Inspect the current verification baseline, package matrix, release status and known gaps.</span>
   </a>
