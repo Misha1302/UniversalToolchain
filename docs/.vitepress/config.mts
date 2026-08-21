@@ -304,7 +304,7 @@ export default defineConfig({
             { text: 'Architecture', link: '/architecture/project-map' },
             { text: 'Reference', link: '/reference/' },
             { text: 'Evidence', link: '/evidence/' },
-            { text: 'GitHub', link: 'https://github.com/Misha1302/Wist2' }
+            { text: 'GitHub', link: 'https://github.com/Misha1302/UniversalToolchain' }
         ],
         search: { provider: 'local' },
         sidebar: {
@@ -322,9 +322,9 @@ export default defineConfig({
         },
         outline: { level: [2, 3], label: 'On this page' },
         docFooter: { prev: 'Previous', next: 'Next' },
-        socialLinks: [{ icon: 'github', link: 'https://github.com/Misha1302/Wist2' }],
+        socialLinks: [{ icon: 'github', link: 'https://github.com/Misha1302/UniversalToolchain' }],
         editLink: {
-            pattern: 'https://github.com/Misha1302/Wist2/edit/master/docs/:path',
+            pattern: 'https://github.com/Misha1302/UniversalToolchain/edit/master/docs/:path',
             text: 'Edit this page on GitHub'
         },
         footer: {

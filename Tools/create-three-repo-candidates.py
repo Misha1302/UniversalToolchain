@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse, json, os, pathlib, re, shutil, uuid, subprocess, sys, xml.etree.ElementTree as ET
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 BUNDLE_ID='UniversalToolchain.RepositoryBundle'
-BUNDLE_VERSION='0.3.0-split.2'
+BUNDLE_VERSION=None
 IGNORE=shutil.ignore_patterns('bin','obj','artifacts','packages','.git','.idea','.vs','TestResults','*.user')
 
 def norm(s): return s.replace('\\','/')
@@ -144,7 +144,7 @@ if m['component']=='UNIVERSAL':
    inc=pr.get('Include'); ver=pr.get('Version') or pr.findtext('Version')
    if inc and ver: deps[inc]=ver
  with tempfile.TemporaryDirectory() as td:
-  td=pathlib.Path(td); cs=td/'bundle.csproj'; lines=['<Project Sdk="Microsoft.NET.Sdk">','<PropertyGroup><TargetFramework>net10.0</TargetFramework><PackageId>UniversalToolchain.RepositoryBundle</PackageId><Version>0.3.0-split.2</Version><IsPackable>true</IsPackable><IncludeBuildOutput>false</IncludeBuildOutput><PackageLicenseExpression>Apache-2.0</PackageLicenseExpression></PropertyGroup>','<ItemGroup>']
+  td=pathlib.Path(td); cs=td/'bundle.csproj'; lines=['<Project Sdk="Microsoft.NET.Sdk">','<PropertyGroup><TargetFramework>net10.0</TargetFramework><PackageId>UniversalToolchain.RepositoryBundle</PackageId><Version>__BUNDLE_VERSION__</Version><IsPackable>true</IsPackable><IncludeBuildOutput>false</IncludeBuildOutput><PackageLicenseExpression>Apache-2.0</PackageLicenseExpression></PropertyGroup>','<ItemGroup>']
   for inc,ver in sorted(deps.items()): lines.append(f'<PackageReference Include="{inc}" Version="{ver}" />')
   for f in sorted(set(files)): lines.append(f'<None Include="{f}" Pack="true" PackagePath="lib/net10.0" />')
   for f in sorted(set(toolfiles)): lines.append(f'<None Include="{f}" Pack="true" PackagePath="tools/net10.0" />')
@@ -152,6 +152,7 @@ if m['component']=='UNIVERSAL':
   r=subprocess.run([d,'pack',str(cs),'-c','Release','--disable-build-servers','-p:NuGetAudit=false','-o',str(out)],cwd=root,env=env)
   if r.returncode: sys.exit(r.returncode)
 '''
+ pack=pack.replace('__BUNDLE_VERSION__',BUNDLE_VERSION)
  (tools/'pack-component.py').write_text(pack); os.chmod(tools/'pack-component.py',0o755)
  build=f'''#!/usr/bin/env bash
 set -euo pipefail
@@ -186,7 +187,14 @@ def write_ci(cand, comp):
  (wf/'ci.yml').write_text('\n'.join(lines)+'\n')
 
 def main():
- ap=argparse.ArgumentParser(); ap.add_argument('--output',required=True); a=ap.parse_args(); out=pathlib.Path(a.output).resolve(); shutil.rmtree(out,ignore_errors=True); out.mkdir(parents=True)
+ global BUNDLE_VERSION
+ ap=argparse.ArgumentParser(); ap.add_argument('--output',required=True); a=ap.parse_args(); out=pathlib.Path(a.output).resolve()
+ status=subprocess.check_output(['git','status','--porcelain','--untracked-files=all'],cwd=ROOT,text=True)
+ if status.strip():
+  raise SystemExit('split candidate generation requires a clean working tree')
+ revision=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+ BUNDLE_VERSION=f'0.3.0-split.2.g{revision[:12]}'
+ shutil.rmtree(out,ignore_errors=True); out.mkdir(parents=True)
  m=readj(ROOT/'eng/project-ownership.json'); owners=m['owners']; partitions=readj(ROOT/'eng/repository-partitions.json'); pack=[x.strip() for x in (ROOT/'eng/package-projects.txt').read_text().splitlines() if x.strip() and not x.startswith('#')]
  specs=[('UniversalToolchain','UNIVERSAL','UniversalToolchain.sln'),('Wist','WIST_PRODUCT','Wist.sln'),('PlanFuzz','PLANFUZZ_RESEARCH','PlanFuzz.sln')]
  for name,owner,sln in specs:
@@ -228,11 +236,11 @@ def main():
     if any(x in p for x in ['.Tests/','/Experiments/','UniversalToolchain.Templates','samples/']): continue
     if p.endswith('UniversalToolchain.FeatureManifestEmitter.csproj'): continue
     bundle.append(p)
-  comp={'schemaVersion':1,'component':owner,'projects':owners[owner],'tests':tests,'packProjects':packp,'bundleProjects':bundle,'sourceRevision':'8399b7de25ee850203e9db84f3bf1db7a4c85c79','artifactContract':{'id':BUNDLE_ID,'version':BUNDLE_VERSION}}
+  comp={'schemaVersion':1,'component':owner,'projects':owners[owner],'tests':tests,'packProjects':packp,'bundleProjects':bundle,'sourceRevision':revision,'artifactContract':{'id':BUNDLE_ID,'version':BUNDLE_VERSION}}
   if owner=='UNIVERSAL': comp['migrationAllowlist']=m.get('migrationAllowlist',[])
   (cand/'eng').mkdir(exist_ok=True); (cand/'eng/component.json').write_text(json.dumps(comp,indent=2)+'\n')
   shutil.copy2(ROOT/'eng/wist-package-lib-baseline.txt',cand/'eng/wist-package-lib-baseline.txt') if owner=='WIST_PRODUCT' else None
   write_validator(cand,owner,owners[owner]); write_tools(cand,owner,sln); write_ci(cand,owner)
-  subprocess.run([sys.executable,str(ROOT/'Tools/finalize-split-candidate.py'),'--candidate',str(cand),'--owner',owner,'--solution',sln],check=True)
+  subprocess.run([sys.executable,str(ROOT/'Tools/finalize-split-candidate.py'),'--candidate',str(cand),'--owner',owner,'--solution',sln,'--source-revision',revision],check=True)
  print(out)
 if __name__=='__main__': main()

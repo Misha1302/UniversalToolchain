@@ -1,7 +1,13 @@
 name: Three-repository architecture
+
 on:
-  push:
+  workflow_dispatch:
   pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
 jobs:
   architecture:
     runs-on: ubuntu-latest

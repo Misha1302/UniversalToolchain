@@ -7,7 +7,7 @@ PlanFuzz/packages. External third-party packages come from --external-feed (or N
 when omitted).
 """
 from __future__ import annotations
-import argparse, os, pathlib, shutil, subprocess, sys
+import argparse, os, pathlib, shutil, subprocess, sys, tempfile
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 
 def run(cmd,cwd,env):
@@ -40,21 +40,48 @@ def main():
     env['DOTNET']=str(pathlib.Path(a.dotnet).resolve()) if '/' in a.dotnet else a.dotnet
     if a.external_feed: env['EXTERNAL_NUGET_FEED']=str(pathlib.Path(a.external_feed).resolve())
     run([sys.executable,ROOT/'Tools/create-three-repo-candidates.py','--output',out],ROOT,env)
-    ut,wist,pf=(out/'UniversalToolchain',out/'Wist',out/'PlanFuzz')
-    for repo in (ut,wist,pf): write_nuget(repo,a.external_feed)
-    # UniversalToolchain is self-contained source; its public and reviewed private artifacts seed Wist.
-    run(['./build.sh','--pack'],ut,env)
-    run([sys.executable,'Tools/package-consumer-smoke.py'],ut,env)
-    copy_packages(ut,wist/'packages')
-    # Wist may consume UT only from packages. No source path is provided to the command or config.
-    run([sys.executable,'Tools/check-dependency-packages.py','--require','UniversalToolchain.RepositoryBundle'],wist,env)
-    run(['./build.sh','--pack'],wist,env)
-    run([sys.executable,'Tools/package-consumer-smoke.py'],wist,env)
-    copy_packages(ut,pf/'packages'); copy_packages(wist,pf/'packages')
-    # PlanFuzz consumes both upstream components as packages; Adapter.Wist is the allowed Wist edge.
-    run([sys.executable,'Tools/check-dependency-packages.py','--require','UniversalToolchain.RepositoryBundle'],pf,env)
-    run([sys.executable,'Tools/check-dependency-packages.py','--require','UniversalToolchain.Wist'],pf,env)
-    run(['./build.sh'],pf,env)
-    run([env['DOTNET'],'test','UniversalToolchain/UniversalToolchain.PlanFuzz.IntegrationTests/UniversalToolchain.PlanFuzz.IntegrationTests.csproj','-c','Release','--no-build','--no-restore','--filter','StrictReplayTests','-p:NuGetAudit=false'],pf,env)
+    generated={name:out/name for name in ('UniversalToolchain','Wist','PlanFuzz')}
+    artifact_feed=out/'package-feed'; artifact_feed.mkdir()
+    def isolated_copy(name):
+        temporary=tempfile.TemporaryDirectory(prefix=f'ut-{name.lower()}-isolation-')
+        repo=pathlib.Path(temporary.name)/'repo'
+        shutil.copytree(generated[name],repo)
+        return temporary,repo
+    # UniversalToolchain is built with no sibling component source tree in its build root.
+    ut_tmp,ut=isolated_copy('UniversalToolchain')
+    try:
+        ut_env=env | {'NUGET_PACKAGES':str(pathlib.Path(ut_tmp.name)/'nuget-packages')}
+        write_nuget(ut,a.external_feed)
+        run(['./build.sh','--pack'],ut,ut_env)
+        run([sys.executable,'Tools/package-consumer-smoke.py'],ut,ut_env)
+        copy_packages(ut,artifact_feed)
+    finally:
+        ut_tmp.cleanup()
+    # Wist sees only package artifacts, never a sibling UniversalToolchain checkout.
+    wist_tmp,wist=isolated_copy('Wist')
+    try:
+        wist_env=env | {'NUGET_PACKAGES':str(pathlib.Path(wist_tmp.name)/'nuget-packages')}
+        write_nuget(wist,a.external_feed)
+        (wist/'packages').mkdir(exist_ok=True)
+        for package in artifact_feed.glob('*.nupkg'): shutil.copy2(package,wist/'packages'/package.name)
+        run([sys.executable,'Tools/check-dependency-packages.py','--require','UniversalToolchain.RepositoryBundle'],wist,wist_env)
+        run(['./build.sh','--pack'],wist,wist_env)
+        run([sys.executable,'Tools/package-consumer-smoke.py'],wist,wist_env)
+        copy_packages(wist,artifact_feed)
+    finally:
+        wist_tmp.cleanup()
+    # PlanFuzz likewise sees only the reviewed package feed.
+    pf_tmp,pf=isolated_copy('PlanFuzz')
+    try:
+        pf_env=env | {'NUGET_PACKAGES':str(pathlib.Path(pf_tmp.name)/'nuget-packages')}
+        write_nuget(pf,a.external_feed)
+        (pf/'packages').mkdir(exist_ok=True)
+        for package in artifact_feed.glob('*.nupkg'): shutil.copy2(package,pf/'packages'/package.name)
+        run([sys.executable,'Tools/check-dependency-packages.py','--require','UniversalToolchain.RepositoryBundle'],pf,pf_env)
+        run([sys.executable,'Tools/check-dependency-packages.py','--require','UniversalToolchain.Wist'],pf,pf_env)
+        run(['./build.sh'],pf,pf_env)
+        run([pf_env['DOTNET'],'test','UniversalToolchain/UniversalToolchain.PlanFuzz.IntegrationTests/UniversalToolchain.PlanFuzz.IntegrationTests.csproj','-c','Release','--no-build','--no-restore','--filter','StrictReplayTests','-p:NuGetAudit=false'],pf,pf_env)
+    finally:
+        pf_tmp.cleanup()
     print('THREE_REPO_PACKAGE_ISOLATION=PASS')
 if __name__=='__main__': main()

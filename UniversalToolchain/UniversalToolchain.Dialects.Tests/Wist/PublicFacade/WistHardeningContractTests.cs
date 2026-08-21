@@ -26,6 +26,23 @@ public sealed class WistHardeningContractTests
     }
 
     [Test]
+    public void TryCompile_InvalidFormula_PreservesParserDiagnosticStage()
+    {
+        using var engine = WistEngine.CreateRestrictedArithmetic();
+
+        var result = engine.TryCompile<Func<double, double>>("price *", "price");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.FailureKind, Is.EqualTo(WistFailureKind.UserInput));
+            Assert.That(result.Diagnostics, Has.Count.EqualTo(1));
+            Assert.That(result.Diagnostics[0].Code, Is.EqualTo(WistDiagnosticCodes.ParserFailure));
+            Assert.That(result.Diagnostics[0].Stage, Is.EqualTo("Parser"));
+        });
+    }
+
+    [Test]
     public void TryCompile_DeveloperDiagnostics_ExposeExpectedException()
     {
         using var engine = WistEngine.Create(new WistEngineOptions

@@ -16,7 +16,9 @@ FILES = (
     Path("UniversalToolchain/UniversalToolchain.Wist/WistFailureClassifier.cs"),
     Path("UniversalToolchain/UniversalToolchain.Wist/WistUserInputException.cs"),
     Path("UniversalToolchain/VariablesModule/VariablesBindingRule.cs"),
-    Path("UniversalToolchain/CommonExceptions/StageExceptions.cs"),
+    Path("UniversalToolchain/UniversalToolchain.Exceptions/StageExceptions.cs"),
+    Path("UniversalToolchain/CommonExceptions/WistException.cs"),
+    Path("UniversalToolchain/UniversalToolchain.Wist/WistDiagnosticFactory.cs"),
 )
 
 

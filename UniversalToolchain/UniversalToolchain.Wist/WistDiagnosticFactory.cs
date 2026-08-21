@@ -29,9 +29,9 @@ internal static class WistDiagnosticFactory
         if (exception is SsaRouteException ssaRouteException)
             return FromSsaRouteException(ssaRouteException, exposure, sourceName);
 
-        var wistException = exception as WistException;
-        var stage = wistException?.Stage ?? operationStage;
-        var span = wistException?.Location is { } location
+        var toolchainException = exception as ToolchainException;
+        var stage = toolchainException?.Stage ?? operationStage;
+        var span = toolchainException?.Location is { } location
             ? new WistSourceSpan(
                 string.IsNullOrWhiteSpace(location.File) ? sourceName : location.File!,
                 Math.Max(0, location.Line),

@@ -83,7 +83,7 @@ int RunCommand(RunOptions options)
         WriteTraceIfRequested(options, code, ResolveDialectLabel(options), result);
         return 0;
     }
-    catch (WistException ex)
+    catch (ToolchainException ex)
     {
         WriteFailureTraceIfRequested(options, ex);
         Console.Error.WriteLine(ex.ToString());
@@ -110,7 +110,7 @@ int ReplCommand(ReplOptions options)
         Console.WriteLine($"Backend: {options.Backend}");
         return new Repl(code => engine.Evaluate<object?>(code), options.HistoryFile).Run();
     }
-    catch (WistException ex)
+    catch (ToolchainException ex)
     {
         Console.Error.WriteLine(ex.ToString());
         return 1;

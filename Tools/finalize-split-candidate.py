@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse,pathlib,shutil,os
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 def main():
- ap=argparse.ArgumentParser();ap.add_argument('--candidate',required=True);ap.add_argument('--owner',required=True);ap.add_argument('--solution',required=True);a=ap.parse_args()
+ ap=argparse.ArgumentParser();ap.add_argument('--candidate',required=True);ap.add_argument('--owner',required=True);ap.add_argument('--solution',required=True);ap.add_argument('--source-revision',required=True);a=ap.parse_args()
  cand=pathlib.Path(a.candidate).resolve(); owner=a.owner; sln=a.solution
  nested=cand/'UniversalToolchain/NuGet.config'
  if nested.exists(): nested.unlink()
@@ -16,7 +16,7 @@ def main():
   if p.name!='ci.yml':shutil.move(str(p),legacy/p.name)
  title='UniversalToolchain' if owner=='UNIVERSAL' else 'Wist' if owner=='WIST_PRODUCT' else 'PlanFuzz'
  dep=('This repository is language-neutral and has no Wist or PlanFuzz production source dependency.' if owner=='UNIVERSAL' else 'UniversalToolchain is consumed only through reviewed NuGet artifacts in `packages/`; no UniversalToolchain source checkout is required.' if owner=='WIST_PRODUCT' else 'UniversalToolchain and Wist are consumed only through reviewed NuGet artifacts in `packages/`; Wist code dependency is restricted to Adapter.Wist/integration layers.')
- (cand/'README.md').write_text(f'# {title}\n\nIndependent split candidate generated from `Misha1302/UniversalToolchain@8399b7de25ee850203e9db84f3bf1db7a4c85c79`.\n\n{dep}\n\n## Build\n\n```bash\n./build.sh\n```\n\nUse `./build.sh --pack` where the component is packable. Architecture checks run before restore/build. See `docs/architecture.md`, `docs/CONTRIBUTING.md`, and `docs/package-boundary.md`.\n')
+ (cand/'README.md').write_text(f'# {title}\n\nIndependent split candidate generated from `Misha1302/UniversalToolchain@{a.source_revision}`.\n\n{dep}\n\n## Build\n\n```bash\n./build.sh\n```\n\nUse `./build.sh --pack` where the component is packable. Architecture checks run before restore/build. See `docs/architecture.md`, `docs/CONTRIBUTING.md`, and `docs/package-boundary.md`.\n')
  d=cand/'docs';d.mkdir(parents=True,exist_ok=True)
  (d/'architecture.md').write_text(f'# {title} architecture\n\nThis repository is the `{owner}` component. Its canonical solution is `{sln}`. Solution membership is a build/IDE surface; source ownership is recorded in `eng/component.json`.\n\nCross-repository source paths, ProjectReference edges, imports, source includes, hardcoded DLL paths and source probing are forbidden. `Tools/check-repository-architecture.py` scans all dependency-bearing `*.csproj`, `*.props` and `*.targets` files before build.\n')
  extra=(' Wist migration guardrails treat `LanguageCompiler` and `LanguagePlan` as canonical framework concepts; do not reintroduce retired Wist-only ownership for them.' if owner=='WIST_PRODUCT' else '')

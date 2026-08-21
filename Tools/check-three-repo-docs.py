@@ -3,6 +3,17 @@ from pathlib import Path
 import sys
 root=Path(__file__).resolve().parents[1]
 errs=[]
+canonical_paths=[
+ 'internal-docs/policies-and-reports/DOCUMENTATION_INDEX.md',
+ 'internal-docs/policies-and-reports/PROJECT_RULES.md',
+ 'internal-docs/policies-and-reports/ARCHITECTURE_RULES.md',
+ 'internal-docs/policies-and-reports/SYNTAX_OWNERSHIP_RULES.md',
+ 'internal-docs/policies-and-reports/DOCUMENTATION_RULES.md',
+ 'docs/CURRENT_ARCHITECTURE_STATUS.md',
+ 'docs/CONTRIBUTING.md',
+]
+for rel in canonical_paths:
+ if not (root/rel).exists(): errs.append(f'missing canonical documentation owner {rel}')
 required={
  'docs/architecture/three-repository-split.md':['UniversalToolchain/UniversalToolchain.sln','UniversalToolchain/Wist.sln','UniversalToolchain/PlanFuzz.sln','--component universal','--component wist','--component planfuzz'],
  'docs/CONTRIBUTING.md':['--component universal','--component wist','--component planfuzz','UniversalToolchain/UniversalToolchain.sln','eng/project-ownership.json','eng/repository-partitions.json'],

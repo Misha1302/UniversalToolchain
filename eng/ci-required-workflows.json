@@ -13,6 +13,10 @@
       "workflow": ".github/workflows/universal-toolchain-validation.yml"
     },
     {
+      "name": "Three-repository architecture",
+      "workflow": ".github/workflows/three-repo-architecture.yml"
+    },
+    {
       "name": "Docs Check",
       "workflow": ".github/workflows/docs-check.yml"
     },

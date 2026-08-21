@@ -11,7 +11,7 @@
         <Description>Restricted formulas for .NET: validate rules, evaluate diagnostics, and compile approved formulas into typed delegates while the host owns inputs and side effects.</Description>
         <Authors>Mikhail Razakov</Authors>
         <PackageProjectUrl>https://misha1302.github.io/Wist2/</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/Misha1302/Wist2</RepositoryUrl>
+        <RepositoryUrl>https://github.com/Misha1302/UniversalToolchain</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>

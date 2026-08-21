@@ -28,7 +28,9 @@ def main() -> int:
     classifier = (root / "UniversalToolchain/UniversalToolchain.Wist/WistFailureClassifier.cs").read_text(encoding="utf-8-sig")
     user_input = (root / "UniversalToolchain/UniversalToolchain.Wist/WistUserInputException.cs").read_text(encoding="utf-8-sig")
     binding = (root / "UniversalToolchain/VariablesModule/VariablesBindingRule.cs").read_text(encoding="utf-8-sig")
-    common_failures = (root / "UniversalToolchain/CommonExceptions/StageExceptions.cs").read_text(encoding="utf-8-sig")
+    common_failures = (root / "UniversalToolchain/UniversalToolchain.Exceptions/StageExceptions.cs").read_text(encoding="utf-8-sig")
+    wist_exception = (root / "UniversalToolchain/CommonExceptions/WistException.cs").read_text(encoding="utf-8-sig")
+    diagnostics = (root / "UniversalToolchain/UniversalToolchain.Wist/WistDiagnosticFactory.cs").read_text(encoding="utf-8-sig")
 
     forbid(runtime, "public LanguageArtifactBuildResult Build(", "execution-only LanguageRuntime must not expose Build")
     forbid(runtime, "public LanguageExecutionResult ExecuteBuilt(", "execution-only LanguageRuntime must not expose ExecuteBuilt")
@@ -53,7 +55,11 @@ def main() -> int:
     require(classifier, "kind is WistFailureKind.UserInput or WistFailureKind.Policy or WistFailureKind.Unsupported", "only expected failure classes may become structured results")
     require(user_input, "internal sealed class WistUserInputException : ArgumentException", "facade user-input failure must stay internal and preserve the ArgumentException family")
 
-    require(common_failures, "public sealed class BindingException : WistException", "binding failures need a typed CommonExceptions marker")
+    require(common_failures, "public sealed class BindingException : ToolchainException", "binding failures need the generic typed toolchain marker")
+    require(wist_exception, "public class WistException : ToolchainException", "Wist facade exceptions must share the generic toolchain diagnostic base")
+    forbid(wist_exception, "public new string? Stage", "WistException must not hide ToolchainException.Stage")
+    forbid(wist_exception, "public new SourceLocation? Location", "WistException must not hide ToolchainException.Location")
+    require(diagnostics, "var toolchainException = exception as ToolchainException;", "Wist diagnostics must project stage/location from generic toolchain exceptions")
     require(binding, "private static InvalidOperationException BindingFailure(string message)", "low-level binding failures must preserve the reviewed InvalidOperationException family")
     require(binding, "new(message, new BindingException(message))", "low-level binding failures must carry the typed marker for facade classification")
     forbid(binding, "throw new TypeSystemException", "VariablesModule must not change the reviewed top-level binding exception family")
