@@ -38,6 +38,9 @@ jobs:
       - name: Build documentation
         run: npm run docs:build
 
+      - name: Verify GitHub Pages deployment invariants
+        run: npm run docs:pages
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 

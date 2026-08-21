@@ -64,5 +64,11 @@ jobs:
       - name: Reject Wist first-contact documentation mutants
         run: python3 Tools/test-wist-documentation-first-contact-mutants.py --root .
 
+      - name: Reject GitHub Pages invariant mutants
+        run: npm run docs:pages-selftest
+
       - name: Build documentation
         run: npm run docs:build
+
+      - name: Verify GitHub Pages deployment invariants
+        run: npm run docs:pages

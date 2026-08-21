@@ -10,7 +10,9 @@
     "docs:first-contact": "python3 -c \"from pathlib import Path; Path('UniversalToolchain/packages').mkdir(parents=True, exist_ok=True)\" && python3 Tools/check-wist-documentation-first-contact.py",
     "docs:status": "python3 Tools/check_documentation_status.py && npm run docs:release-state && npm run docs:readiness",
     "docs:links": "python3 Tools/check_documentation_links.py",
-    "docs:check": "npm run docs:status && npm run docs:readiness-mutants && npm run docs:links && npm run docs:first-contact && npm run docs:build"
+    "docs:pages": "python3 Tools/check_documentation_pages.py",
+    "docs:pages-selftest": "python3 Tools/test-documentation-pages.py",
+    "docs:check": "npm run docs:status && npm run docs:readiness-mutants && npm run docs:links && npm run docs:first-contact && npm run docs:pages-selftest && npm run docs:build && npm run docs:pages"
   },
   "devDependencies": {
     "vitepress": "1.6.4"
