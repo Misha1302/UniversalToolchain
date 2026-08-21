@@ -78,6 +78,28 @@ def main() -> None:
         )
         expect_failure(checker, drift, "aggregate owner drift")
 
+        docs_gate = Path(temporary) / "docs-gate"
+        shutil.copytree(baseline, docs_gate)
+        docs_workflow = docs_gate / ".github/workflows/docs-check.yml"
+        docs_workflow.write_text(
+            docs_workflow.read_text(encoding="utf-8").replace(
+                "run: npm run docs:pages-selftest", "run: echo pages-selftest-removed", 1
+            ),
+            encoding="utf-8",
+        )
+        expect_failure(checker, docs_gate, "Docs Check Pages self-test removal")
+
+        deploy_gate = Path(temporary) / "deploy-gate"
+        shutil.copytree(baseline, deploy_gate)
+        deploy_workflow = deploy_gate / ".github/workflows/deploy-docs.yml"
+        deploy_workflow.write_text(
+            deploy_workflow.read_text(encoding="utf-8").replace(
+                "run: npm run docs:pages", "run: echo pages-gate-removed", 1
+            ),
+            encoding="utf-8",
+        )
+        expect_failure(checker, deploy_gate, "Pages deploy gate removal")
+
     print("CI contract mutants rejected")
 
 

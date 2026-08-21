@@ -66,6 +66,24 @@ def main() -> None:
         if item.get("name") in names:
             fail(f"non-blocking workflow is also required: {item.get('name')!r}")
 
+    pages_wiring = {
+        ".github/workflows/docs-check.yml": (
+            "npm run docs:pages-selftest",
+            "npm run docs:pages",
+        ),
+        ".github/workflows/deploy-docs.yml": (
+            "npm run docs:pages",
+        ),
+    }
+    for relative, required_commands in pages_wiring.items():
+        workflow = root / relative
+        if not workflow.is_file():
+            fail(f"GitHub Pages invariant workflow is missing: {relative}")
+        text = workflow.read_text(encoding="utf-8")
+        for command in required_commands:
+            if command not in text:
+                fail(f"{relative}: GitHub Pages invariant gate is not wired: missing `{command}`")
+
     print(f"CI contract OK: {len(required)} fail-closed required workflows")
 
 
