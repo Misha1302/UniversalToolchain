@@ -17,6 +17,7 @@ REPOSITORY = "Misha1302/UniversalToolchain"
 def write_fixture(root: Path) -> None:
     (root / "docs" / ".vitepress" / "dist" / "assets").mkdir(parents=True)
     (root / "docs" / ".vitepress" / "dist" / "start").mkdir(parents=True)
+    (root / "docs" / ".vitepress" / "dist" / "evidence").mkdir(parents=True)
     (root / "docs" / ".vitepress").mkdir(parents=True, exist_ok=True)
     (root / "docs" / ".vitepress" / "config.mts").write_text(
         "export default defineConfig({ base: '/UniversalToolchain/' })\n", encoding="utf-8"
@@ -26,11 +27,15 @@ def write_fixture(root: Path) -> None:
     )
     (root / "docs" / ".vitepress" / "dist" / "index.html").write_text(
         '<link rel="stylesheet" href="/UniversalToolchain/assets/app.css">\n'
-        '<a href="/UniversalToolchain/start/">Start</a>\n',
+        '<a href="/UniversalToolchain/start/">Start</a>\n'
+        '<a href="/UniversalToolchain/evidence/wist-stability-v0.1.0-alpha.7">Stability</a>\n',
         encoding="utf-8",
     )
     (root / "docs" / ".vitepress" / "dist" / "assets" / "app.css").write_text("body{}\n", encoding="utf-8")
     (root / "docs" / ".vitepress" / "dist" / "start" / "index.html").write_text("<p>start</p>\n", encoding="utf-8")
+    (root / "docs" / ".vitepress" / "dist" / "evidence" / "wist-stability-v0.1.0-alpha.7.html").write_text(
+        "<p>stability</p>\n", encoding="utf-8"
+    )
 
 
 def expect_failure(root: Path, needle: str) -> None:
@@ -64,7 +69,10 @@ def main() -> int:
         built.write_text('<link rel="stylesheet" href="/UniversalToolchain/assets/missing.css">\n', encoding="utf-8")
         expect_failure(root, "missing built target")
 
-    print("GitHub Pages invariant self-test passed: valid fixture + base/source/built/missing-target mutants rejected.")
+    print(
+        "GitHub Pages invariant self-test passed: valid fixture including dotted clean URLs + "
+        "base/source/built/missing-target mutants rejected."
+    )
     return 0
 
 
