@@ -109,12 +109,12 @@ def source_raw_root_urls(root: Path) -> list[str]:
     return errors
 
 
-def _candidate_targets(base: Path, path_text: str) -> list[Path]:
+def _candidate_targets(base: Path, path_text: str, *, allow_clean_url: bool) -> list[Path]:
     target = base / unquote(path_text)
     candidates = [target]
     if path_text.endswith("/"):
         candidates.append(target / "index.html")
-    elif target.suffix == "":
+    elif allow_clean_url:
         candidates.extend([Path(str(target) + ".html"), target / "index.html"])
     return candidates
 
@@ -149,6 +149,7 @@ def built_site_errors(root: Path, expected_base: str) -> list[str]:
             if not path_text:
                 continue
 
+            allow_clean_url = tag == "a" and attr == "href"
             if path_text.startswith("/"):
                 if expected_base == "/":
                     relative = path_text.lstrip("/")
@@ -161,9 +162,9 @@ def built_site_errors(root: Path, expected_base: str) -> list[str]:
                         f"{html_path.relative_to(root)}: <{tag} {attr}={raw!r}> escapes expected Pages base {expected_base!r}"
                     )
                     continue
-                candidates = _candidate_targets(dist, relative)
+                candidates = _candidate_targets(dist, relative, allow_clean_url=allow_clean_url)
             else:
-                candidates = _candidate_targets(html_path.parent, path_text)
+                candidates = _candidate_targets(html_path.parent, path_text, allow_clean_url=allow_clean_url)
 
             if not _exists_within_dist(dist, candidates):
                 errors.append(
