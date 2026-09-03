@@ -72,6 +72,8 @@ internal static class LanguageArtifactRoutePhase
                 diagnostics);
             if (steps == null)
                 continue;
+            if (!ValidateDescriptorRouteOrder(transformations, steps, backend, diagnostics))
+                continue;
             if (!ValidateDefinitionRouteOrder(definition, steps, backend, diagnostics))
                 continue;
             routes.Add(new LanguageArtifactRoute(backend, definition.EntryArtifact, target, steps));
@@ -177,6 +179,47 @@ internal static class LanguageArtifactRoutePhase
                 transformation.Cost));
             emitted.Add(ready.Contribution.Id);
             remaining.Remove(ready.Contribution.Id);
+        }
+        return true;
+    }
+
+    private static bool ValidateDescriptorRouteOrder(
+        IReadOnlyList<ResolvedLanguageContribution> transformations,
+        IReadOnlyList<LanguageArtifactRouteStep> steps,
+        BackendId backend,
+        ICollection<LanguageDiagnostic> diagnostics)
+    {
+        var indexes = steps
+            .Select(static (step, index) => (step.ContributionId, Index: index))
+            .ToDictionary(static item => item.ContributionId, static item => item.Index);
+        var contributions = transformations.ToDictionary(static item => item.Contribution.Id);
+        foreach (var (contributionId, index) in indexes)
+        {
+            if (!contributions.TryGetValue(contributionId, out var resolved))
+                continue;
+
+            foreach (var before in resolved.Contribution.BeforeContributions)
+            {
+                if (!indexes.TryGetValue(before, out var beforeIndex) || index < beforeIndex)
+                    continue;
+                diagnostics.Add(LanguagePlanningDiagnostics.Error(
+                    "UTL2206", "planning",
+                    $"Executable route for backend '{backend.Value}' violates descriptor order: '{contributionId.Value}' Before '{before.Value}'.",
+                    contributionId.Value,
+                    "Change the contribution order or provide a route whose topology can satisfy it."));
+                return false;
+            }
+            foreach (var after in resolved.Contribution.AfterContributions)
+            {
+                if (!indexes.TryGetValue(after, out var afterIndex) || index > afterIndex)
+                    continue;
+                diagnostics.Add(LanguagePlanningDiagnostics.Error(
+                    "UTL2206", "planning",
+                    $"Executable route for backend '{backend.Value}' violates descriptor order: '{contributionId.Value}' After '{after.Value}'.",
+                    contributionId.Value,
+                    "Change the contribution order or provide a route whose topology can satisfy it."));
+                return false;
+            }
         }
         return true;
     }
