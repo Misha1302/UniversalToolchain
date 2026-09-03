@@ -180,6 +180,22 @@ public static class LanguagePlanVerifier
                     Fail($"Route for backend '{backend.Value}' violates after-order '{after.Value}' -> '{contributionId.Value}'.");
             }
         }
+
+        foreach (var constraint in plan.Definition.ContributionOrderConstraints)
+        {
+            if (!stepIndexes.TryGetValue(constraint.Source, out var sourceIndex) ||
+                !stepIndexes.TryGetValue(constraint.Target, out var targetIndex))
+                continue;
+
+            var satisfied = constraint.Kind == LanguageContributionOrderKind.Before
+                ? sourceIndex < targetIndex
+                : targetIndex < sourceIndex;
+            if (!satisfied)
+            {
+                Fail(
+                    $"Route for backend '{backend.Value}' violates definition-level order '{constraint.Source.Value}' {constraint.Kind} '{constraint.Target.Value}'.");
+            }
+        }
     }
 
     private static void ValidateRegistrationIdentityConsistency(LanguagePlan plan)

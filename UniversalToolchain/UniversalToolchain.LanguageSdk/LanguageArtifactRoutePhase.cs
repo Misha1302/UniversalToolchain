@@ -64,6 +64,7 @@ internal static class LanguageArtifactRoutePhase
             }
 
             var steps = InsertPasses(
+                definition,
                 definition.EntryArtifact,
                 baseSteps,
                 transformations.Where(static item => item.Contribution.Transformation!.IsPass).ToArray(),
@@ -71,12 +72,15 @@ internal static class LanguageArtifactRoutePhase
                 diagnostics);
             if (steps == null)
                 continue;
+            if (!ValidateDefinitionRouteOrder(definition, steps, backend, diagnostics))
+                continue;
             routes.Add(new LanguageArtifactRoute(backend, definition.EntryArtifact, target, steps));
         }
         return routes;
     }
 
     private static IReadOnlyList<LanguageArtifactRouteStep>? InsertPasses(
+        LanguageDefinition definition,
         LanguageArtifactContract source,
         IReadOnlyList<LanguageArtifactRouteStep> baseSteps,
         IReadOnlyList<ResolvedLanguageContribution> passes,
@@ -89,12 +93,12 @@ internal static class LanguageArtifactRoutePhase
 
         foreach (var step in baseSteps)
         {
-            if (!AppendPassesForContract(current, remaining, result, backend, diagnostics))
+            if (!AppendPassesForContract(definition, current, remaining, result, backend, diagnostics))
                 return null;
             result.Add(step);
             current = step.TargetContract;
         }
-        if (!AppendPassesForContract(current, remaining, result, backend, diagnostics))
+        if (!AppendPassesForContract(definition, current, remaining, result, backend, diagnostics))
             return null;
         if (remaining.Count != 0)
         {
@@ -112,6 +116,7 @@ internal static class LanguageArtifactRoutePhase
     }
 
     private static bool AppendPassesForContract(
+        LanguageDefinition definition,
         LanguageArtifactContract contract,
         IDictionary<LanguageContributionId, ResolvedLanguageContribution> remaining,
         ICollection<LanguageArtifactRouteStep> output,
@@ -126,17 +131,31 @@ internal static class LanguageArtifactRoutePhase
         if (candidates.Count == 0)
             return true;
 
+        var predecessors = candidates.Keys.ToDictionary(
+            static id => id,
+            static _ => new HashSet<LanguageContributionId>());
+        foreach (var item in candidates.Values)
+        {
+            foreach (var after in item.Contribution.AfterContributions.Where(candidates.ContainsKey))
+                predecessors[item.Contribution.Id].Add(after);
+            foreach (var before in item.Contribution.BeforeContributions.Where(candidates.ContainsKey))
+                predecessors[before].Add(item.Contribution.Id);
+        }
+        foreach (var constraint in definition.ContributionOrderConstraints.Where(constraint =>
+                     candidates.ContainsKey(constraint.Source) && candidates.ContainsKey(constraint.Target)))
+        {
+            if (constraint.Kind == LanguageContributionOrderKind.Before)
+                predecessors[constraint.Target].Add(constraint.Source);
+            else
+                predecessors[constraint.Source].Add(constraint.Target);
+        }
+
         var emitted = new HashSet<LanguageContributionId>();
         while (emitted.Count != candidates.Count)
         {
             var ready = candidates.Values
                 .Where(item => !emitted.Contains(item.Contribution.Id))
-                .Where(item => item.Contribution.AfterContributions
-                    .Where(candidates.ContainsKey)
-                    .All(emitted.Contains))
-                .Where(item => candidates.Values
-                    .Where(other => other.Contribution.BeforeContributions.Contains(item.Contribution.Id))
-                    .All(other => emitted.Contains(other.Contribution.Id)))
+                .Where(item => predecessors[item.Contribution.Id].All(emitted.Contains))
                 .OrderBy(static item => item.Contribution.Order)
                 .ThenBy(static item => item.Contribution.Id.Value, StringComparer.Ordinal)
                 .FirstOrDefault();
@@ -146,7 +165,7 @@ internal static class LanguageArtifactRoutePhase
                     "UTL2202", "planning",
                     $"Artifact passes for contract '{contract}' contain an ordering cycle.",
                     contract.Kind.Value,
-                    "Remove the cyclic Before/After constraints."));
+                    "Remove cyclic descriptor-level or definition-level Before/After/Requires constraints."));
                 return false;
             }
 
@@ -158,6 +177,40 @@ internal static class LanguageArtifactRoutePhase
                 transformation.Cost));
             emitted.Add(ready.Contribution.Id);
             remaining.Remove(ready.Contribution.Id);
+        }
+        return true;
+    }
+
+    private static bool ValidateDefinitionRouteOrder(
+        LanguageDefinition definition,
+        IReadOnlyList<LanguageArtifactRouteStep> steps,
+        BackendId backend,
+        ICollection<LanguageDiagnostic> diagnostics)
+    {
+        if (definition.ContributionOrderConstraints.Count == 0)
+            return true;
+
+        var indexes = steps
+            .Select(static (step, index) => (step.ContributionId, Index: index))
+            .ToDictionary(static item => item.ContributionId, static item => item.Index);
+        foreach (var constraint in definition.ContributionOrderConstraints)
+        {
+            if (!indexes.TryGetValue(constraint.Source, out var sourceIndex) ||
+                !indexes.TryGetValue(constraint.Target, out var targetIndex))
+                continue;
+
+            var satisfied = constraint.Kind == LanguageContributionOrderKind.Before
+                ? sourceIndex < targetIndex
+                : targetIndex < sourceIndex;
+            if (satisfied)
+                continue;
+
+            diagnostics.Add(LanguagePlanningDiagnostics.Error(
+                "UTL2205", "planning",
+                $"Executable route for backend '{backend.Value}' violates definition-level order: '{constraint.Source.Value}' {constraint.Kind} '{constraint.Target.Value}'.",
+                constraint.Source.Value,
+                "Change the definition order or provide a route whose executable contributions can satisfy it."));
+            return false;
         }
         return true;
     }
