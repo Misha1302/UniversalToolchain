@@ -1,3 +1,9 @@
+---
+title: Planner/composition iterative repair — final finding status
+navigation: hidden
+status: Branch-scoped audit disposition ledger; not part of published user navigation.
+---
+
 # Planner/composition iterative repair — final finding status
 
 Date: 2026-09-03
@@ -52,7 +58,7 @@ After the production repair, `92ba1b3009d6386043c913bc13d3c9c05dc704b7` produced
 
 The untouched baseline `7005371…` already had a non-test documentation-status failure: `docs/talks: internal material must live under internal-docs/`. Its canonical test contract was 1,306/1,306 green and hardening mutants were green before that pre-existing docs-status rule failed.
 
-The planner repair itself did not create that failure. A separate hygiene commit `fc8de17a0640d8e788789d658213349a88cc2259` moved the only `docs/talks` file to `internal-docs/talks` as an exact Git rename: 0 additions, 0 deletions, and 0 content changes. On that exact SHA the Linux canonical entrypoint completed 1,323/1,323 tests, `HARDENING_CONTRACT=PASS`, `HARDENING_MUTANTS=PASS`, the documentation-status check passed, and the workflow advanced into the downstream documentation build for the first time in this repair cycle.
+The planner repair itself did not create that failure. A separate hygiene commit `fc8de17a0640d8e788789d658213349a88cc2259` moved the only talks file from the former public documentation location to `internal-docs/talks` as an exact Git rename: 0 additions, 0 deletions, and 0 content changes. On that exact SHA the Linux canonical entrypoint completed 1,323/1,323 tests, `HARDENING_CONTRACT=PASS`, `HARDENING_MUTANTS=PASS`, the documentation-status check passed, and the workflow advanced into the downstream documentation build for the first time in this repair cycle.
 
 That downstream `docs:readiness` gate then exposed one census-derived stale claim in `docs/evidence/wist-stability-v0.1.0-alpha.7.md` (`1,306` instead of the observed canonical `1,323`). The final hygiene reconciliation updates that claim to the manifest value. No planner production or planner test semantics are changed by either hygiene correction.
 

@@ -1,3 +1,9 @@
+---
+title: Planner routing policy decision — 2026-09-03
+navigation: hidden
+status: Branch-scoped audit policy decision; not part of published user navigation.
+---
+
 # Planner routing policy decision — 2026-09-03
 
 Baseline: `master@7005371d6c30175dff4b0e9f906a26218b0ee54d`

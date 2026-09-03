@@ -1,3 +1,9 @@
+---
+title: Planner iterative repair — 2026-09-03
+navigation: hidden
+status: Branch-scoped repair release note; not part of published user navigation.
+---
+
 # Planner iterative repair — 2026-09-03
 
 This repair hardens executable planning around one rule: semantic constraints define feasible plans; declared preferences rank feasible plans; technical IDs do not silently decide semantics.

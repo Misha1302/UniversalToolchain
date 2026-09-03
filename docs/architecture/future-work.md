@@ -2,6 +2,7 @@
 title: Future work without pre-LangDev architecture expansion
 description: Explicitly deferred architecture work and its activation triggers.
 audience: maintainers, reviewers
+navigation: hidden
 status: proposed documentation-only hardening
 ---
 

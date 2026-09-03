@@ -2,6 +2,7 @@
 title: LangDev adversarial architecture boundaries
 description: Current UniversalToolchain planning claims, limits, and source-of-truth boundaries for LangDev 2026.
 audience: maintainers, conference reviewers, advanced users
+navigation: hidden
 status: proposed documentation-only hardening
 ---
 

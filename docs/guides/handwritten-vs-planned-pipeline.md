@@ -2,6 +2,7 @@
 title: Handwritten pipeline vs planned composition
 description: When UniversalToolchain is justified and when a direct pipeline is better.
 audience: language authors, reviewers
+navigation: hidden
 status: proposed documentation-only hardening
 ---
 
