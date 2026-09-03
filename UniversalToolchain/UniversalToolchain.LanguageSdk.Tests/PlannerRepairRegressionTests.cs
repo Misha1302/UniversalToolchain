@@ -43,6 +43,8 @@ public sealed class PlannerRepairRegressionTests
         var secondValue = secondRuntime.Run(new LanguageExecutionRequest("ignored", backend)).Value;
         var firstLock = LanguageLockFile.Serialize(multiplyThenAdd);
         var secondLock = LanguageLockFile.Serialize(addThenMultiply);
+        var firstCanonicalLock = LanguageLockFile.SerializeCanonical(multiplyThenAdd);
+        var secondCanonicalLock = LanguageLockFile.SerializeCanonical(addThenMultiply);
 
         Assert.Multiple(() =>
         {
@@ -52,7 +54,7 @@ public sealed class PlannerRepairRegressionTests
             Assert.That(secondValue, Is.EqualTo(4));
             Assert.That(addThenMultiply.PlanHash, Is.Not.EqualTo(multiplyThenAdd.PlanHash));
             Assert.That(secondLock, Is.Not.EqualTo(firstLock));
-            Assert.That(LanguageLockFile.SerializeCanonical(addThenMultiply), Is.EqualTo(LanguageLockFile.SerializeCanonical(addThenMultiply)));
+            Assert.That(secondCanonicalLock, Is.Not.EqualTo(firstCanonicalLock));
         });
     }
 
