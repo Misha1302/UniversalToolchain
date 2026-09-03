@@ -1,159 +1,169 @@
 # UniversalToolchain planner/composition adversarial audit
 
-Date: 2026-09-03
-
-Baseline branch: `master`
-Baseline commit: `7005371d6c30175dff4b0e9f906a26218b0ee54d`
+Date: 2026-09-03  
+Baseline branch: `master`  
+Baseline commit: `7005371d6c30175dff4b0e9f906a26218b0ee54d`  
 Audit branch: `audit/planner-countertests-20260903`
 
-Scope: planning/composition/runtime architecture only. This document intentionally does **not** propose or implement production fixes. It is the Phase A inventory that must exist before countertests are added.
+This is the Phase A inventory. It intentionally does **not** design or implement production fixes.
 
 ## Baseline
 
-The default branch is `master`; the audited commit is `7005371d6c30175dff4b0e9f906a26218b0ee54d` (`docs: add LangDev adversarial defense pack`). The relevant ownership map is:
+The repository default branch is `master`; all code evidence below was re-read at commit `7005371d6c30175dff4b0e9f906a26218b0ee54d` (`docs: add LangDev adversarial defense pack`). The principal ownership path is:
 
-- `UniversalToolchain.Language.Abstractions`: IDs, definitions, artifact contracts, runtime policy;
-- `UniversalToolchain.FeatureSdk`: features, contributions, transformation metadata, package registry;
-- `UniversalToolchain.LanguageSdk`: feature/contribution resolution, planner, routes, `LanguagePlan`, canonicalization, verifier;
-- `UniversalToolchain.Runtime`: runtime materialization, transformer/executor lookup, execution;
+- `UniversalToolchain.Language.Abstractions`: definitions, stable IDs, artifact contracts, runtime policy;
+- `UniversalToolchain.FeatureSdk`: package registry, feature/contribution descriptors, transformation metadata;
+- `UniversalToolchain.LanguageSdk`: feature/contribution resolution, route/pass planning, `LanguagePlan`, PlanHash and verifier;
+- `UniversalToolchain.Runtime`: exact runtime materialization and execution;
 - `UniversalToolchain.LanguageAuthoring`: typed authoring facade;
-- `UniversalToolchain.LanguageSdk.Tests`: principal planning/runtime regression tests.
+- `UniversalToolchain.LanguageSdk.Tests`: main planning/runtime regression suite.
 
-GitHub Actions baseline for the exact commit is not green. `.NET CI` run `33340972913` failed on both Linux and Windows. On Linux the canonical build/test step completed, then `Enforce canonical entrypoint result` failed; on Windows the canonical PowerShell build/test entrypoint failed. The uploaded canonical build log artifact expired on 2026-09-02, so the exact pre-existing inner failure cannot be reconstructed from the retained artifact. These failures must be kept separate from new expected-red countertests.
+GitHub Actions baseline for this exact commit is already red. `.NET CI` run `33340972913` failed on Linux and Windows. Linux completed the canonical build/test step and then failed `Enforce canonical entrypoint result`; Windows failed the canonical PowerShell build/test step. The uploaded canonical build log expired on 2026-09-02, so its inner failure cannot now be reconstructed. New countertest failures must therefore be classified separately from this pre-existing CI state.
 
 ## End-to-end decision path
 
-The audited lifecycle is:
+`LanguageDefinition / packages`
+→ features
+→ contribution dependency/capability closure
+→ conflicts / slot policies / requirements
+→ definition-level ordering
+→ runtime-provider selection
+→ backend ownership
+→ conversion graph
+→ conversion route selection
+→ same-contract pass insertion/order
+→ `LanguageArtifactRoute`
+→ `LanguagePlan`
+→ PlanHash
+→ `LanguagePlanVerifier`
+→ runtime component source validation
+→ exact transformer/executor binding
+→ execution.
 
-`LanguageDefinition` -> selected features -> contribution dependency/capability closure -> slot/conflict/requirement policies -> definition order -> runtime-provider selection -> backend owner -> artifact conversion route -> pass insertion/order -> `LanguageArtifactRoute` / `LanguagePlan` -> PlanHash -> `LanguagePlanVerifier` -> runtime component materialization -> exact transformer/executor binding -> execution.
-
-Important phase boundary: `LanguageCompiler.Compile` resolves features/contributions/runtime provider first and then invokes `LanguageArtifactRoutePhase.Build`; route planning does not feed constraints back into contribution/provider selection. `LanguageArtifactRoutePhase.Build` itself first computes a conversion-only route with `FindBestRoute`, then inserts all selected same-contract passes. Runtime materialization is later and is explicitly documented as not changing semantic selection.
+`LanguageCompiler.Compile` resolves features/contributions/provider before route construction. `LanguageArtifactRoutePhase.Build` then chooses a conversion-only route with `FindBestRoute` and only afterwards inserts selected passes. Runtime materialization is later and is explicitly forbidden from changing the semantic selection captured in the plan.
 
 ## Findings
 
 | ID | Class | Invariant / expected property | Minimal witness | Current behavior | Severity | Confidence | Countertest |
 |---|---|---|---|---|---|---|---|
-| UT-PLAN-001 | ARCHITECTURAL_UNDERSPECIFICATION | Route semantics should not depend on one scalar unless all competing preferences are commensurable in that domain. | Two legal conversion routes with the same scalar cost but different behavior. | `ArtifactTransformationDescriptor` exposes only non-negative `int Cost`; `FindBestRoute` treats it as the primary preference signal. No hard/soft, lexicographic, semantic-equivalence, required/forbidden-route, or policy dimension exists. | HIGH | HIGH | `Planner_ShouldNotResolveSemanticRouteAmbiguityByContributionIdAlone` |
-| UT-PLAN-002 | INCONSISTENT_POLICY | If alternatives are semantically distinguishable and no preference is declared, deterministic enumeration must not silently become semantic policy. | `Source -> A -> T` and `Source -> B -> T`, equal cost. | Equal route cost is resolved by a concatenated lexical `ContributionId` signature. Capability ambiguity (`UTL2002`), runtime-provider ambiguity (`UTL2302`) and single-owner ambiguity (`UTL2101`) instead fail closed. | HIGH | HIGH | same equal-cost ambiguity witness |
-| UT-PLAN-003 | ARCHITECTURAL_UNDERSPECIFICATION | Proposed safety invariant: a selected mandatory pass should participate in route feasibility; a locally cheapest route should not cause failure if another route yields a complete valid plan. | Cheap `Source -> T`; slightly dearer `Source -> M -> T`; selected pass `M -> M`. | `FindBestRoute` chooses conversion-only path first. `InsertPasses` then reports `UTL2204` because `M` is absent; planner does not retry the alternative route. Docs currently describe this behavior, so this is a model/global-planning gap rather than a violation of the documented algorithm. | HIGH | HIGH | `Planner_ShouldNotRejectGloballyValidRoute_WhenSelectedPassRequiresAlternativePath` |
-| UT-PLAN-004 | INCONSISTENT_POLICY | If `LanguageArtifactRoute.TotalCost` is the route cost exposed by the final plan, its relation to the optimized cost domain must be explicit and non-contradictory. | Route A has cheaper conversions plus non-zero same-contract pass cost; Route B has dearer conversions but lower final total. | Search minimizes conversion costs before passes; `LanguageArtifactRoute.TotalCost` sums all final steps. Low-level descriptors allow non-zero pass cost while typed `AddPass` fixes pass cost to zero. Thus “minimum-cost route” and published `TotalCost` are not generally the same objective. | MEDIUM | HIGH | low-level descriptor witness; keep as design witness if assertion policy remains unspecified |
-| UT-PLAN-005 | CONFIRMED_BUG | Every cost accepted by public descriptor construction must be handled without arithmetic corruption or an uncaught planner exception. | Direct route cost 100; alternate two-edge route with `int.MaxValue + int.MaxValue`. | `FindBestRoute` adds `int` costs directly. Overflow can wrap and make the expensive route appear cheaper. Construction of `LanguageArtifactRoute` later uses `Enumerable.Sum(int)`, which can throw `OverflowException`; `LanguageCompiler.Compile` does not convert this into a diagnostic. | CRITICAL | HIGH | `Planner_ShouldNotPreferOverflowedRoute_WhenCostsExceedIntRange` |
-| UT-PLAN-006 | MISSING_VALIDATION | Explicit `Before`/`After` constraints that are impossible on the chosen route must be rejected during planning as diagnostics, not ignored until verifier construction throws. | Pass on earlier contract A declares `After` a selected pass on later contract B. | `AppendPassesForContract` only considers ordering references inside the current contract's candidate set, so the cross-contract edge is ignored during insertion. `LanguagePlanVerifier` later sees both steps and rejects the global order; the exception escapes `Compile`. | HIGH | HIGH | `Planner_ShouldReportImpossibleCrossContractPassOrder_AsPlanningFailure` |
-| UT-PLAN-007 | ARCHITECTURAL_UNDERSPECIFICATION | Semantically non-commutative same-contract passes need an explicit ordering relation or an explicit declaration that ties are interchangeable. | Two same-contract passes, equal `Order`, no `Before`/`After`, non-commutative transforms. | Ready passes are ordered by `Order`, then lexical `ContributionId`. Determinism is achieved, but ID is also an undeclared execution priority. | MEDIUM | HIGH | `Planner_ShouldNotUseContributionIdAsSemanticOrderForEqualOrderPasses` (proposed safety invariant) |
-| UT-PLAN-008 | TEST_COVERAGE_GAP | Registration/enumeration permutations that preserve the same descriptors should preserve route and hash. | Register identical packages in opposite order. | Registry APIs sort exposed packages/contributions/providers and descriptor collections snapshot deterministically. No defect found in code review; a metamorphic regression test is still useful. | MEDIUM | HIGH | `Planner_ShouldPreservePlan_WhenPackageRegistrationOrderChanges` |
-| UT-PLAN-009 | DOCUMENTED_LIMITATION | Artifact compatibility needs a stable author-controlled semantic identity; the framework need not infer language/version/normalization dimensions automatically. | Same CLR type but different semantic states. | `LanguageArtifactContract` consists of artifact kind + optional stable type/contract identity. Docs explicitly assign stable protocol identity to authors and recommend distinct identities for public contracts. No concrete unsafe composition is proven when authors use the contract as designed. | MEDIUM | HIGH | none until a public-API witness demonstrates two semantically distinct states that cannot be represented |
-| UT-PLAN-010 | INCONSISTENT_POLICY | Selected executable contributions should have an explicit “candidate” vs “must execute” semantic. | Feature selects multiple non-pass transformers; cheapest route bypasses one. | Route planning treats non-pass transformations as alternatives. Selection/dependency validity does not imply route reachability/use. Current API does not state that every selected conversion must execute, so this is not promoted to bug. | MEDIUM | MEDIUM | needs contract clarification before assertion |
-| UT-PLAN-011 | NOT_A_BUG | Capability/provider ambiguity should not be resolved by registration order or lexical IDs. | Two capability providers / two runtime providers. | Resolver emits `UTL2002` / `UTL2302`; single-owner slot conflict emits `UTL2101`. Explicit `PreferCapabilityProvider`, `UseRuntimeProvider`, or slot replacement is required. | — | HIGH | existing behavior is the control for UT-PLAN-002 |
-| UT-PLAN-012 | DOCUMENTED_LIMITATION | A valid plan may be materialized only when exact runtime component sources are supplied; planning itself need not have those future instances. | Build plan from descriptor registration, then omit transformer implementation source at runtime. | Runtime assembler validates exact package/version/manifest/implementation and transformer/executor presence and can reject materialization. Docs explicitly define this as a later materialization boundary, so planning-success/runtime-failure is not itself a planner bug. | MEDIUM | HIGH | existing runtime binding tests already cover representative failures |
-| UT-PLAN-013 | NOT_A_BUG | Backend-specific composition may differ when declarations explicitly scope contributions to backends. | Pass supported only on backend A in a two-backend language. | Route construction filters transformations per backend using `SupportedBackends`; docs list backend scope as contribution semantics. No cross-backend semantic-equality invariant is declared. | — | HIGH | none without a stronger cross-backend language contract |
-| UT-PLAN-014 | NOT_A_BUG | PlanHash should be stable under semantically irrelevant input ordering and change with selected executable identity/contracts. | Permute definition order constraints/intrinsic directives. | `LanguageDefinition` canonicalizes order constraints and intrinsic policy; PlanHash sorts features/contributions/backends and serializes route steps, IDs, contracts and costs. No same-hash/different-executable witness found. | — | HIGH | registration-permutation control only |
-| UT-PLAN-015 | TEST_COVERAGE_GAP | Existing route assertions should distinguish semantic contract from implementation characterization. | Existing Wist tests assert exact contribution sequences. | Canonical Wist route tests verify exact current route IDs, and pass tests verify a declared `Before`; no adversarial equal-cost route, overflow, or globally-valid-alternative witness was found. | HIGH | HIGH | new focused countertest fixture |
-| UT-PLAN-016 | SUSPICIOUS_NEEDS_COUNTEREXAMPLE | Provider selection and route feasibility are separate local decisions; if feasibility could safely disambiguate candidates, the architecture currently cannot express that global relation. | Two eligible runtime providers, one with unreachable input and one reachable. | Runtime provider selection happens before route construction and ambiguous providers fail closed. This may be intentional explicit-selection policy; no bug claim without a documented auto-feasibility preference. | LOW | MEDIUM | do not encode as assertion yet |
-| UT-PLAN-017 | TEST_COVERAGE_GAP | Dominated/unreachable alternatives that do not participate in semantic selection should not perturb the executable route. | Add strictly more expensive conversion or unreachable transform. | Route search should leave selected route unchanged by cost/graph reasoning; there is no focused metamorphic countertest proving this invariant around lexical signatures and canonicalization. | MEDIUM | MEDIUM | add dominated-alternative green metamorphic test if fixture remains minimal |
+| UT-PLAN-001 | ARCHITECTURAL_UNDERSPECIFICATION | Route choice should not silently decide semantics when the model provides no semantic preference/equivalence relation. | Two equal-cost legal routes with different transformers. | One non-negative scalar `int Cost` is the only route preference domain. | HIGH | HIGH | `Planner_ShouldNotResolveSemanticRouteAmbiguityByContributionIdAlone` |
+| UT-PLAN-002 | INCONSISTENT_POLICY | Unresolved semantic alternatives should follow an explicit ambiguity policy rather than a technical-name priority. | Equal-cost `Source -> Target` alternatives. | `FindBestRoute` resolves equal cost by lexical concatenated `ContributionId` signature; capability/runtime-provider/single-owner ambiguities instead fail with `UTL2002`/`UTL2302`/`UTL2101`. | HIGH | HIGH | same equal-cost witness |
+| UT-PLAN-003 | ARCHITECTURAL_UNDERSPECIFICATION | Proposed safety invariant: selected mandatory pass feasibility should participate in route choice; a planner should not reject when another conversion route yields a complete valid plan. | Cheap `Source -> T`; dearer `Source -> M -> T`; selected pass `M -> M`. | Conversion path is fixed first; `InsertPasses` then emits `UTL2204` and never retries the alternative. Current docs explicitly describe conversion-first + `UTL2204`, so this is a global-planning gap, not a violation of the documented algorithm. | HIGH | HIGH | `Planner_ShouldNotRejectGloballyValidRoute_WhenSelectedPassRequiresAlternativePath` |
+| UT-PLAN-004 | NOT_A_BUG | Among routes that satisfy the current mandatory-pass semantics, minimizing conversion cost should also minimize final `TotalCost`. | Compare two valid routes under the same selected pass set. | Every selected pass must be placed exactly once or planning fails `UTL2204`; therefore the sum of selected pass costs is constant across valid routes for one backend. The seed “route B without the selected pass” is not valid under the current contract. | — | HIGH | no red test; retain only a control if needed |
+| UT-PLAN-005 | CONFIRMED_BUG | Every non-negative cost accepted by the public descriptor API must be processed without overflow corruption or an uncaught compiler exception. | Direct cost `100`; dominated two-edge path `int.MaxValue + int.MaxValue`. | Route search adds `int` directly with no overflow guard; the huge path can wrap negative and become preferred. Final `LanguageArtifactRoute.TotalCost` recomputes through `Sum(int)` and can throw `OverflowException`; `Compile` does not translate this into a diagnostic. | CRITICAL | HIGH | `Planner_ShouldNotPreferOverflowedRoute_WhenCostsExceedIntRange` |
+| UT-PLAN-006 | MISSING_VALIDATION | Explicit `Before`/`After` constraints that cannot be satisfied by route topology should fail during planning as diagnostics, not survive until `LanguagePlanVerifier` throws. | Pass on earlier contract A declares `After` pass on later contract B. | `AppendPassesForContract` filters ordering refs to candidates on the current contract, ignoring cross-contract edge; verifier later evaluates both route indexes and rejects the order. | HIGH | HIGH | `Planner_ShouldReportImpossibleCrossContractPassOrder_AsPlanningFailure` |
+| UT-PLAN-007 | ARCHITECTURAL_UNDERSPECIFICATION | Non-commutative equal-order passes need an explicit semantic order/equivalence contract. | Two passes on one contract, same `Order`, no `Before`/`After`, transforms `+1` and `*2`. | Ready set is ordered by `Order`, then lexical `ContributionId`; stable identity becomes execution priority. | MEDIUM | HIGH | `Planner_ShouldNotUseContributionIdAsSemanticOrderForEqualOrderPasses` (proposed safety invariant) |
+| UT-PLAN-008 | TEST_COVERAGE_GAP | Package/registration permutations that preserve descriptors should preserve selected executable route and PlanHash. | Register frontend and execution packages in opposite order. | Registry/provider collections and descriptor snapshots are canonicalized/sorted. No code defect found; focused metamorphic coverage is still missing. | MEDIUM | HIGH | `Planner_ShouldPreservePlan_WhenPackageRegistrationOrderChanges` |
+| UT-PLAN-009 | DOCUMENTED_LIMITATION | Semantic state must be representable by author-selected artifact identities; framework need not infer dialect/version/normalization dimensions. | Same CLR type carrying two semantic states. | Contract = artifact kind + optional stable type/contract identity. Docs explicitly make the protocol identity author-controlled and recommend explicit identities. No API-impossible witness was found. | — | HIGH | none |
+| UT-PLAN-010 | ARCHITECTURAL_UNDERSPECIFICATION | Selected non-pass contributions need an explicit “candidate alternative” vs “must execute” meaning. | Feature selects a conversion that the chosen route bypasses. | Non-pass selected transformations are treated as route alternatives; dependency/conflict selection does not imply execution. Current public contract does not state that every selected conversion must execute. | MEDIUM | MEDIUM | needs contract decision before assertion |
+| UT-PLAN-011 | NOT_A_BUG | Capability/provider ambiguity should be fail-closed unless explicitly selected. | Two capability or runtime providers. | Resolver already emits `UTL2002` / `UTL2302`; single-owner slot conflict emits `UTL2101`. | — | HIGH | serves as control for UT-PLAN-002 |
+| UT-PLAN-012 | DOCUMENTED_LIMITATION | Planning may precede runtime materialization, provided later binding validates exact provenance and implementations. | Descriptor-only plan, then missing component source. | Runtime assembler validates package/version/API/manifest/implementation instance plus exact transformer/executor presence. This later failure boundary is documented and intentional. | — | HIGH | existing binding tests sufficient |
+| UT-PLAN-013 | NOT_A_BUG | Backend-specific routes may differ when declarations explicitly scope contributions by backend. | Pass supported only on backend A. | `LanguageArtifactRoutePhase.Build` filters transformations by `SupportedBackends`; backend scope is documented contribution semantics. | — | HIGH | none without stronger cross-backend invariant |
+| UT-PLAN-014 | NOT_A_BUG | PlanHash should be insensitive to irrelevant input ordering while including executable identities/contracts. | Permute order constraints/intrinsic directives. | `LanguageDefinition` canonicalizes these collections; canonicalizer sorts features/contributions/routes and serializes executable route steps. No collision/ordering defect found. | — | HIGH | registration-permutation control |
+| UT-PLAN-015 | TEST_COVERAGE_GAP | Route tests should distinguish true semantic invariants from characterization of the current chosen IDs/order. | Existing exact Wist route assertions versus equal-cost counterfactuals. | Existing tests strongly verify canonical routes and declared pass ordering but no focused equal-cost ambiguity, overflow, or globally-valid-alternative witness was found. | HIGH | HIGH | new adversarial fixture |
+| UT-PLAN-016 | SUSPICIOUS_NEEDS_COUNTEREXAMPLE | If downstream route feasibility is intended to disambiguate providers, the current phase ordering cannot express that relation. | Two runtime providers, one unreachable input and one reachable. | Provider ambiguity is resolved/fails before route construction. Explicit selection may be intentional policy, so no bug claim. | LOW | MEDIUM | none yet |
+| UT-PLAN-017 | TEST_COVERAGE_GAP | A strictly dominated/unreachable conversion alternative should not change the chosen route. | Add more-expensive or unreachable edge. | Graph algorithm should preserve the route; no focused metamorphic regression was found. | LOW | MEDIUM | optional green control |
 
-## Detailed evidence
+## Code evidence
 
-### UT-PLAN-001 / UT-PLAN-002 — scalar cost and equal-cost ambiguity
+### Route selection, pass insertion, and ID tie-break
 
-`UniversalToolchain/UniversalToolchain.FeatureSdk/FeatureDescriptors.cs`, `ArtifactTransformationDescriptor` (baseline lines ~21-45) validates only `cost >= 0` and stores one `int Cost`.
+`UniversalToolchain/UniversalToolchain.LanguageSdk/LanguageArtifactRoutePhase.cs` at baseline commit:
 
-`UniversalToolchain/UniversalToolchain.LanguageSdk/LanguageArtifactRoutePhase.cs`, `FindBestRoute` (baseline lines ~158-214) maintains `RouteState(int Cost, string Signature, ...)`. Candidate selection is ordered by cost then lexical signature; signature concatenates contribution IDs. On equal cost, lexical signature explicitly replaces the previous candidate.
+- `Build`, lines 8–76: selects backend owner/target; builds `conversionEdges` from non-pass transformations; calls `FindBestRoute`; only then calls `InsertPasses`.
+- `InsertPasses`, approximately lines 79–113: walks the already-selected conversion steps and emits `UTL2204` if selected passes remain.
+- `AppendPassesForContract`, approximately lines 114–158: computes only same-contract candidates; ordering dependencies are filtered through that local candidate set; ready passes are `OrderBy(Order).ThenBy(ContributionId)`.
+- `FindBestRoute`, approximately lines 160–215: state is `(int Cost, string Signature, Steps)`; pending nodes and equal-cost candidates tie-break on lexical signature built from contribution IDs; cost accumulation is `currentState.Cost + edge.Transformation.Cost` with no overflow guard.
 
-There is no route-level equivalent of `PreferCapabilityProvider` or `UseRuntimeProvider`, and no ambiguity diagnostic for equal-cost alternatives. In contrast, `LanguageContributionResolutionPhase.ResolveCapabilityProvider` emits `UTL2002`, `SelectRuntimeProvider` emits `UTL2302`, and `ApplySlotPolicies` emits `UTL2101` for unresolved ownership ambiguity.
+### Cost domain
 
-Nearest coverage: canonical route tests assert chosen contribution sequences, but no focused test demonstrates that equal-cost semantic alternatives are either equivalent or explicitly selected.
+`UniversalToolchain/UniversalToolchain.FeatureSdk/FeatureDescriptors.cs`, `ArtifactTransformationDescriptor`, lines ~21–45 accepts every `int cost >= 0`; there is no upper-bound or checked-sum contract. `LanguageFeatureBuilder.AddPass` in `UniversalToolchain.LanguageAuthoring` fixes typed authored passes to cost 0, but the lower-level descriptor remains public and allows non-zero pass cost.
 
-### UT-PLAN-003 — conversion route fixed before selected passes
+`UniversalToolchain/UniversalToolchain.LanguageSdk/LanguagePlan.cs`, `LanguageArtifactRoute` computes `TotalCost = Steps.Sum(step => step.Cost)` after pass insertion.
 
-`LanguageArtifactRoutePhase.Build` (baseline lines ~8-76) filters `conversionEdges`, calls `FindBestRoute`, then calls `InsertPasses`. `InsertPasses` reports `UTL2204` for any selected pass whose contract is absent from that already-fixed route. There is no retry/backtracking with pass feasibility as a constraint.
+Adversarial correction: this does **not** prove a base-vs-final minimum bug in the current mandatory-pass model. Any valid route must contain every selected pass exactly once, so pass-cost sum is constant among valid routes. The genuine failure is UT-PLAN-003: the conversion-minimum route can be infeasible for the selected pass set even when another valid route exists.
 
-The architecture docs explicitly say conversions form the minimum-cost route and an unplaceable selected pass fails with `UTL2204`. Therefore the current implementation matches the documented local algorithm. The counterexample is still architectural evidence that route selection is not a global constraint problem: a complete valid LanguagePlan may exist while the planner returns failure.
+### Ambiguity policies
 
-Nearest coverage: the existing `UTL2204` regression validates failure for an unplaceable pass but does not add an alternative conversion route that would make the selected pass placeable.
+`UniversalToolchain/UniversalToolchain.LanguageSdk/LanguageContributionResolutionPhase.cs`:
 
-### UT-PLAN-004 — base cost and final `TotalCost` are different domains
+- `SelectRuntimeProvider` emits `UTL2301` for none and `UTL2302` for multiple candidates;
+- `ResolveCapabilityProvider` emits `UTL2002` when multiple providers remain without `PreferCapabilityProvider`;
+- `ApplySlotPolicies` emits `UTL2101` for unresolved single-owner/replacement ambiguity;
+- definition-level topological ready ties use `Order` then ID only after constraints are validated.
 
-`LanguageArtifactRoutePhase.FindBestRoute` sees only non-pass transformations. `LanguageArtifactRoute` in `LanguagePlan.cs` computes `TotalCost = Steps.Sum(step => step.Cost)` after passes have been inserted. The low-level `ArtifactTransformationDescriptor` permits non-zero pass costs; the typed `LanguageFeatureBuilder.AddPass` hardcodes cost zero.
+This makes silent equal-cost route selection a real cross-subsystem policy inconsistency even though it is deterministic.
 
-Thus a low-level legal descriptor can produce a final route whose `TotalCost` is not minimal among executable routes even though docs and release notes use the phrase “minimum-cost artifact routes”. This is a cost-model inconsistency; the audit does not choose whether the correct future model should optimize final cost, conversion-only cost, or a richer objective.
+### Verifier boundary
 
-### UT-PLAN-005 — `int` overflow
+`UniversalToolchain/UniversalToolchain.LanguageSdk/LanguagePlanVerifier.cs`, `ValidateRoute`, records indexes for every route step and enforces every selected step's `BeforeContributions` / `AfterContributions` whenever the referenced contribution is present. This is broader than the per-contract filtering done during pass insertion and creates the UT-PLAN-006 planner/verifier gap.
 
-Accepted costs span the whole non-negative `int` domain. `FindBestRoute` performs `currentState.Cost + edge.Transformation.Cost` into `int` with no overflow guard. This can wrap a huge path negative and make it lexicographically/cost-wise preferred. Final `LanguageArtifactRoute` construction recomputes the sum with `Enumerable.Sum(int)`, which has different overflow behavior and can throw. `LanguageCompiler.Compile` does not catch this arithmetic failure.
+### Structural contract boundary
 
-Minimal witness:
+`UniversalToolchain/UniversalToolchain.Language.Abstractions/ArtifactContracts.cs` defines `LanguageArtifactContract` as stable artifact kind plus optional stable value/contract identity. `LanguageArtifactRoute.ContractsConnect` requires exact kind and identity compatibility. Architecture docs explicitly assign stable protocol identity to language/package authors. No claim is made that the framework infers normalization/version/validation states.
 
-```text
-Source --100----------------> Target
-Source --int.MaxValue--> Mid --int.MaxValue--> Target
-```
+### Runtime materialization
 
-A legal, obviously dominated route must not become preferred because of arithmetic overflow.
+`UniversalToolchain/UniversalToolchain.Runtime/LanguageRouteRuntimeAssembler.cs` states that component loading is materialization only and must not expand/change plan semantics. It validates exact package identity/version/API/manifest/implementation provenance and exact transformer/executor registrations. Planning-success/runtime-materialization-failure is therefore intentional when required runtime sources are not supplied.
 
-### UT-PLAN-006 — cross-contract pass ordering validation gap
+### PlanHash/canonicalization
 
-`AppendPassesForContract` builds `candidates` only for the current contract. Its `AfterContributions` and reverse `BeforeContributions` checks filter dependencies through `candidates.ContainsKey`, so ordering edges to selected passes at other route contracts are ignored during insertion.
+`LanguageDefinition` sorts/deduplicates contribution order constraints and canonicalizes intrinsic policy. `LanguagePlanCanonicalizer` sorts features, contributions and routes and writes each executable route step with contribution ID, source, target and cost. No semantically-different/same-hash or irrelevant-order/different-hash witness was proven in this audit.
 
-`LanguagePlanVerifier.ValidateRoute`, however, constructs indexes for all route steps and checks every selected contribution's `BeforeContributions` / `AfterContributions` whenever the referenced step is present. Therefore an impossible cross-contract ordering can survive planning, then throw `LanguagePlanVerificationException` while constructing `LanguagePlan`. That is a missing planning validation / error-boundary defect.
+## Existing-test blind spots
 
-### UT-PLAN-007 — pass tie uses ID as execution order
+Nearest existing coverage includes:
 
-Within one artifact contract, `AppendPassesForContract` chooses ready passes by `Contribution.Order`, then `Contribution.Id` ordinal. `Before`/`After` can encode a partial order, but equal `Order` with no relation is executable and deterministic. For non-commutative passes, lexical ID therefore becomes semantic execution priority. This is not claimed as a current contract violation; it is a concrete underspecification witness.
+- exact Wist canonical route sequence assertions;
+- same-artifact pass execution with an explicit `Before` relation;
+- an `UTL2204` unplaceable-pass test;
+- capability conflict/alternative executor tests;
+- runtime manifest/source binding rejection tests;
+- canonicalization/typed-contract tests.
 
-### UT-PLAN-008 / UT-PLAN-014 — permutation and hash controls
+What these do **not** isolate is the counterfactual state space: equal-cost alternative routes, selected pass with an alternative feasible conversion route, cost overflow, impossible cross-contract pass order, and registration-order metamorphism. Exact current route assertions can therefore characterize a tie-break without proving why that route is semantically required.
 
-The audit attempted to falsify permutation stability. `LanguagePackageRegistry` sorts exposed package/contribution collections and capability providers. Descriptor collection snapshots sort IDs. `LanguageDefinition` canonicalizes contribution order constraints and intrinsic policy. `LanguagePlanCanonicalizer` sorts features, contributions and routes, while route step order remains executable order. No PlanHash collision or irrelevant-order instability was proven in this pass.
+## Mandatory checklist result
 
-### UT-PLAN-009 — structural vs semantic compatibility
-
-`LanguageArtifactRoute.ContractsConnect` requires equal artifact kind and equal value-type identity (or both untyped). It does not infer dialect/version/normalization/validation state. However `LanguageArtifactContract.Kind` and explicit contract identity are author-controlled stable protocol identifiers, and docs recommend explicit identities. A package can represent those semantic states by different contracts. Without a witness where the public API makes the distinction impossible, this is not classified as a bug.
-
-### UT-PLAN-012 — runtime availability
-
-`LanguageRouteRuntimeAssembler` validates exact package identity/version/manifest/implementation instance and exact transformer/executor registrations after planning. Its own contract states component loading is materialization only and must not change semantic selection. Existing tests already cover manifest mismatch and missing runtime-provider source. The ability to construct a plan before future runtime sources are supplied is therefore intentional.
-
-## Mandatory hypothesis checklist result
-
-1. Scalar cost: **confirmed underspecification** (UT-PLAN-001).
-2. Equal-cost routes: **confirmed silent ID tie policy** (UT-PLAN-002).
-3. Base-route vs final-route cost: **confirmed cost-domain inconsistency** (UT-PLAN-004).
-4. Route vs mandatory/selected pass: **confirmed global-planning gap, documented local behavior** (UT-PLAN-003).
-5. Optimizations/passes changing route validity: **confirmed via UT-PLAN-003**.
-6. Local optimum vs global valid plan: **confirmed for route/pass composition; provider variants not promoted without stronger policy**.
-7. Hidden ID/lexical policy: **confirmed in route ties and pass ties** (UT-PLAN-002, UT-PLAN-007).
-8. Cost arithmetic boundaries: **confirmed bug** (UT-PLAN-005).
-9. Structural vs semantic compatibility: **reviewed, no concrete API-impossible witness** (UT-PLAN-009).
-10. Provider ambiguity vs route ambiguity: **confirmed inconsistent policy** (UT-PLAN-002 vs UT-PLAN-011).
-11. Dependencies/conflicts vs route reachability: **selection does not mean execution for non-pass transforms; contract unclear** (UT-PLAN-010).
-12. Pass ordering: **confirmed missing cross-contract validation + tie underspecification** (UT-PLAN-006, UT-PLAN-007).
-13. Multi-backend consistency: **backend-specific divergence is explicitly modeled; no bug proven** (UT-PLAN-013).
-14. Runtime availability vs planning validity: **intentional materialization boundary** (UT-PLAN-012).
-15. PlanHash/canonicalization: **reviewed; no collision/irrelevant-order defect proven** (UT-PLAN-014).
-16. Error instead of alternative solution: **confirmed route/pass witness** (UT-PLAN-003).
-17. Tests blessing implementation: **coverage gap confirmed** (UT-PLAN-015).
+1. Scalar cost — **underspecified** (UT-PLAN-001).
+2. Equal-cost route ambiguity — **confirmed silent ID tie** (UT-PLAN-002).
+3. Base-route vs final-route cost — **refuted as a bug under current mandatory-pass semantics** (UT-PLAN-004).
+4. Route vs mandatory/selected passes — **global-planning gap confirmed** (UT-PLAN-003).
+5. Optimizations/passes changing route validity — **confirmed via UT-PLAN-003**.
+6. Local optimum vs global valid plan — **confirmed for route/pass phase**.
+7. Hidden ID/lexical policy — **confirmed for route ties and equal-order passes** (UT-PLAN-002, UT-PLAN-007).
+8. Cost arithmetic boundaries — **confirmed bug** (UT-PLAN-005).
+9. Structural vs semantic compatibility — **reviewed; no API-impossible witness** (UT-PLAN-009).
+10. Provider ambiguity vs route ambiguity — **confirmed inconsistent policy** (UT-PLAN-002 vs UT-PLAN-011).
+11. Dependency/conflict vs route reachability — **candidate-vs-mandatory semantics unclear** (UT-PLAN-010).
+12. Pass ordering — **confirmed validation gap + underspecified equal-order fallback** (UT-PLAN-006/007).
+13. Multi-backend consistency — **explicit backend scope; no bug proven** (UT-PLAN-013).
+14. Runtime availability vs planning validity — **intentional materialization boundary** (UT-PLAN-012).
+15. PlanHash/canonicalization — **no defect proven in reviewed permutations** (UT-PLAN-014).
+16. Error instead of alternative solution — **confirmed route/pass witness** (UT-PLAN-003).
+17. Tests blessing implementation — **coverage gap confirmed** (UT-PLAN-015).
 
 ## Highest-value countertests
 
-Priority order:
+1. `Planner_ShouldNotPreferOverflowedRoute_WhenCostsExceedIntRange` — concrete legal-input arithmetic defect.
+2. `Planner_ShouldNotRejectGloballyValidRoute_WhenSelectedPassRequiresAlternativePath` — global-valid-plan counterexample.
+3. `Planner_ShouldNotResolveSemanticRouteAmbiguityByContributionIdAlone` — hidden semantic tie policy.
+4. `Planner_ShouldReportImpossibleCrossContractPassOrder_AsPlanningFailure` — planner/verifier error-boundary defect.
+5. `Planner_ShouldPreservePlan_WhenPackageRegistrationOrderChanges` — green metamorphic control.
+6. `Planner_ShouldNotUseContributionIdAsSemanticOrderForEqualOrderPasses` — proposed safety invariant / design-ambiguity witness.
 
-1. **Cost overflow / dominated huge route** — legal input, concrete arithmetic defect, deterministic, very small witness.
-2. **Required pass forces alternative route** — strongest global-planning counterexample; demonstrates failure despite an existing complete plan.
-3. **Equal-cost semantic ambiguity** — isolates the hidden lexical-ID semantic policy and contrasts it with fail-closed provider ambiguity.
-4. **Impossible cross-contract pass order** — exposes a planning/verifier boundary bug and uncaught exception path.
-5. **Registration permutation** — green metamorphic control; proves the fixture is not accidentally registration-order-dependent.
-6. **Equal-order non-commutative passes** — architectural underspecification witness; assertion must be labeled proposed safety invariant, not current documented contract.
-7. **Base conversion cost vs final total cost** — useful design witness; use low-level descriptors because typed `AddPass` fixes pass cost to zero.
-8. **Dominated alternative** — green metamorphic control if it adds distinct coverage after overflow/ambiguity fixtures.
+A base-vs-final-cost RED test is deliberately **not** in this list after adversarial refutation: with the current rule that all selected passes must be placed exactly once, its proposed cheaper route without the pass is not a valid alternative.
 
 ## Adversarial refutation of high-severity findings
 
-- **UT-PLAN-003**: strongest defense is the architecture doc explicitly specifying conversion-first minimum route and `UTL2204` for a selected pass absent from that route. Result: kept as `ARCHITECTURAL_UNDERSPECIFICATION`, not `CONFIRMED_BUG`.
-- **UT-PLAN-002**: strongest defense is deterministic reproducibility. Result: determinism is real, but provider subsystems demonstrate that reproducibility and semantic justification are separate policies. Kept as `INCONSISTENT_POLICY`.
-- **UT-PLAN-005**: no defense found. Descriptor construction accepts the values; arithmetic can change route ordering and escape `Compile`. Kept `CONFIRMED_BUG`.
-- **UT-PLAN-006**: verifier proves the ordering relation is intended to be global over route steps, while insertion filters it locally. No documentation was found declaring such cross-contract constraints invalid at authoring time. Kept `MISSING_VALIDATION`.
-- **UT-PLAN-009**: strongest defense succeeds: contract identity is explicitly author-controlled and documented. Downgraded to `DOCUMENTED_LIMITATION` / no bug.
-- **UT-PLAN-012**: strongest defense succeeds: runtime materialization is explicitly later and exact-binding validation is deliberate. Kept `DOCUMENTED_LIMITATION`.
+- **UT-PLAN-003:** docs explicitly specify conversion-first route + `UTL2204`; retained as `ARCHITECTURAL_UNDERSPECIFICATION`, not implementation bug.
+- **UT-PLAN-002:** determinism is a valid defense but not semantic justification; fail-closed provider policies make the inconsistency concrete.
+- **UT-PLAN-004:** refutation succeeds; downgraded to `NOT_A_BUG` for the current mandatory-pass model.
+- **UT-PLAN-005:** no defense found; legal public costs can overflow planner arithmetic.
+- **UT-PLAN-006:** verifier itself demonstrates that `Before`/`After` is intended to constrain global route-step order when both contributions are present; local insertion fails to validate impossible cross-contract constraints.
+- **UT-PLAN-009:** refutation succeeds because semantic protocol identity is explicitly author-controlled.
+- **UT-PLAN-012:** refutation succeeds because later exact materialization is documented architecture.
 
 ## Phase B guardrails
 
-Countertests may be expected red. Assertions must not be weakened to match current behavior. No production implementation file may be modified. Test-fixture errors must be repaired before a failure is accepted as evidence. The final diff must contain only this research artifact and files under test projects/test-only support.
+Countertests may be intentionally red. Do not weaken assertions to match current behavior. If a test fails for fixture/compile reasons, fix only the test. Do not modify production. Final diff must contain only this audit artifact and test-project/test-only files.
