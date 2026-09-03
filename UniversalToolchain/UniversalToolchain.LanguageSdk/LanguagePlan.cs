@@ -60,7 +60,7 @@ public sealed class LanguageArtifactRoute
         SourceContract = source;
         TargetContract = target;
         Steps = new ReadOnlyCollection<LanguageArtifactRouteStep>(steps.ToArray());
-        TotalCost = Steps.Sum(static x => x.Cost);
+        TotalCost = Steps.Sum(static x => (long)x.Cost);
         if (Steps.Count == 0 && source != target)
             throw new ArgumentException("A non-identity route must contain at least one transformation.", nameof(steps));
         var current = source;
@@ -80,7 +80,7 @@ public sealed class LanguageArtifactRoute
     public LanguageArtifactKindId Source => SourceContract.Kind;
     public LanguageArtifactKindId Target => TargetContract.Kind;
     public IReadOnlyList<LanguageArtifactRouteStep> Steps { get; }
-    public int TotalCost { get; }
+    public long TotalCost { get; }
 
     public static bool ContractsConnect(LanguageArtifactContract produced, LanguageArtifactContract consumed)
     {

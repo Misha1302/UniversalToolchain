@@ -222,7 +222,7 @@ internal static class LanguageArtifactRoutePhase
     {
         var best = new Dictionary<LanguageArtifactContract, RouteState>
         {
-            [source] = new RouteState(0, string.Empty, [])
+            [source] = new RouteState(0L, string.Empty, [])
         };
         var pending = new HashSet<LanguageArtifactContract> { source };
         while (pending.Count != 0)
@@ -273,7 +273,7 @@ internal static class LanguageArtifactRoutePhase
         ArtifactTransformationDescriptor Transformation);
 
     private sealed record RouteState(
-        int Cost,
+        long Cost,
         string Signature,
         IReadOnlyList<LanguageArtifactRouteStep> Steps);
 }
