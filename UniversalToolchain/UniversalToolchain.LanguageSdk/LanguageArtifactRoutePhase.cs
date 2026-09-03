@@ -1,3 +1,4 @@
+using System.Numerics;
 using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
 
@@ -52,22 +53,48 @@ internal static class LanguageArtifactRoutePhase
                 .Where(static item => !item.Contribution.Transformation!.IsPass)
                 .Select(static item => new RouteEdge(item.Contribution.Id, item.Contribution.Transformation!))
                 .ToArray();
-            var baseSteps = FindBestRoute(definition.EntryArtifact, target, conversionEdges);
-            if (baseSteps == null)
+            var passes = transformations
+                .Where(static item => item.Contribution.Transformation!.IsPass)
+                .OrderBy(static item => item.Contribution.Id.Value, StringComparer.Ordinal)
+                .ToArray();
+
+            var routeSearch = FindBestRoute(definition.EntryArtifact, target, conversionEdges, passes);
+            if (routeSearch.Steps == null)
+            {
+                var unconstrained = FindBestRoute(definition.EntryArtifact, target, conversionEdges, []);
+                if (unconstrained.Steps != null && passes.Length != 0)
+                {
+                    diagnostics.Add(LanguagePlanningDiagnostics.Error(
+                        "UTL2204", "planning",
+                        $"Selected artifact passes cannot all be placed on any conversion route for backend '{backend.Value}'.",
+                        backend.Value,
+                        "Remove the pass, restrict its supported backends, or provide a route containing every mandatory pass contract."));
+                }
+                else
+                {
+                    diagnostics.Add(LanguagePlanningDiagnostics.Error(
+                        "UTL2201", "planning",
+                        $"No type-compatible artifact route exists from '{definition.EntryArtifact}' to '{target}' for backend '{backend.Value}'.",
+                        runtimeProvider.Contribution.Id.Value,
+                        "Register compatible typed artifact-transformer contributions or correct their contracts."));
+                }
+                continue;
+            }
+            if (routeSearch.IsAmbiguous)
             {
                 diagnostics.Add(LanguagePlanningDiagnostics.Error(
-                    "UTL2201", "planning",
-                    $"No type-compatible artifact route exists from '{definition.EntryArtifact}' to '{target}' for backend '{backend.Value}'.",
-                    runtimeProvider.Contribution.Id.Value,
-                    "Register compatible typed artifact-transformer contributions or correct their contracts."));
+                    "UTL2207", "planning",
+                    $"Backend '{backend.Value}' has multiple fully feasible minimum-cost artifact routes with no explicit semantic preference.",
+                    backend.Value,
+                    "Assign distinct route costs or introduce an explicit route-selection policy instead of relying on contribution IDs."));
                 continue;
             }
 
             var steps = InsertPasses(
                 definition,
                 definition.EntryArtifact,
-                baseSteps,
-                transformations.Where(static item => item.Contribution.Transformation!.IsPass).ToArray(),
+                routeSearch.Steps,
+                passes,
                 backend,
                 diagnostics);
             if (steps == null)
@@ -158,10 +185,8 @@ internal static class LanguageArtifactRoutePhase
             var ready = candidates.Values
                 .Where(item => !emitted.Contains(item.Contribution.Id))
                 .Where(item => predecessors[item.Contribution.Id].All(emitted.Contains))
-                .OrderBy(static item => item.Contribution.Order)
-                .ThenBy(static item => item.Contribution.Id.Value, StringComparer.Ordinal)
-                .FirstOrDefault();
-            if (ready == null)
+                .ToArray();
+            if (ready.Length == 0)
             {
                 diagnostics.Add(LanguagePlanningDiagnostics.Error(
                     "UTL2202", "planning",
@@ -171,14 +196,30 @@ internal static class LanguageArtifactRoutePhase
                 return false;
             }
 
-            var transformation = ready.Contribution.Transformation!;
+            var minimumOrder = ready.Min(static item => item.Contribution.Order);
+            var minimumReady = ready
+                .Where(item => item.Contribution.Order == minimumOrder)
+                .OrderBy(static item => item.Contribution.Id.Value, StringComparer.Ordinal)
+                .ToArray();
+            if (minimumReady.Length != 1)
+            {
+                diagnostics.Add(LanguagePlanningDiagnostics.Error(
+                    "UTL2208", "planning",
+                    $"Artifact passes for contract '{contract}' have multiple unrelated ready contributions with equal order {minimumOrder}: {string.Join(", ", minimumReady.Select(static item => item.Contribution.Id.Value))}.",
+                    contract.Kind.Value,
+                    "Declare Before/After ordering or assign distinct semantic Order values; contribution IDs do not resolve execution ambiguity."));
+                return false;
+            }
+
+            var selected = minimumReady[0];
+            var transformation = selected.Contribution.Transformation!;
             output.Add(new LanguageArtifactRouteStep(
-                ready.Contribution.Id,
+                selected.Contribution.Id,
                 transformation.SourceContract,
                 transformation.TargetContract,
                 transformation.Cost));
-            emitted.Add(ready.Contribution.Id);
-            remaining.Remove(ready.Contribution.Id);
+            emitted.Add(selected.Contribution.Id);
+            remaining.Remove(selected.Contribution.Id);
         }
         return true;
     }
@@ -258,30 +299,39 @@ internal static class LanguageArtifactRoutePhase
         return true;
     }
 
-    private static IReadOnlyList<LanguageArtifactRouteStep>? FindBestRoute(
+    private static RouteSearchResult FindBestRoute(
         LanguageArtifactContract source,
         LanguageArtifactContract target,
-        IReadOnlyList<RouteEdge> edges)
+        IReadOnlyList<RouteEdge> edges,
+        IReadOnlyList<ResolvedLanguageContribution> requiredPasses)
     {
-        var best = new Dictionary<LanguageArtifactContract, RouteState>
+        var requiredMask = requiredPasses.Count == 0
+            ? BigInteger.Zero
+            : (BigInteger.One << requiredPasses.Count) - BigInteger.One;
+        var initialMask = PassMaskForContract(source, requiredPasses);
+        var initialKey = new RouteSearchKey(source, initialMask);
+        var best = new Dictionary<RouteSearchKey, RouteState>
         {
-            [source] = new RouteState(0L, string.Empty, [])
+            [initialKey] = new RouteState(0L, string.Empty, [], false)
         };
-        var pending = new HashSet<LanguageArtifactContract> { source };
+        var pending = new HashSet<RouteSearchKey> { initialKey };
         while (pending.Count != 0)
         {
             var current = pending
-                .OrderBy(node => best[node].Cost)
-                .ThenBy(node => best[node].Signature, StringComparer.Ordinal)
-                .ThenBy(static node => node.ToString(), StringComparer.Ordinal)
+                .OrderBy(key => best[key].Cost)
+                .ThenBy(key => best[key].Signature, StringComparer.Ordinal)
+                .ThenBy(static key => key.Contract.ToString(), StringComparer.Ordinal)
+                .ThenBy(static key => key.CoveredPasses)
                 .First();
             pending.Remove(current);
             var currentState = best[current];
             foreach (var edge in edges
-                         .Where(edge => LanguageArtifactRoute.ContractsConnect(current, edge.Transformation.SourceContract))
+                         .Where(edge => LanguageArtifactRoute.ContractsConnect(current.Contract, edge.Transformation.SourceContract))
                          .OrderBy(static edge => edge.ContributionId.Value, StringComparer.Ordinal))
             {
-                var next = edge.Transformation.TargetContract;
+                var nextContract = edge.Transformation.TargetContract;
+                var nextMask = current.CoveredPasses | PassMaskForContract(nextContract, requiredPasses);
+                var nextKey = new RouteSearchKey(nextContract, nextMask);
                 var signature = string.IsNullOrEmpty(currentState.Signature)
                     ? edge.ContributionId.Value
                     : currentState.Signature + "|" + edge.ContributionId.Value;
@@ -292,31 +342,80 @@ internal static class LanguageArtifactRoutePhase
                         edge.ContributionId,
                         edge.Transformation.SourceContract,
                         edge.Transformation.TargetContract,
-                        edge.Transformation.Cost)).ToArray());
-                if (!best.TryGetValue(next, out var existing) ||
-                    candidate.Cost < existing.Cost ||
-                    candidate.Cost == existing.Cost && StringComparer.Ordinal.Compare(candidate.Signature, existing.Signature) < 0)
+                        edge.Transformation.Cost)).ToArray(),
+                    currentState.IsAmbiguous);
+
+                if (!best.TryGetValue(nextKey, out var existing) || candidate.Cost < existing.Cost)
                 {
-                    best[next] = candidate;
-                    pending.Add(next);
+                    best[nextKey] = candidate;
+                    pending.Add(nextKey);
+                    continue;
                 }
+                if (candidate.Cost != existing.Cost)
+                    continue;
+
+                var differentPath = !StringComparer.Ordinal.Equals(candidate.Signature, existing.Signature);
+                var mergedAmbiguity = existing.IsAmbiguous || candidate.IsAmbiguous || differentPath;
+                var useCandidate = StringComparer.Ordinal.Compare(candidate.Signature, existing.Signature) < 0;
+                var representative = useCandidate ? candidate : existing;
+                if (representative.IsAmbiguous == mergedAmbiguity && !useCandidate)
+                    continue;
+
+                best[nextKey] = representative with { IsAmbiguous = mergedAmbiguity };
+                pending.Add(nextKey);
             }
         }
 
-        return best
-            .Where(pair => LanguageArtifactRoute.ContractsConnect(pair.Key, target))
-            .OrderBy(static pair => pair.Value.Cost)
-            .ThenBy(static pair => pair.Value.Signature, StringComparer.Ordinal)
-            .Select(static pair => pair.Value.Steps)
-            .FirstOrDefault();
+        var goals = best
+            .Where(pair => pair.Key.CoveredPasses == requiredMask &&
+                           LanguageArtifactRoute.ContractsConnect(pair.Key.Contract, target))
+            .ToArray();
+        if (goals.Length == 0)
+            return new RouteSearchResult(null, false);
+
+        var minimumCost = goals.Min(static pair => pair.Value.Cost);
+        var minimumGoals = goals
+            .Where(pair => pair.Value.Cost == minimumCost)
+            .OrderBy(static pair => pair.Value.Signature, StringComparer.Ordinal)
+            .ToArray();
+        var distinctSignatures = minimumGoals
+            .Select(static pair => pair.Value.Signature)
+            .Distinct(StringComparer.Ordinal)
+            .Take(2)
+            .Count();
+        var ambiguous = distinctSignatures > 1 || minimumGoals.Any(static pair => pair.Value.IsAmbiguous);
+        return new RouteSearchResult(minimumGoals[0].Value.Steps, ambiguous);
+    }
+
+    private static BigInteger PassMaskForContract(
+        LanguageArtifactContract contract,
+        IReadOnlyList<ResolvedLanguageContribution> passes)
+    {
+        var mask = BigInteger.Zero;
+        for (var index = 0; index < passes.Count; index++)
+        {
+            var passContract = passes[index].Contribution.Transformation!.SourceContract;
+            if (LanguageArtifactRoute.ContractsConnect(contract, passContract))
+                mask |= BigInteger.One << index;
+        }
+        return mask;
     }
 
     private sealed record RouteEdge(
         LanguageContributionId ContributionId,
         ArtifactTransformationDescriptor Transformation);
 
+    private readonly record struct RouteSearchKey(
+        LanguageArtifactContract Contract,
+        BigInteger CoveredPasses);
+
     private sealed record RouteState(
         long Cost,
         string Signature,
-        IReadOnlyList<LanguageArtifactRouteStep> Steps);
+        IReadOnlyList<LanguageArtifactRouteStep> Steps,
+        bool IsAmbiguous);
+
+    private sealed record RouteSearchResult(
+        IReadOnlyList<LanguageArtifactRouteStep>? Steps,
+        bool IsAmbiguous);
 }
