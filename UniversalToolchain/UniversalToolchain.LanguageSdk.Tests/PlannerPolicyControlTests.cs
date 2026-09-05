@@ -161,7 +161,7 @@ public sealed class PlannerPolicyControlTests
     }
 
     [Test]
-    public void RouteSearch_ShouldChooseMoreExpensiveRoute_WhenCheaperRouteViolatesDefinitionOrder()
+    public void RouteSearch_ShouldChooseMoreExpensiveRoute_WhenCheaperRouteViolatesDescriptorOrder()
     {
         var backend = new BackendId("control.order.backend");
         var middle = new LanguageArtifactKind<int>("control.order.middle");
@@ -187,7 +187,8 @@ public sealed class PlannerPolicyControlTests
                     transformation: ArtifactTransformationDescriptor.Create(
                         StandardLanguageArtifactKinds.SourceText,
                         middle,
-                        1)),
+                        1),
+                    afterContributions: [cheapLower]),
                 new LanguageContributionDescriptor(
                     cheapLower,
                     new LanguageSlotId("control.order.cheap-lower"),
@@ -222,7 +223,6 @@ public sealed class PlannerPolicyControlTests
         var definition = LanguageDefinitionBuilder.Create("Control.Order.Language", "1")
             .UseFeature(feature)
             .EnableBackend(backend)
-            .OrderContributionAfter(cheapParse, cheapLower)
             .Build();
 
         var result = new LanguageCompiler(registry).Compile(definition);
