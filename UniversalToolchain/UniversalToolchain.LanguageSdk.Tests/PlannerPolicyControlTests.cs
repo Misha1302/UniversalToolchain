@@ -160,6 +160,80 @@ public sealed class PlannerPolicyControlTests
         });
     }
 
+    [Test]
+    public void RouteSearch_ShouldChooseMoreExpensiveRoute_WhenCheaperRouteViolatesDefinitionOrder()
+    {
+        var backend = new BackendId("control.order.backend");
+        var middle = new LanguageArtifactKind<int>("control.order.middle");
+        var executable = new LanguageArtifactKind<int>("control.order.executable");
+        var feature = new LanguageFeatureId("control.order.core");
+        var cheapParse = new LanguageContributionId("control.order.cheap.parse");
+        var cheapLower = new LanguageContributionId("control.order.cheap.lower");
+        var direct = new LanguageContributionId("control.order.direct");
+        var executor = new LanguageContributionId("control.order.executor");
+        var version = new LanguageVersion("1");
+        var mainDescriptor = new LanguagePackageDescriptor(
+            new LanguagePackageId("Control.Order.Main"),
+            version,
+            ToolchainApi.Current,
+            [new LanguageFeatureDescriptor(
+                feature,
+                contributions: [cheapParse, cheapLower, direct, executor])],
+            contributions:
+            [
+                new LanguageContributionDescriptor(
+                    cheapParse,
+                    new LanguageSlotId("control.order.cheap-parse"),
+                    transformation: ArtifactTransformationDescriptor.Create(
+                        StandardLanguageArtifactKinds.SourceText,
+                        middle,
+                        1)),
+                new LanguageContributionDescriptor(
+                    cheapLower,
+                    new LanguageSlotId("control.order.cheap-lower"),
+                    transformation: ArtifactTransformationDescriptor.Create(
+                        middle,
+                        executable,
+                        1)),
+                new LanguageContributionDescriptor(
+                    direct,
+                    new LanguageSlotId("control.order.direct-route"),
+                    transformation: ArtifactTransformationDescriptor.Create(
+                        StandardLanguageArtifactKinds.SourceText,
+                        executable,
+                        10)),
+                new LanguageContributionDescriptor(
+                    executor,
+                    LanguageSlots.Backends,
+                    providesCapabilities: [LanguageCapabilities.Backend(backend)],
+                    supportedBackends: [backend],
+                    backendInputContract: executable.Contract)
+            ]);
+        var providerDescriptor = RuntimeProviderPackage(
+            "Control.Order.Provider",
+            new LanguageContributionId("control.order.runtime"),
+            "control.order.runtime",
+            version,
+            backend,
+            executable.Contract);
+        var registry = new LanguagePackageRegistry()
+            .AddPackage(new DescriptorPackage(mainDescriptor))
+            .AddPackage(new DescriptorPackage(providerDescriptor));
+        var definition = LanguageDefinitionBuilder.Create("Control.Order.Language", "1")
+            .UseFeature(feature)
+            .EnableBackend(backend)
+            .OrderContributionAfter(cheapParse, cheapLower)
+            .Build();
+
+        var result = new LanguageCompiler(registry).Compile(definition);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Diagnostics, Is.Empty);
+            Assert.That(RouteIds(result.GetRequiredPlan(), backend), Is.EqualTo(new[] { direct }));
+        });
+    }
+
     private static AuthoredLanguagePackage CreateExecutablePackage(
         string packageId,
         string featureId,
