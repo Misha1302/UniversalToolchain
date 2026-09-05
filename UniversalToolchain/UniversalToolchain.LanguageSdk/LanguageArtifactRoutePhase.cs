@@ -57,11 +57,45 @@ internal static class LanguageArtifactRoutePhase
                 .Where(static item => item.Contribution.Transformation!.IsPass)
                 .OrderBy(static item => item.Contribution.Id.Value, StringComparer.Ordinal)
                 .ToArray();
+            var routeOrderConstraints = CreateRouteOrderConstraints(definition, transformations);
 
-            var routeSearch = FindBestRoute(definition.EntryArtifact, target, conversionEdges, passes);
+            var routeSearch = FindBestRoute(
+                definition.EntryArtifact,
+                target,
+                conversionEdges,
+                passes,
+                routeOrderConstraints);
             if (routeSearch.Steps == null)
             {
-                var unconstrained = FindBestRoute(definition.EntryArtifact, target, conversionEdges, []);
+                var orderUnconstrained = routeOrderConstraints.Count == 0
+                    ? routeSearch
+                    : FindBestRoute(definition.EntryArtifact, target, conversionEdges, passes, []);
+                if (routeOrderConstraints.Count != 0 && orderUnconstrained.Steps != null)
+                {
+                    var orderDiagnostics = new List<LanguageDiagnostic>();
+                    var orderSteps = InsertPasses(
+                        definition,
+                        definition.EntryArtifact,
+                        orderUnconstrained.Steps,
+                        passes,
+                        backend,
+                        orderDiagnostics);
+                    if (orderSteps != null)
+                    {
+                        ValidateDescriptorRouteOrder(transformations, orderSteps, backend, orderDiagnostics);
+                        ValidateDefinitionRouteOrder(definition, orderSteps, backend, orderDiagnostics);
+                    }
+                    foreach (var diagnostic in orderDiagnostics)
+                        diagnostics.Add(diagnostic);
+                    continue;
+                }
+
+                var unconstrained = FindBestRoute(
+                    definition.EntryArtifact,
+                    target,
+                    conversionEdges,
+                    [],
+                    routeOrderConstraints);
                 if (unconstrained.Steps != null && passes.Length != 0)
                 {
                     diagnostics.Add(LanguagePlanningDiagnostics.Error(
@@ -106,6 +140,35 @@ internal static class LanguageArtifactRoutePhase
             routes.Add(new LanguageArtifactRoute(backend, definition.EntryArtifact, target, steps));
         }
         return routes;
+    }
+
+    private static IReadOnlyList<RouteOrderConstraint> CreateRouteOrderConstraints(
+        LanguageDefinition definition,
+        IReadOnlyList<ResolvedLanguageContribution> transformations)
+    {
+        var conversions = transformations
+            .Where(static item => !item.Contribution.Transformation!.IsPass)
+            .ToDictionary(static item => item.Contribution.Id);
+        var constraints = new HashSet<RouteOrderConstraint>();
+        foreach (var item in conversions.Values)
+        {
+            foreach (var before in item.Contribution.BeforeContributions.Where(conversions.ContainsKey))
+                constraints.Add(new RouteOrderConstraint(item.Contribution.Id, before));
+            foreach (var after in item.Contribution.AfterContributions.Where(conversions.ContainsKey))
+                constraints.Add(new RouteOrderConstraint(after, item.Contribution.Id));
+        }
+        foreach (var constraint in definition.ContributionOrderConstraints.Where(constraint =>
+                     conversions.ContainsKey(constraint.Source) && conversions.ContainsKey(constraint.Target)))
+        {
+            if (constraint.Kind == LanguageContributionOrderKind.Before)
+                constraints.Add(new RouteOrderConstraint(constraint.Source, constraint.Target));
+            else
+                constraints.Add(new RouteOrderConstraint(constraint.Target, constraint.Source));
+        }
+        return constraints
+            .OrderBy(static constraint => constraint.Before.Value, StringComparer.Ordinal)
+            .ThenBy(static constraint => constraint.After.Value, StringComparer.Ordinal)
+            .ToArray();
     }
 
     private static IReadOnlyList<LanguageArtifactRouteStep>? InsertPasses(
@@ -303,13 +366,22 @@ internal static class LanguageArtifactRoutePhase
         LanguageArtifactContract source,
         LanguageArtifactContract target,
         IReadOnlyList<RouteEdge> edges,
-        IReadOnlyList<ResolvedLanguageContribution> requiredPasses)
+        IReadOnlyList<ResolvedLanguageContribution> requiredPasses,
+        IReadOnlyList<RouteOrderConstraint> orderConstraints)
     {
         var requiredMask = requiredPasses.Count == 0
             ? BigInteger.Zero
             : (BigInteger.One << requiredPasses.Count) - BigInteger.One;
+        var orderIds = orderConstraints
+            .SelectMany(static constraint => new[] { constraint.Before, constraint.After })
+            .Distinct()
+            .OrderBy(static id => id.Value, StringComparer.Ordinal)
+            .ToArray();
+        var orderBits = orderIds
+            .Select(static (id, index) => (id, index))
+            .ToDictionary(static item => item.id, static item => item.index);
         var initialMask = PassMaskForContract(source, requiredPasses);
-        var initialKey = new RouteSearchKey(source, initialMask);
+        var initialKey = new RouteSearchKey(source, initialMask, BigInteger.Zero);
         var best = new Dictionary<RouteSearchKey, RouteState>
         {
             [initialKey] = new RouteState(0L, string.Empty, [], false)
@@ -322,6 +394,7 @@ internal static class LanguageArtifactRoutePhase
                 .ThenBy(key => best[key].Signature, StringComparer.Ordinal)
                 .ThenBy(static key => key.Contract.ToString(), StringComparer.Ordinal)
                 .ThenBy(static key => key.CoveredPasses)
+                .ThenBy(static key => key.SeenOrderContributions)
                 .First();
             pending.Remove(current);
             var currentState = best[current];
@@ -329,9 +402,20 @@ internal static class LanguageArtifactRoutePhase
                          .Where(edge => LanguageArtifactRoute.ContractsConnect(current.Contract, edge.Transformation.SourceContract))
                          .OrderBy(static edge => edge.ContributionId.Value, StringComparer.Ordinal))
             {
+                if (ViolatesRouteOrder(
+                        edge.ContributionId,
+                        current.SeenOrderContributions,
+                        orderConstraints,
+                        orderBits))
+                    continue;
+
                 var nextContract = edge.Transformation.TargetContract;
                 var nextMask = current.CoveredPasses | PassMaskForContract(nextContract, requiredPasses);
-                var nextKey = new RouteSearchKey(nextContract, nextMask);
+                var nextOrderMask = MarkOrderContributionSeen(
+                    edge.ContributionId,
+                    current.SeenOrderContributions,
+                    orderBits);
+                var nextKey = new RouteSearchKey(nextContract, nextMask, nextOrderMask);
                 var signature = string.IsNullOrEmpty(currentState.Signature)
                     ? edge.ContributionId.Value
                     : currentState.Signature + "|" + edge.ContributionId.Value;
@@ -387,6 +471,32 @@ internal static class LanguageArtifactRoutePhase
         return new RouteSearchResult(minimumGoals[0].Value.Steps, ambiguous);
     }
 
+    private static bool ViolatesRouteOrder(
+        LanguageContributionId next,
+        BigInteger seen,
+        IReadOnlyList<RouteOrderConstraint> constraints,
+        IReadOnlyDictionary<LanguageContributionId, int> orderBits)
+    {
+        foreach (var constraint in constraints.Where(constraint => constraint.Before == next))
+        {
+            if (!orderBits.TryGetValue(constraint.After, out var afterIndex))
+                continue;
+            if ((seen & (BigInteger.One << afterIndex)) != BigInteger.Zero)
+                return true;
+        }
+        return false;
+    }
+
+    private static BigInteger MarkOrderContributionSeen(
+        LanguageContributionId contribution,
+        BigInteger seen,
+        IReadOnlyDictionary<LanguageContributionId, int> orderBits)
+    {
+        if (!orderBits.TryGetValue(contribution, out var index))
+            return seen;
+        return seen | (BigInteger.One << index);
+    }
+
     private static BigInteger PassMaskForContract(
         LanguageArtifactContract contract,
         IReadOnlyList<ResolvedLanguageContribution> passes)
@@ -405,9 +515,14 @@ internal static class LanguageArtifactRoutePhase
         LanguageContributionId ContributionId,
         ArtifactTransformationDescriptor Transformation);
 
+    private readonly record struct RouteOrderConstraint(
+        LanguageContributionId Before,
+        LanguageContributionId After);
+
     private readonly record struct RouteSearchKey(
         LanguageArtifactContract Contract,
-        BigInteger CoveredPasses);
+        BigInteger CoveredPasses,
+        BigInteger SeenOrderContributions);
 
     private sealed record RouteState(
         long Cost,
