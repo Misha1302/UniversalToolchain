@@ -43,29 +43,14 @@ internal static class UtDownstreamTreatment
             .AddFeature("rq3.discount", feature => feature
                 .Requires(new LanguageFeatureId("rq3.core"))
                 .AddPass("rq3.discount.apply", LanguageSlots.Optimizers, ProgramArtifact,
-                    static (program, _) => ApplyDiscount(program),
+                    static (program, _) => UtFeatureSemantics.ApplyDiscount(program),
                     LanguageRuntimeComponentTraits.DeterministicNoHostInterop, order: 10))
             .AddFeature("rq3.surcharge", feature => feature
                 .Requires(new LanguageFeatureId("rq3.core"))
                 .AddPass("rq3.surcharge.apply", LanguageSlots.Optimizers, ProgramArtifact,
-                    static (program, _) => ApplySurcharge(program),
+                    static (program, _) => UtFeatureSemantics.ApplySurcharge(program),
                     LanguageRuntimeComponentTraits.DeterministicNoHostInterop, order: 20))
             .UseRouteRuntime("rq3.runtime", "1.0.0")
             .Build();
 
-    private static PricingProgram ApplyDiscount(PricingProgram program)
-    {
-        var value = program.Value;
-        foreach (var operation in program.Operations.Where(static op => op.Name == "discount"))
-            value *= 1m - operation.Percent / 100m;
-        return program.WithValue(value);
-    }
-
-    private static PricingProgram ApplySurcharge(PricingProgram program)
-    {
-        var value = program.Value;
-        foreach (var operation in program.Operations.Where(static op => op.Name == "surcharge"))
-            value *= 1m + operation.Percent / 100m;
-        return program.WithValue(value);
-    }
 }
