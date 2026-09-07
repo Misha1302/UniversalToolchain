@@ -65,7 +65,7 @@ internal sealed class UtPricingRuntime : IDisposable
                 .Requires(new LanguageFeatureId("pricing.core"))
                 .AddPass(
                     "pricing.discount.apply",
-                    LanguageSlots.Semantics,
+                    LanguageSlots.Optimizers,
                     ProgramArtifact,
                     static (program, _) => ApplyDiscount(program),
                     LanguageRuntimeComponentTraits.DeterministicNoHostInterop,
@@ -74,7 +74,7 @@ internal sealed class UtPricingRuntime : IDisposable
                 .Requires(new LanguageFeatureId("pricing.core"))
                 .AddPass(
                     "pricing.surcharge.apply",
-                    LanguageSlots.Semantics,
+                    LanguageSlots.Optimizers,
                     ProgramArtifact,
                     static (program, _) => ApplySurcharge(program),
                     LanguageRuntimeComponentTraits.DeterministicNoHostInterop,
