@@ -23,6 +23,7 @@ foreach (var @case in cases)
     Console.WriteLine(JsonSerializer.Serialize(new Observation(
         @case.Id, result.Value.ToString("0.################", CultureInfo.InvariantCulture), result.RemainingOperations)));
 }
+return 0;
 
 internal sealed record Rq3Case(string Id, string Source, string[] Features, string Expected);
 internal sealed record Observation(string Id, string Value, int RemainingOperations);
