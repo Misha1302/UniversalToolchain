@@ -8,7 +8,7 @@ if (args.Length != 2 || args[0] != "--treatment")
     return 2;
 }
 
-var spec = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "spec", "cases.json");
+var spec = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "spec", "cases.json");
 if (!File.Exists(spec))
     spec = Path.Combine(Directory.GetCurrentDirectory(), "experiments", "dsl-evolution-study", "rq3-control", "spec", "cases.json");
 var cases = JsonSerializer.Deserialize<List<Rq3Case>>(File.ReadAllText(spec), new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
