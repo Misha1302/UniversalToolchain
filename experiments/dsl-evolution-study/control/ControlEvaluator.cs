@@ -10,9 +10,14 @@ internal static class ControlEvaluator
         {
             if (operation.Name != "discount")
                 throw new PricingException("UNSUPPORTED", $"Unsupported operation: {operation.Name}.");
-            var percent = PercentRule.RequireValid(operation.Percent);
+            var percent = ControlPercentRule.RequireValid(operation.Percent);
             value *= 1m - percent / 100m;
         }
         return value;
     }
+}
+
+internal static class ControlPercentRule
+{
+    public static decimal RequireValid(decimal percent) => percent;
 }

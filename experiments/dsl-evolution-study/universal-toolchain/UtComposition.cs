@@ -87,7 +87,7 @@ internal sealed class UtPricingRuntime : IDisposable
         var value = program.Value;
         foreach (var operation in program.Operations.Where(static op => op.Name == "discount"))
         {
-            var percent = PercentRule.RequireValid(operation.Percent);
+            var percent = UtPercentRule.RequireValid(operation.Percent);
             value *= 1m - percent / 100m;
         }
         return program.WithValue(value);
@@ -98,9 +98,14 @@ internal sealed class UtPricingRuntime : IDisposable
         var value = program.Value;
         foreach (var operation in program.Operations.Where(static op => op.Name == "surcharge"))
         {
-            var percent = PercentRule.RequireValid(operation.Percent);
+            var percent = UtPercentRule.RequireValid(operation.Percent);
             value *= 1m + percent / 100m;
         }
         return program.WithValue(value);
     }
+}
+
+internal static class UtPercentRule
+{
+    public static decimal RequireValid(decimal percent) => percent;
 }

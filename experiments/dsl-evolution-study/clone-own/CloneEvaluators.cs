@@ -10,7 +10,7 @@ internal static class DiscountVariant
         {
             if (operation.Name != "discount")
                 throw new PricingException("UNSUPPORTED", $"Unsupported operation: {operation.Name}.");
-            var percent = PercentRule.RequireValid(operation.Percent);
+            var percent = ClonePercentRule.RequireValid(operation.Percent);
             value *= 1m - percent / 100m;
         }
         return value;
@@ -27,7 +27,7 @@ internal static class SurchargeVariant
         {
             if (operation.Name != "surcharge")
                 throw new PricingException("UNSUPPORTED", $"Unsupported operation: {operation.Name}.");
-            var percent = PercentRule.RequireValid(operation.Percent);
+            var percent = ClonePercentRule.RequireValid(operation.Percent);
             value *= 1m + percent / 100m;
         }
         return value;
@@ -42,7 +42,7 @@ internal static class CombinedVariant
         var value = program.Value;
         foreach (var operation in program.Operations)
         {
-            var percent = PercentRule.RequireValid(operation.Percent);
+            var percent = ClonePercentRule.RequireValid(operation.Percent);
             value = operation.Name switch
             {
                 "discount" => value * (1m - percent / 100m),
@@ -52,4 +52,9 @@ internal static class CombinedVariant
         }
         return value;
     }
+}
+
+internal static class ClonePercentRule
+{
+    public static decimal RequireValid(decimal percent) => percent;
 }
