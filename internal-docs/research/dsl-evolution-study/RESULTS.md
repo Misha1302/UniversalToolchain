@@ -21,9 +21,13 @@ The deterministic normalized 3-line clone approximation marked 18 duplicated eli
 - **H1: partial / mixed support.** The duplication ratio was lower for UT, and E2 marginal feature LOC was lower (19 vs 35), but absolute duplicated-line count was equal (18 vs 18) and total UT footprint remained larger.
 - **H2: not supported.** A fair clone baseline centralized the percent validity rule; E3 therefore required one logical site in both clone-and-own and UT.
 - **H3: supported for this micro-workload.** The fixed first-case evaluator was 16 SLOC and avoided the UT package/planner/runtime ceremony. UT's full treatment carried 76 SLOC classified as ceremony/platform-facing wiring.
-- **H4 / RQ3: not experimentally exercised.** E4 was optional and was not added after measurement freeze. Existing repository architecture supports shared downstream routes, but this study does not turn that implementation fact into experimental evidence for source-language extensibility.
+- **H4 / RQ3: supported by a separate post-freeze control.** The frozen primary RQ1/RQ2 experiment remains unchanged. In the addendum, an ordinary shared pipeline and UT each implemented the same downstream canonicalization at one shared site while touching zero variant-specific semantic files; the isolated change was 3 LOC for the ordinary pipeline and 5 LOC for UT. This supports shared downstream reuse while explicitly **not** supporting a unique source-extensibility claim.
 - **H0: not rejected globally.** The result is mixed and too small to establish a universal break-even point.
 
 ## Crossover interpretation
 
 The first fixed language is clearly cheaper in the simple control. At the second overlapping variant, UT has a lower measured marginal feature slice (19 vs 35 SLOC), but its cumulative implementation footprint is still higher (105 vs 61 SLOC). No measured propagation advantage appeared at E3 after strengthening the baseline. Therefore this experiment observes a **marginal-cost crossover on E2, not a total-cost crossover** within two variants.
+
+## Post-freeze RQ3 control
+
+`RQ3_RESULTS.md` records an isolated control added after the primary experiment freeze. It compares UT against a stronger ordinary shared-representation pipeline rather than clone-and-own. Both treatments preserved all four numeric results, canonicalized the terminal artifact to zero remaining operations, required one propagation site, and edited no variant-specific semantic files. The result separates shared downstream compiler reuse from the source-language composition question.

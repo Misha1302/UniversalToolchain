@@ -8,6 +8,9 @@ Controlled micro-evolution experiment comparing a fair clone-and-own implementat
 - Frozen hypotheses/workload commit: `3b78658f`
 - Isolated E3 propagation commit: `11ea672ed10c6756b52a0494718109f5caf28b45`
 - Measurement/results commit: `7baade19a6f263d0bc941df5439fa7ff9415cb7c`
+- Post-freeze RQ3 spec: `cf95345b`
+- RQ3 pre-improvement state: `214204c5668007353033e6c00f2fecca73e39923`
+- RQ3 isolated downstream change: `5bca2e701a8e213416f0bf1965a5b53b63e9c953`
 - Branch: `research/dsl-evolution-experiment-2026-09-08`
 - OS: Fedora Linux 43 x64
 - .NET SDK used: `10.0.111`; runtime `10.0.11`
@@ -47,6 +50,14 @@ python3 experiments/dsl-evolution-study/scripts/make_figures.py
 
 Expected outputs are under `experiments/dsl-evolution-study/results/`: treatment oracle JSON, `raw.json`, `raw.csv`, `summary.json`, and two SVG figures.
 
+Post-freeze RQ3 shared-pipeline control:
+
+```bash
+experiments/dsl-evolution-study/rq3-control/reproduce.sh
+```
+
+Its independent evidence is under `experiments/dsl-evolution-study/rq3-control/results/`. It does not rewrite the primary RQ1/RQ2 results.
+
 ## Repository checks executed
 
 ```bash
@@ -63,6 +74,7 @@ Observed: Acme output `35.0:35.0`; LanguageSdk tests 185/185 pass; Generic Langu
 - `LIMITATIONS.md`: what the experiment does not measure.
 - `THREATS_TO_VALIDITY.md`: adversarial baseline and measurement review.
 - `LANGDEV_TAKEAWAYS.md`: presentation-safe extraction.
+- `RQ3_RESULTS.md`: isolated post-freeze shared-downstream control and its interpretation.
 - `results/summary.json`: machine-readable metric source.
 
 ## External framing anchors
