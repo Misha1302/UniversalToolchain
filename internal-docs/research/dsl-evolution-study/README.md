@@ -95,3 +95,9 @@ These sources motivate the problem/counterarguments; they do not determine the e
 A detached clean worktree at `2211af5e723b4f11ec8cf604cd93281fb0d02d35` ran `scripts/reproduce.sh` successfully. Regenerated `raw.json`, `raw.csv`, `summary.json`, and all three oracle JSON files were byte-for-byte SHA-256 identical to the committed artifacts, and the worktree remained clean after reproduction.
 
 The first clean-room attempt exposed a CSV newline nondeterminism (Python `csv` CRLF output versus Git-normalized LF). It did not change any values; commit `2211af5e` fixes the writer with an explicit LF terminator and the clean-room check was repeated successfully.
+
+### Combined clean-room replay after RQ3 addendum
+
+A detached clean worktree at `dad0de7b7a06d889cb24963f8b3571087c90216c` ran both the primary `scripts/reproduce.sh` and the isolated `rq3-control/reproduce.sh`. SHA-256 hashes of all committed primary raw/summary/oracle artifacts and all RQ3 raw/summary/oracle artifacts were identical before and after regeneration, and the clean worktree remained clean.
+
+The first combined replay exposed an SDK-style default-glob integration defect: the primary `DslEvolutionStudy.csproj` recursively included the nested RQ3 project's top-level `Program.cs` and generated `obj/*.cs`. Commit `dad0de7b` fixes only that packaging boundary by excluding `rq3-control/**/*.cs` from the primary project; it does not alter the frozen primary treatment implementations or metrics.

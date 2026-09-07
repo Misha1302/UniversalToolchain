@@ -71,3 +71,7 @@ experiments/dsl-evolution-study/rq3-control/reproduce.sh
 ```
 
 The script creates detached worktrees for the exact pre-change and downstream-change commits, runs the corresponding retained/canonicalized oracles, and regenerates `results/raw.json` and `results/summary.json`.
+
+## Clean-room verification
+
+Combined detached-worktree replay at `dad0de7b7a06d889cb24963f8b3571087c90216c` regenerated both the primary experiment evidence and the RQ3 evidence with identical SHA-256 hashes and a clean Git status. The replay also served as an integration check that the nested addendum project is isolated from the primary SDK-style project glob.
