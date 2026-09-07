@@ -80,6 +80,6 @@ for name,path in FILES.items():
 outdir=STUDY/"results"; outdir.mkdir(exist_ok=True)
 (outdir/"summary.json").write_text(json.dumps(summary,indent=2)+"\n")
 with (outdir/"raw.csv").open("w",newline="") as f:
-    w=csv.DictWriter(f,fieldnames=sorted({k for r in rows for k in r})); w.writeheader(); w.writerows(rows)
+    w=csv.DictWriter(f, fieldnames=sorted({k for r in rows for k in r}), lineterminator="\n"); w.writeheader(); w.writerows(rows)
 (outdir/"raw.json").write_text(json.dumps(rows,indent=2)+"\n")
 print(json.dumps(summary,indent=2))
