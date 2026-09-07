@@ -29,3 +29,7 @@ The experiment builds on .NET 10.0.111. The Acme generic authoring sample produc
 ## External confirmation-bias check
 
 Krüger & Berger (ESEC/FSE 2020, DOI `10.1145/3368089.3409684`) explicitly find platform-oriented reuse has higher upfront cost and can even have more expensive change propagation. Bertolotti et al. (JSS 2023, DOI `10.1016/j.jss.2023.111704`) support explicit linguistic reuse against clone-and-own at studied reuse granularities, but do not imply that every platform wins every workload. The mixed result here is consistent with treating both as competing cost structures rather than a predetermined UT victory.
+
+## Reproduction repair
+
+The first detached-worktree reproduction matched all JSON artifacts but changed only `raw.csv` line endings. This was treated as a reproducibility failure, not ignored. The CSV writer was made explicitly LF-stable in `2211af5e`; the detached reproduction was rerun and all checked evidence hashes then matched with a clean worktree.

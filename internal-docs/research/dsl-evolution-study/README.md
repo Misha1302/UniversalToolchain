@@ -77,3 +77,9 @@ These sources motivate the problem/counterarguments; they do not determine the e
 6. Current JetBrains MPS FAQ, “Why extend a language? Aren't libraries good enough?”.
 7. Current MLIR documentation on dialects/extensible dialects.
 8. Martin Fowler, “Is Design Dead?” and “YAGNI”.
+
+## Clean-room reproduction
+
+A detached clean worktree at `2211af5e723b4f11ec8cf604cd93281fb0d02d35` ran `scripts/reproduce.sh` successfully. Regenerated `raw.json`, `raw.csv`, `summary.json`, and all three oracle JSON files were byte-for-byte SHA-256 identical to the committed artifacts, and the worktree remained clean after reproduction.
+
+The first clean-room attempt exposed a CSV newline nondeterminism (Python `csv` CRLF output versus Git-normalized LF). It did not change any values; commit `2211af5e` fixes the writer with an explicit LF terminator and the clean-room check was repeated successfully.
