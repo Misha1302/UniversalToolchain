@@ -7,6 +7,9 @@
     <LangVersion>14</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="rq3-control/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\UniversalToolchain\UniversalToolchain.LanguageAuthoring\UniversalToolchain.LanguageAuthoring.csproj" />
     <ProjectReference Include="..\..\UniversalToolchain\UniversalToolchain.LanguageSdk\UniversalToolchain.LanguageSdk.csproj" />
     <ProjectReference Include="..\..\UniversalToolchain\UniversalToolchain.Runtime\UniversalToolchain.Runtime.csproj" />
