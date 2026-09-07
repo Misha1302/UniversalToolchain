@@ -37,6 +37,9 @@ internal static class UtDownstreamTreatment
                     StandardLanguageArtifactKinds.SourceText, ProgramArtifact,
                     static (source, _) => PricingParser.Parse(source),
                     LanguageRuntimeComponentTraits.DeterministicNoHostInterop, cost: 1)
+                .AddPass("rq3.downstream.canonicalize", LanguageSlots.Optimizers, ProgramArtifact,
+                    static (program, _) => Canonicalize(program),
+                    LanguageRuntimeComponentTraits.DeterministicNoHostInterop, order: 100)
                 .AddBackend(Backend, new LanguageContributionId("rq3.interpreter"), ProgramArtifact,
                     static (program, _) => new Rq3Result(program.Value, program.Operations.Count),
                     LanguageRuntimeComponentTraits.DeterministicNoHostInterop))
@@ -53,4 +56,6 @@ internal static class UtDownstreamTreatment
             .UseRouteRuntime("rq3.runtime", "1.0.0")
             .Build();
 
+    private static PricingProgram Canonicalize(PricingProgram program) =>
+        program with { Operations = Array.Empty<PricingOperation>() };
 }

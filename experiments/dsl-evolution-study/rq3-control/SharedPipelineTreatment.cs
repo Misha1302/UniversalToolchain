@@ -16,7 +16,10 @@ internal static class SharedPipelineTreatment
                 _ => throw new ArgumentOutOfRangeException(nameof(features), feature, "Unknown feature")
             };
         }
+        program = Canonicalize(program);
         return new Rq3Result(program.Value, program.Operations.Count);
     }
 
+    private static PricingProgram Canonicalize(PricingProgram program) =>
+        program with { Operations = Array.Empty<PricingOperation>() };
 }
