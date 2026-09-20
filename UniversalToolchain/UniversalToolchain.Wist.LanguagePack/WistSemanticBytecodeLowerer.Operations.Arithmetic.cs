@@ -26,7 +26,7 @@ internal sealed partial class WistSemanticBytecodeLowerer
         {
             RequireContribution(WistContributionIds.CanonicalAddLowering);
             LowerOperands(operation, bytecode);
-            EmitDynamicArithmetic(bytecode, "Op_Add", "Add");
+            EmitDeclarativeDynamicArithmetic(bytecode, "Op_Add", "Add");
             return;
         }
 
@@ -141,6 +141,12 @@ internal sealed partial class WistSemanticBytecodeLowerer
     {
         foreach (var child in operation.Children)
             LowerNode(child, bytecode);
+    }
+
+    private static void EmitDeclarativeDynamicArithmetic(Bytecode bytecode, string instructionName, string methodName)
+    {
+        bytecode.Instructions.Add(new BytecodeInstruction(
+            Declarative(instructionName, new WistDynamicArithmeticOperation(methodName))));
     }
 
     private static void EmitDynamicArithmetic(Bytecode bytecode, string instructionName, string methodName)
