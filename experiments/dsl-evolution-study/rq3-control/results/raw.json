@@ -1,0 +1,30 @@
+{
+  "changed_files": [
+    "experiments/dsl-evolution-study/rq3-control/SharedPipelineTreatment.cs",
+    "experiments/dsl-evolution-study/rq3-control/UtDownstreamTreatment.cs"
+  ],
+  "feature_files": [
+    "experiments/dsl-evolution-study/rq3-control/SharedFeatureSemantics.cs",
+    "experiments/dsl-evolution-study/rq3-control/UtFeatureSemantics.cs"
+  ],
+  "metrics": {
+    "shared-pipeline": {
+      "changed_existing_loc": 3,
+      "added": 3,
+      "deleted": 0,
+      "touched_existing_files": 1,
+      "propagation_sites": 1,
+      "new_downstream_loc": 3,
+      "variant_semantic_files_touched": 0
+    },
+    "universal-toolchain": {
+      "changed_existing_loc": 5,
+      "added": 5,
+      "deleted": 0,
+      "touched_existing_files": 1,
+      "propagation_sites": 1,
+      "new_downstream_loc": 5,
+      "variant_semantic_files_touched": 0
+    }
+  }
+}
