@@ -1,7 +1,13 @@
+---
+title: Semantic Fact & Proof Layer — research note
+navigation: hidden
+status: Research proposal; not part of published user navigation.
+---
+
 # Semantic Fact & Proof Layer — research note
 
-Status: research proposal  
-Date: 2026-09-20  
+Status: research proposal
+Date: 2026-09-20
 Basis: the 2026-09-20 voice-note transcript, current UniversalToolchain architecture, current ContractExperiments, and a bounded prior-art review.
 
 > This note does not claim research novelty. It records the design problem, maps it to existing mechanisms, and proposes the smallest useful experiment.
@@ -28,6 +34,33 @@ A new feature such as a delegate/closure can add syntax without much difficulty,
 The target property is:
 
 > Modules communicate through typed semantic facts/capabilities and proof obligations, not through concrete knowledge of one another.
+
+This is deliberately a semantic layer above concrete implementation APIs. A type system, interpreter, JIT or native backend may implement the same high-level feature in radically different ways; the delegate/closure feature should depend on facts such as serializability, purity, capture shape or materializability rather than on one backend's internal representation. The layer does not attempt to reconstruct all high-level semantics from generated CIL, native code or interpreter internals.
+
+### Semantic structural compatibility
+
+Consumers should quantify over proven semantic properties, not nominal implementation types. Two operands participating in one operation need not have the same concrete CLR type or originate from the same module if they satisfy the required semantic contract.
+
+For example:
+
+```text
+Combine(left, right)
+  requires CallableLike(left)
+  requires CallableLike(right)
+  requires CompatibleSignature(left, right)
+```
+
+This is closer to structural/capability typing over compile-time semantic evidence than to runtime dynamic typing. It is important for independently-developed modules: compatibility is established by shared predicates rather than concrete cross-package references.
+
+Operations themselves also have contracts. Preconditions, postconditions and preservation/invalidation behavior belong next to algebraic laws:
+
+```text
+Combine(left, right)
+  requires  CallableLike(left), CallableLike(right)
+  produces  CallableLike(result)
+  preserves Deterministic(result) when both inputs are deterministic
+  invalidates CachedCaptureLayout(result) when capture structure changes
+```
 
 Example questions:
 
@@ -65,6 +98,7 @@ Commutative(op, domain)
 Associative(op, domain)
 Idempotent(op, domain)
 Distributive(opA, opB, domain)
+Transitive(relation, domain)
 ```
 
 ### Inference rules
@@ -76,8 +110,8 @@ CanShareSerializedContext(d1, d2, c, target)
   :- Captures(d1, c),
      Captures(d2, c),
      Serializable(c, target),
-     StableIdentity(c),
-     SnapshotStable(c).
+     StableIdentity(c, SnapshotScope),
+     SnapshotStable(c, SnapshotScope).
 ```
 
 ### Proof obligations
@@ -87,6 +121,10 @@ Consumers declare what must be proven before an action is legal:
 ```text
 requires Proven(CanShareSerializedContext(...))
 ```
+
+### Primitive versus derived properties
+
+The vocabulary should prefer small, stable, reasonably orthogonal primitive facts and derive convenience facts where possible. The goal is not to pretend that every semantic property can be mathematically independent; real compiler semantics overlap. The practical rule is to avoid duplicate synonyms and manually repeated consequences. If `CanPersist(x)` is always derivable from more fundamental facts, it should normally be a rule result rather than another independently asserted flag.
 
 ## 3. Open-world, fail-closed semantics
 
@@ -112,6 +150,17 @@ Contradiction -> diagnostic/failure
 
 Internally, absence of a positive or explicit-negative proof should mean Unknown.
 
+`Disproven` must require explicit negative evidence; it is never negation-by-absence. A useful internal model is proposition polarity:
+
+```text
+positive evidence only -> Proven
+negative evidence only -> Disproven
+neither                 -> Unknown
+both                     -> Contradiction
+```
+
+The MVP should therefore avoid negation-as-failure. Explicit negative facts can be represented by proposition polarity or dedicated negative evidence records while rule evaluation remains monotone.
+
 This is especially important for independently-developed extensions: a module cannot assume that an unknown production/object/dependency does not exist.
 
 ## 4. Existing UniversalToolchain foundation
@@ -133,6 +182,8 @@ and already has:
 - invalidation-created obligations;
 - unresolved-obligation failure;
 - unknown/missing/conflicting verifier routes failing closed.
+
+This is evidence from the current experimental surface, not a claim that the proposed semantic layer is already a production feature.
 
 The proposed layer should generalize the *shape* of facts and add derivation/provenance.
 
@@ -203,10 +254,24 @@ delegate analysis:
 runtime/backend provider:
   Serializable(c, PersistentSnapshot)
   StableIdentity(c, SnapshotScope)
-  SnapshotStable(c)
+  SnapshotStable(c, SnapshotScope)
 ```
 
 Providers do not reference consumers.
+
+### Evidence authority and what "proof" means
+
+The word *proof* in this note means a machine-checkable derivation from registered semantic evidence under known rules. It does **not** by itself mean formal verification that a provider's implementation satisfies the fact it publishes.
+
+Evidence should retain its origin, for example:
+
+```text
+DeclaredByOwner
+EstablishedByVerifier
+DerivedByRule
+```
+
+A verifier-backed fact is stronger evidence than an unchecked author declaration, but both can participate only according to explicit policy. A buggy or dishonest provider can otherwise publish a false premise and make a derivation internally valid but semantically wrong. The fact layer composes evidence; it does not magically prove arbitrary implementation semantics.
 
 ### Fact store
 
@@ -232,6 +297,7 @@ Start with a deliberately restricted Datalog/Horn-clause-like model:
 - deterministic fixed-point/worklist evaluation;
 - recursive rules allowed only with fixed-point semantics;
 - no unrestricted arbitrary code in declarative rules;
+- explicit negative evidence rather than negation-as-failure in the MVP;
 - stratified negation/aggregates/custom solvers only later.
 
 An operational budget is still useful. Exhausting it yields Unknown, never a positive result.
@@ -248,7 +314,7 @@ CanShareSerializedContext(d1,d2,c,target)
     Captures(d2,c)                         [delegate-analysis]
     Serializable(c,target)                [runtime-provider]
     StableIdentity(c,SnapshotScope)        [runtime-provider]
-    SnapshotStable(c)                      [runtime-provider]
+    SnapshotStable(c,SnapshotScope)         [runtime-provider]
 ```
 
 Include owner/provider/version/plan identity so stale proofs cannot survive a package/backend change silently.
@@ -274,7 +340,7 @@ Captures(d1,c)
 Captures(d2,c)
 Serializable(c,target)
 StableIdentity(c,SnapshotScope)
-SnapshotStable(c)
+SnapshotStable(c, SnapshotScope)
 ```
 
 Derived:
@@ -348,6 +414,18 @@ Rare framework-level work. New fundamental predicates/rules require review for:
 - conflict semantics;
 - invalidation;
 - proof explainability.
+
+### Who authors what
+
+The intended responsibility split is:
+
+- a normal feature author reuses existing traits and publishes only facts owned by that feature;
+- an operation author declares operation-specific preconditions/effects and algebraic laws only when they are semantically guaranteed;
+- a backend/runtime author publishes backend- or platform-scoped capability/evidence;
+- a verifier author establishes facts that can be checked from an artifact boundary;
+- framework maintainers own new fundamental predicate families, conflict semantics and reusable inference rules.
+
+This keeps ordinary module work away from theorem-engine design.
 
 The ergonomics principle should be:
 
@@ -470,8 +548,8 @@ Infrastructure:
 
 1. typed entity/predicate IDs;
 2. typed proposition arguments;
-3. Proven/Disproven/Unknown/Contradiction;
-4. provider and provenance identities;
+3. Proven/Disproven/Unknown/Contradiction with explicit proposition polarity;
+4. provider, evidence-authority and provenance identities;
 5. monotone rule registration;
 6. deterministic worklist/fixpoint evaluation;
 7. explanation/proof-tree API;
@@ -491,6 +569,8 @@ Infrastructure:
 8. Conflicting evidence is visible, never silently resolved by provider order.
 9. Algebraic laws are scoped to operations/domains/preconditions.
 10. Missing optional facts may disable optimization; required semantics need explicit implementation/verifier contracts.
+11. Absence of evidence is Unknown, never Disproven.
+12. A successful derivation proves only what follows from its registered premises; provider truth requires its own authority/verifier contract.
 
 ## 13. Strongest simpler alternative
 
@@ -522,7 +602,8 @@ Implement:
 
 - 6–10 predicates;
 - 3–5 inference rules;
-- open-world tri-state queries;
+- open-world four-state queries;
+- explicit positive/negative evidence;
 - provenance;
 - deterministic fixpoint;
 - invalidation propagation.
@@ -563,7 +644,28 @@ Measure:
 
 This makes the "will property declarations make developer life unbearable?" question empirical.
 
-## 15. Research conclusion
+### E. Heterogeneous composition test
+
+Define two nominally unrelated delegate-like entities from independent packages. Give them only the shared semantic facts required by `Combine`/serialization. The consumer must accept or reject them solely from those facts, without adding package-specific branches. This directly tests the structural semantic compatibility goal from the original idea.
+
+## 15. Voice-note traceability
+
+The proposal intentionally preserves the main ideas from the source discussion:
+
+- fixed toolchain-stage ordering is not the hard part; cooperation with feature modules above/beside the pipeline is;
+- component APIs vary across type systems/runtimes/backends, so consumers should not bind to concrete implementations;
+- objects and operations expose high-level semantic properties rather than requiring one universal low-level implementation model;
+- operations may combine nominally different entities when required properties are proven;
+- algebraic laws, purity, determinism, context dependence and preservation/invalidation are distinct semantic dimensions;
+- property explosion is controlled through reusable traits, providers and derived facts;
+- bounded ad-hoc BFS/DFS theorem search is replaced with deterministic restricted inference;
+- delegate serialization follows transitive dependencies and must account for opaque interpreter/native state;
+- multiple delegates may share one serialized context only when identity/snapshot semantics permit graph deduplication;
+- MLIR and Silver/AbleC are comparison points for semantic interfaces and independent extension composition;
+- missing knowledge is fail-closed for correctness-sensitive actions;
+- platform/backend/runtime differences are facts in scope, not hard-coded delegate logic.
+
+## 16. Research conclusion
 
 The idea is technically coherent, but the useful version is narrower than "an algebra containing hundreds of manually declared properties for every object".
 
