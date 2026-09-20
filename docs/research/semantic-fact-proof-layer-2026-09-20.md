@@ -52,14 +52,24 @@ Combine(left, right)
 
 This is closer to structural/capability typing over compile-time semantic evidence than to runtime dynamic typing. It is important for independently-developed modules: compatibility is established by shared predicates rather than concrete cross-package references.
 
-Operations themselves also have contracts. Preconditions, postconditions and preservation/invalidation behavior belong next to algebraic laws:
+Operations themselves also have contracts, but operation semantics and pipeline-pass lifecycle should not be conflated. An operation may declare semantic preconditions/results and laws:
 
 ```text
 Combine(left, right)
-  requires  CallableLike(left), CallableLike(right)
-  produces  CallableLike(result)
-  preserves Deterministic(result) when both inputs are deterministic
-  invalidates CachedCaptureLayout(result) when capture structure changes
+  requires CallableLike(left), CallableLike(right)
+  produces CallableLike(result)
+  derives  Deterministic(result)
+           if Deterministic(left), Deterministic(right), Deterministic(Combine)
+```
+
+A compiler pass or transformation can separately use the existing lifecycle vocabulary:
+
+```text
+LowerDelegateLayout
+  requires  CaptureGraphKnown
+  preserves CallableSemantics
+  invalidates CachedCaptureLayout
+  produces  LoweredDelegateLayout
 ```
 
 Example questions:
@@ -329,7 +339,7 @@ Delegate d1 ─┐
 Delegate d2 ─┘
 ```
 
-A naive tree serializer duplicates c. A graph serializer can emit one serialized context node and two references.
+A naive tree serializer duplicates c. A graph serializer can emit one serialized context node and two references. The shared context may represent a closure environment, a whole-program/program-image snapshot, or another runtime-owned state object; the semantic rules should not assume one concrete representation.
 
 But deduplication is legal only when facts prove that sharing preserves semantics.
 
