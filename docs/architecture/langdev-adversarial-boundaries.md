@@ -87,13 +87,13 @@ Safe talk wording:
 
 ### Equal-cost route ambiguity
 
-If two artifact routes are structurally valid and have equal cost, deterministic tie-breaking is defensible only as a reproducibility policy, not as a semantic-equivalence claim.
+At the audited baseline `1d46f17`, `LanguageArtifactRoutePhase` rejects **multiple fully feasible minimum-cost artifact routes** rather than choosing one by contribution identity. It emits `UTL2207` and requires a distinguishing declared route cost or an explicit route-selection policy. Likewise, unrelated ready artifact passes with the same minimum declared order fail as `UTL2208`; callers must supply `Before/After` ordering or distinct semantic `Order` values. These constraints are evaluated after route/pass feasibility, not by a technical lexical ID tie-break.
 
 Safe documentation wording:
 
-> Route selection is deterministic. Equal-cost candidates are resolved by stable canonical ordering. This guarantees reproducibility, not semantic equivalence. If an application needs semantic preference between otherwise valid routes, that preference must become explicit policy.
+> Route planning is deterministic **including its ambiguity failures**. Fully feasible equal-minimum-cost executable alternatives without explicit distinguishing policy fail before execution; they are not assumed semantically interchangeable.
 
-Do not use “the planner refuses to guess” as a universal statement unless route ambiguity is also confirmed to fail closed in current code.
+This is narrower than claiming every possible semantic ambiguity is detected. The planner checks declared contracts and constraints, not correctness/equivalence of arbitrary code. Do not restore the superseded assertion that equal-cost candidates are resolved by stable canonical ordering. Source: `UniversalToolchain/UniversalToolchain.LanguageSdk/LanguageArtifactRoutePhase.cs` (`UTL2207`, `UTL2208`), and `docs/research/planner-routing-policy-decision-2026-09-03.md`.
 
 ## LanguagePlan guarantees
 
