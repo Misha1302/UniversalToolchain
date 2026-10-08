@@ -35,7 +35,7 @@ The revised study compares **A0 direct typed interfaces** against evidence-aware
 
 ## Original 18 comparison dimensions
 
-The source's full eight-competitor matrix covers **(1) simplicity of language creation, (2) modularity, (3) language composability, (4) semantic extensibility, (5) type-system authoring, (6) language evolution, (7) representation neutrality, (8) code generation, (9) runtime, (10) optimization, (11) performance, (12) extensibility cost, (13) IDE tooling, (14) debugging, (15) web integration, (16) AI integration, (17) documentation, (18) ecosystem maturity**. See the **original `10_COMPETITIVE_DIMENSIONS.md`** for its item-by-item judgments and citations; do not compress these unlike-for-like systems into one invented leaderboard.
+The source's full eight-competitor matrix covers **(1) simplicity of language creation, (2) language composition, (3) semantic extensibility, (4) open-world integration, (5) global planning, (6) incremental analysis, (7) representation neutrality, (8) code generation, (9) runtime, (10) optimization, (11) performance, (12) extensibility cost, (13) IDE tooling, (14) debugging, (15) web integration, (16) AI integration, (17) documentation, (18) ecosystem maturity**. See the **original `10_COMPETITIVE_DIMENSIONS.md`** for its item-by-item judgments and citations; do not compress these unlike-for-like systems into one invented leaderboard.
 
 ## Discriminator, not branding
 
