@@ -22,7 +22,6 @@ The proposed *semantic evidence* service must not be a second language planner, 
 | Falsification and comparison protocol | [EXPERIMENTS.md](EXPERIMENTS.md) |
 | Real LangDev narrative, verified claims vs outlook | [LANGDEV.md](LANGDEV.md) |
 | Source lineage, links, uncertainty, reproducibility | [SOURCES.md](SOURCES.md) |
-
 | Source packages → all 14 deliverables, 20 DoD and AI hypothesis provenance | [RESEARCH_TRACEABILITY.md](RESEARCH_TRACEABILITY.md) |
 | Strategic options, original 18 competitive dimensions, strongest alternatives | [STRATEGY_PRIOR_ART.md](STRATEGY_PRIOR_ART.md) |
 | Proposed C# semantic contracts and rule-of-use caveats | [PROPOSED_API_CONTRACTS.md](PROPOSED_API_CONTRACTS.md) |
