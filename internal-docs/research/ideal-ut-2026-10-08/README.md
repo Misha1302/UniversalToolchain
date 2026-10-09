@@ -28,6 +28,12 @@ The proposed *semantic evidence* service must not be a second language planner, 
 | Independent Language Engineering Platform: LSP, debugging, author/end-user journeys | [LANGUAGE_ENGINEERING_PLATFORM.md](LANGUAGE_ENGINEERING_PLATFORM.md) |
 | Task-ready S0–S8 reversible implementation backlog | [ENGINEERING_BACKLOG.md](ENGINEERING_BACKLOG.md) |
 
+## Supplemental development inventory (2026-10-09)
+
+[Full UniversalToolchain → Ideal UT development inventory](DEVELOPMENT_INVENTORY_2026-10-09.md) consolidates **15 domains and 222 candidate development items** with priority/status labels, motivations, technical caveats, dependencies, non-goals and source links. It also separates five additional recommendations from the source-backed inventory.
+
+This is a **supplement to, not one of, the original 14 research deliverables**. It is a revision-bound planning reference in Russian, not an approved release roadmap, evidence of current APIs, or a claim that every item should be built. For an English summary oriented to new readers, see [Future direction](../../../readme.md#future-direction-universaltoolchain-beyond-wist).
+
 ## Source of truth
 
 Actual code and tests > [current architecture](../../../docs/CURRENT_ARCHITECTURE_STATUS.md) > revision-bound experimental records > these proposals > historical recollection. This research folder must not be used to claim implementation or release readiness. Future work is activated only by held-out experiments or measured developer needs.
