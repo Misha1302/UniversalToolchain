@@ -1,0 +1,4 @@
+ceremony_platform_loc,duplicated_lines,duplication_eligible_lines,duplication_ratio,e1_feature_loc,e2_feature_loc,e3_added,e3_changed_existing_loc,e3_deleted,e3_propagation_sites,e3_touched_existing_files,first_case_loc,production_sloc,semantic_loc,treatment
+,0,15,0.0,,,6,7,1,1,1,16,26,,control
+,18,37,0.4865,16,35,6,7,1,1,1,,61,,clone-own
+76,18,81,0.2222,19,19,6,7,1,1,1,,105,29,universal-toolchain
