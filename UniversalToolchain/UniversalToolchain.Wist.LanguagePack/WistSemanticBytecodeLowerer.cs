@@ -22,6 +22,19 @@ namespace UniversalToolchain.Wist.LanguagePack;
 
 internal sealed partial class WistSemanticBytecodeLowerer
 {
+    private static readonly BytecodeOperationHandlerRegistry DeclarativeHandlers = new(
+    [
+        new WistStoreLocalOperationHandler(),
+        new WistStoreExternalOperationHandler(),
+        new WistJumpOperationHandler(),
+        new WistJumpIfFalseOperationHandler(),
+        new WistLabelOperationHandler(),
+        new WistDynamicArithmeticOperationHandler()
+    ]);
+
+    private static DeclarativeMethodImpl Declarative(string name, IBytecodeOperationData operation) =>
+        new(name, operation, DeclarativeHandlers);
+
     private readonly HashSet<LanguageContributionId> _plannedContributions;
     private readonly FunctionCallPlanner _functionCallPlanner;
     private readonly IMethodResolver _methodResolver;
