@@ -202,6 +202,18 @@ Source
 
 The framework keeps language features composable, runtime selection dialect-driven and shared semantics protected by interpreter/CIL parity tests. Wist is the reference language and packaged first-contact experience.
 
+## Future direction: UniversalToolchain beyond Wist
+
+Today, UniversalToolchain composes independently packaged language features into a deterministic, immutable `LanguagePlan`; Wist provides an executable reference language, and the external language-authoring SDK offers a working alpha for non-Wist languages. These are **current capabilities**, not the proposed Ideal UT system.
+
+The longer-term question is whether independent language components can also **collaborate on semantics**: exchange typed, scoped, verifiable evidence so unchanged consumers can apply safe transformations. A proposed proving experiment combines independent shape/range analyses with bounds-check elimination; missing, stale, contradictory or untrusted evidence must never permit an unsafe rewrite. We will compare this against the simpler alternative of ordinary typed .NET interfaces, with independent tests and measurable authoring costs.
+
+Other candidate directions include higher-level grammar/binder/type-system authoring, shared IDE/language services, richer correctness and tracing tools, and optional MCP/agent and web interfaces. **None of these proposals is a shipping promise or an approved implementation commitment.** Progress is gated by real external use cases, negative tests, compatibility and performance evidence.
+
+- [Full development inventory (15 areas, 222 candidate items; Russian)](internal-docs/research/ideal-ut-2026-10-08/DEVELOPMENT_INVENTORY_2026-10-09.md) — scope, motivations, status, priority, risks, dependencies and sources.
+- [Ideal UT research dossier](internal-docs/research/ideal-ut-2026-10-08/README.md) — current-vs-ideal boundaries, experiments, explicit non-goals and reversible engineering backlog.
+- [Current architecture status](docs/CURRENT_ARCHITECTURE_STATUS.md) — what is actually implemented, independently of future plans.
+
 Technical material:
 
 - [Project documentation](docs/index.md)
