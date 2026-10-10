@@ -1,32 +1,31 @@
-# Experimental engineering backlog — from source S0–S8, not completed tasks
+# Engineering backlog — proposals activated only by research and authorization
 
-This is a condensed, task-ready transfer of the supplied `08_CODEX_EXECUTION_TASKS.md`. All tasks are **PROPOSED**, have not been implemented through this documentation PR, and require a fresh baseline audit on the actual target branch. Keep changes experimental, reversible, Wist-independent in generic code, with exact positive and negative tests. Stated effort estimates in the original are *unmeasured*, not delivery promises.
+**NOT APPROVED FOR IMPLEMENTATION.** Historical task names S0–S8 are retained, with new gates as activation conditions. A research conclusion, Claude agent output, or P0 inventory label does **not** allow Codex to modify code. All engineering tasks must be independently approved in [RESEARCH_DECISIONS.md](RESEARCH_DECISIONS.md), use a separate branch, capture current SHA, pass relevant [DoD](DEFINITION_OF_DONE.md), and remain reversible. When A (typed C#) wins, C-specific slices are closed without treating that outcome as project failure.
 
-| Task | Required evidence and owner | Acceptance | Key risk / stop |
-| --- | --- | --- | --- |
-| **S0 characterization** | baseline CI/source checkout, external LanguageSdk tests and independent Acme sample | exact SDK/revision/build/test receipts, clean baseline | without runnable actual UT, claims stay source-only |
-| **S1 schema spike** | optional Semantics.Abstractions/ContractExperiments adjacent experiment | canonical versioned Range/Length schemas; new producer improves unchanged consumer; mismatches/Unknown fail | new central registry source edits or same-name incompatible schemas |
-| **S2 actual bounds elimination** | **real UT** represented optimizer/IR, three independent packages | emitted check removed only when proved; invalid boundary/overflow/alias cases keep check; independent reference agrees | false-safe is hard abort |
-| **S3 invalidation/concurrency** | immutable ProgramSnapshot, scoped provenance, optional mapping witnesses | provider hash/revision/IR/branch/cancel mutations cannot reuse stale verdicts | hidden cache/shared mutable state |
-| **S4 two external languages** | clean consumer authoring paths, real LanguageAuthoring SDK | strict Rules/Policy DSL + divergent configuration/tensor example; source spans, deterministic diagnostics, no Wist dependency | parser/binder workbench sprawl |
-| **S5 semantic services and LSP** | language services and optional LSP adapter | valid→invalid→valid, hover/completion/definition, stale result cannot overwrite new version | duplicate binder or second mutable syntax model |
-| **S6 program-local feasibility** | after selected plan, bounded obligation query on real IR | hard semantic legality before route cost; mandatory pass behavior unchanged; no new global planner | config selection duplicated |
-| **S7 compare and benchmark** | identical inputs, direct/interface/evidence controls; independent oracle | measured changed LOC, code volume, correctness/precision, memory, compile/materialize/hot latencies + variance | unmeasured zero-overhead/novelty claims |
-| **S8 decision/review** | adversarial code/evidence review and independent author | decide A: typed interfaces only; B: bounded checked evidence; C: drop semantic generalization in favor of product | promoting a framework without independent value |
+| Historic task / slice | Subsystem owner | Gate required to *propose* engineering | Smallest vertical result | Negative oracle / abort | Delivery DoD | State |
+|---|---|---|---|---|---|---|
+| S0 baseline characterization | Verification | G00 approval for read-only observation | pin selected HEAD, compiler/SDK, tests; external Acme clean build, actual planner/runtime signatures | baseline drift or tests unavailable => BLOCKED, do not claim PASS | DOC-E8 | PROPOSED |
+| S1 semantic schema *spike only* | Semantic contracts | G01 then conditional G02 hypothesis | separate versioned typed Range/Length contract, UT integrated if possible | Unknown/versions/collision never imply safe | DOC-POC, DOC-RESEARCH | PROPOSED |
+| S2 real bounds-elimination slice | IR optimizer | successful G02 and G03, then maintainer approval at G09 | three separate outputs, real emitted check, unchanged consumer, RangeV2 | overflow, alias, stale path, negative index preserve check; false-safe => revert | DOC-CORE | PROPOSED |
+| S3 provenance/invalidation | Trust / runtime | G03 research result + G09 approval | immutable program/executable context; recheck scoped dependencies | forged Pure/digest/backend/revision cannot authorize; stale shared mutable cache => revert | DOC-CORE | PROPOSED |
+| S4 two independent DSLs | Language Authoring SDK | successful G06 research / explicit G09 approval | clean external Rules/Policy + semantically distinct second family | hidden Wist import, incorrect binder diagnostics or invalid backend => revert | DOC-PUBLICAPI, DOC-PRODUCT | PROPOSED |
+| S5 shared language services / LSP | Language services | successful G07 research / explicit G09 approval | read-only project of batch binder, minimal diagnostics/hover/completion | stale result overwrites new document or duplicate resolver => revert | DOC-TOOLING | PROPOSED |
+| S6 local feasibility | Local optimization | G05 + G03 + G09 approval | same frozen plan, two programs with different legal transforms | reselects packages/providers/routes or mandatory ordering bypass => revert | DOC-CORE | PROPOSED |
+| S7 independent alternatives and benchmark | Performance verification | G08 acceptance, baseline G00/G01 | compare manual A, op-interface B, scoped C + complete cost distribution | mismatched workloads or false-safe => invalidate results | DOC-RESEARCH, DOC-E8 | PROPOSED |
+| S8 decision/promotion | Architecture review | G09 after relevant research | recorded A/B/C decision, minimal implementation slice and release gates | missing data, no approval, no plan for rollback => remain research-only | DOC-RESEARCH, DOC-RELEASE | PROPOSED |
 
-### Execution sequence
+## Implementation slice contract (required for *each* approved PR)
 
-S0 → S1 → S2 → S3 → S6 → S7 → S8; S4 may start alongside S1 and feeds S5; S5 can progress alongside S2 once the respective contracts are fixed. Core promotion must follow negative tests and second external consumer, never precede them.
+`slice_id; hypothesis_id; decision_id; exact selected baseline; approved scope/paths; excluded code; one owner; test oracle independent of implementation; negative/mutation fixtures; verification commands validated on baseline; result identity; compatibility; exception/heap/effect/overflow/FP scope; security/trust; performance costs; fallback; rollback commit; reviewer; evidence links`. An actual Codex assignment must cite an `ACCEPTED` ADR and `G09` permission; absence means research-only, no new API. Run the commands only when a working .NET checkout exists; do not claim that this documentation patch ran them.
 
-### Minimum acceptance invariants
+## Minimum example PR slicing and acceptance
 
-- No consumer or provider may import the other's implementation assembly; record **all** integration LOC and package config edits.
-- Fact identity includes selected world, schema version, subject, phase/path, program revision and trust; Unknown/Contradiction never legalize destructive transformations.
-- Representation changes require accepted mapping certificate or fresh independent verification; `preserves` is only a claim until checked under policy.
-- No universal IR, no second LanguageCompiler, no feature-specific Core switch, no runtime reflection graph lookup on the steady-state critical path.
-- Proof legality is not profitability; test exceptions, heap, signed zero/FP modes, effects, control-flow and overflow.
-- Any new public abstraction requires a named second external consumer, API/version owner, full negative corpus, clean restore/tests, no documentation-check weakening and rollback plan.
+- **S0 PR (docs/tests only):** record actual `git rev-parse HEAD`; `dotnet --info`; `./build.sh --skip-pack` only if environment and prerequisites support it; note missing tools. Identify current `LanguageCompiler`, `LanguagePlan`, `LanguageRuntime`, real AST/Bytecode/AIR/SSA paths, and independent language examples before asserting their behavior.
+- **S2 PR (conditional):** one real `Read(a,i)` bounds-check pass with a transparent guard and retained baseline path. Tests must show safe check removal and unsafe check retention; independent oracle must cover overflow, alias/effects and stale facts; old consumer/producers remain byte-for-byte unchanged across RangeV2 update.
+- **S4 PR (conditional):** runnable external `.NET` language package restoring only published or explicitly pinned SDK dependencies. Demonstrate grammar/binder/types/source spans and real failures; measure change cost against manual pipeline.
+- **S5 PR (conditional):** one editor document state owner; compiler/binder remain authoritative; freeze immutable source versions; cancellation/response reordering negative tests.
+- **S6 PR (conditional):** legality evaluated for program-local facts *after* selected `LanguagePlan`; no local capability/provider re-selection; preserve mandated passes and exact backend executor.
 
-### What to do next
+## Non-goals / deprecations
 
-Create a **separate experimental PR** from a freshly observed current head. Start with S0, then S1 in the existing module-contract/ContractExperiments vicinity (not a shipped `Fact<T>` API). A successful toy stand-alone Python/.NET model is not sufficient to mark S2 complete.
+No second global planner, mandatory SSA, automatic proof from untrusted provider annotations, broad mutable ontology, feature-specific switches in generic Core, eager source generator, untargeted package-version solver, universal speedup claim, automatic sandbox/security claim, or unrequested production-code migration. PR #370 (DSL-evolution comparison) and #371 (declarative Wist bytecode prototype) remained OPEN and UNMERGED at this audit; their branch results are independent proposals, not master behavior. Historic estimates do not constitute delivery dates.

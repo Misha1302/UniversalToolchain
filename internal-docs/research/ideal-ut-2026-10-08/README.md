@@ -1,39 +1,27 @@
-# Ideal UniversalToolchain — research dossier (2026-10-08)
+# Ideal UniversalToolchain — research-to-decision dossier
 
-**STATUS: PROPOSAL / RESEARCH. No current UT APIs or behavior are changed by these documents.**
+**STATUS: PROPOSAL / RESEARCH, NOT APPROVED IMPLEMENTATION.** The original research dossier and 2026-10-09 inventory remain historical source material. This refactor maps them into decision gates; it does **not** change shipped UT APIs, assert scientific originality or claim execution of E1–E8.
 
-Audit revision: [UniversalToolchain@1d46f17](https://github.com/Misha1302/UniversalToolchain/tree/1d46f17c8dc28f434fa58bdf92f9f8278fa5aaee), 2026-09-20. LangDev deck: [18-slide production HTML](https://github.com/Misha1302/lang-dev-presentation-2026/blob/main/index.html), studied on 2026-10-08.
+Audited source revisions must not be conflated: original dossier `1d46f17c8dc28f434fa58bdf92f9f8278fa5aaee` (2026-09-20); historic inventory `002a71f0fcdabe7915ed139b297b3829b8060dc2` (2026-10-08); currently connector-observed master `886bf241623e83566585bf2aec5b635fefe1675f` (2026-10-09). Revalidate latest HEAD when applying changes. Current implementation truth: [CURRENT_ARCHITECTURE_STATUS.md](../../../docs/CURRENT_ARCHITECTURE_STATUS.md), [limitations](../../../docs/limitations.md).
 
-## Thesis
+## Documentation map — one owner per concern
 
-Current UT answers **which independent language packages, contributions, capabilities, artifact paths and runtime implementations form one deterministic language**. Ideal UT asks the harder question: **can independently authored language components also compose semantic knowledge, make transformations legally conditional on that knowledge, revoke it across revisions/representations, and still produce concrete efficient execution?**
+| Need | Canonical owner |
+|---|---|
+| What has actually been built and where it stops | [current implementation vs Ideal IUT-01–13](CURRENT_VS_IDEAL.md); current architecture in docs/ |
+| Design and authority invariants | [ARCHITECTURE.md](ARCHITECTURE.md) and [proposed API examples](PROPOSED_API_CONTRACTS.md) (not APIs that exist) |
+| Historical why and research sources | [ORIGINS.md](ORIGINS.md), [SOURCES.md](SOURCES.md), [RESEARCH_TRACEABILITY.md](RESEARCH_TRACEABILITY.md) |
+| Competition/prior art and ideas | [STRATEGY_PRIOR_ART.md](STRATEGY_PRIOR_ART.md), [IDEAS.md](IDEAS.md) |
+| Development inventory, 222 + 5 suggestions | [historical inventory](DEVELOPMENT_INVENTORY_2026-10-09.md) — **unchanged** |
+| Stable source-item IDs and proposed disposition | [INVENTORY_TRACEABILITY.csv](INVENTORY_TRACEABILITY.csv) — derived, not new approval |
+| Measurable outcomes and staged decision gates | [ROADMAP.md](ROADMAP.md) |
+| Evidence protocol and competing controls E1–E8 | [EXPERIMENTS.md](EXPERIMENTS.md) |
+| One authoritative typed DoD / gate acceptance matrix | [DEFINITION_OF_DONE.md](DEFINITION_OF_DONE.md) |
+| Allowed engineering slices S0–S8 | [ENGINEERING_BACKLOG.md](ENGINEERING_BACKLOG.md) |
+| Dependency DAG / optional branches | [DEPENDENCIES_AND_CRITICAL_PATH.md](DEPENDENCIES_AND_CRITICAL_PATH.md) |
+| Approver-owned ADR and falsifiers | [RESEARCH_DECISIONS.md](RESEARCH_DECISIONS.md) |
+| Claude research → maintainer approval → Codex implementation | [RESEARCH_HANDOFF_CONTRACT.md](RESEARCH_HANDOFF_CONTRACT.md) |
+| Independent DSL adoption, tooling, product | [LANGUAGE_ENGINEERING_PLATFORM.md](LANGUAGE_ENGINEERING_PLATFORM.md) |
+| LangDev slides and claim discipline | [LANGDEV.md](LANGDEV.md) |
 
-The proposed *semantic evidence* service must not be a second language planner, mandatory SSA, a claim of formal universal correctness, a sandbox, or an agent-owned authority. It may be rejected entirely if the strongest alternative—ordinary typed C# interfaces and explicit adapters—solves the held-out cases more simply.
-
-## Documentation map
-
-| Purpose | Document |
-| --- | --- |
-| Historical roots and research questions | [ORIGINS.md](ORIGINS.md) |
-| Current vs proposed; thirteen IUT gap requirements | [CURRENT_VS_IDEAL.md](CURRENT_VS_IDEAL.md) |
-| Target owner boundaries, scopes, evidence and legality | [ARCHITECTURE.md](ARCHITECTURE.md) |
-| Candidate ideas, alternatives, non-goals and decisions | [IDEAS.md](IDEAS.md) |
-| Sequenced roadmap with completion and rollback gates | [ROADMAP.md](ROADMAP.md) |
-| Falsification and comparison protocol | [EXPERIMENTS.md](EXPERIMENTS.md) |
-| Real LangDev narrative, verified claims vs outlook | [LANGDEV.md](LANGDEV.md) |
-| Source lineage, links, uncertainty, reproducibility | [SOURCES.md](SOURCES.md) |
-| Source packages → all 14 deliverables, 20 DoD and AI hypothesis provenance | [RESEARCH_TRACEABILITY.md](RESEARCH_TRACEABILITY.md) |
-| Strategic options, original 18 competitive dimensions, strongest alternatives | [STRATEGY_PRIOR_ART.md](STRATEGY_PRIOR_ART.md) |
-| Proposed C# semantic contracts and rule-of-use caveats | [PROPOSED_API_CONTRACTS.md](PROPOSED_API_CONTRACTS.md) |
-| Independent Language Engineering Platform: LSP, debugging, author/end-user journeys | [LANGUAGE_ENGINEERING_PLATFORM.md](LANGUAGE_ENGINEERING_PLATFORM.md) |
-| Task-ready S0–S8 reversible implementation backlog | [ENGINEERING_BACKLOG.md](ENGINEERING_BACKLOG.md) |
-
-## Supplemental development inventory (2026-10-09)
-
-[Full UniversalToolchain → Ideal UT development inventory](DEVELOPMENT_INVENTORY_2026-10-09.md) consolidates **15 domains and 222 candidate development items** with priority/status labels, motivations, technical caveats, dependencies, non-goals and source links. It also separates five additional recommendations from the source-backed inventory.
-
-This is a **supplement to, not one of, the original 14 research deliverables**. It is a revision-bound planning reference in Russian, not an approved release roadmap, evidence of current APIs, or a claim that every item should be built. For an English summary oriented to new readers, see [Future direction](../../../readme.md#future-direction-universaltoolchain-beyond-wist).
-
-## Source of truth
-
-Actual code and tests > [current architecture](../../../docs/CURRENT_ARCHITECTURE_STATUS.md) > revision-bound experimental records > these proposals > historical recollection. This research folder must not be used to claim implementation or release readiness. Future work is activated only by held-out experiments or measured developer needs.
+**Read order for researchers:** INVENTORY → CURRENT_VS_IDEAL → STRATEGY_PRIOR_ART → EXPERIMENTS → ROADMAP → DoD → ADR/handoff. **For implementers:** current architecture/code/tests → approved ADR+exact gate evidence → BACKLOG slice → DoD → tests → rollback. No roadmap `P0` or model output can stand in for signed implementation authorization.
