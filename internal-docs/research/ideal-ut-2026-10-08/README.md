@@ -25,6 +25,10 @@ This folder is the **single canonical Ideal UT research entrypoint**, not a seco
 
 **Current head considered:** `master@886bf241623e83566585bf2aec5b635fefe1675f` (observed 2026-10-12). The prior dossier's 2026-09-20 audit and the inventory's 2026-10-08 audit are retained as **historical pinned baselines**, not overwritten. PRs [#370](https://github.com/Misha1302/UniversalToolchain/pull/370) and [#371](https://github.com/Misha1302/UniversalToolchain/pull/371) were open and unmerged when reviewed. All newly added research files are documentation only: no new UT runtime API, integrated E1–E8 test or formal proof is claimed.
 
+## 2026-10-12 executable trust-boundary cycle (stacked research PR)
+
+The [frozen experimental protocol](SSA_TRUST_PREREG_2026-10-12.md) and its [decision memo](SSA_TRUST_DECISION_2026-10-12.md) test a **real UT SSA dead-call elimination path** against a CLR side-effect oracle and direct host-approval alternative. This does not complete E1, prove hostile-package runtime reachability or introduce a production semantic-evidence API. Documentation of necessary exact-count CI reconciliation is retained in [amendment A1](SSA_TRUST_PROTOCOL_AMENDMENT_2026-10-12.md) and [amendment A2](SSA_TRUST_DOC_SYNC_2026-10-12.md). The experiment is in a separate branch stacked on research PR #376, and its results must be interpreted at the specific CI commit.
+
 ## Documentation map
 
 | Purpose | Document |
