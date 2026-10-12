@@ -10,7 +10,7 @@ The new [NUnit fixture](../../../UniversalToolchain/Tests/Ssa/SsaTrustBoundaryCh
 
 Linux [Actions run 38245989179](https://github.com/Misha1302/UniversalToolchain/actions/runs/38245989179) compiled and executed 504 Core tests, all passed; full CI rejected the unchanged manifest expectation of 500. The amendments document the exact count and current-doc projections. Final CI status belongs to its own newer commit.
 
-**Limits:** this constructed SSA case does not prove that unreviewed third-party packages can reach this path through canonical `LanguagePlan`, nor demonstrate final emitted-backend behavior or independent N+1 extension authoring.
+**Limits:** this constructed SSA case does not prove that unreviewed third-party packages can reach this path through canonical `LanguagePlan`, nor demonstrate final emitted-backend behavior or independent N+1 extension authoring. In fact, source review of `SsaRouteProfiles.Create` shows a fixed arithmetic pack plus managed-callable pack; the latter contributes **no optimization passes**, while the former passes only its known semantic descriptors into DCE. Thus the default selected optimizer need not treat execution-bound managed attributes as DCE authorization. [Amendment A4](SSA_TRUST_PROFILE_CONTROL_2026-10-12.md) preregisters a direct default-profile contrast: **its outcome is pending CI at the time this line was written**. A manually composed unsafe low-level pipeline must not be generalized to stock Wist.
 
 ## Decision frontier
 
