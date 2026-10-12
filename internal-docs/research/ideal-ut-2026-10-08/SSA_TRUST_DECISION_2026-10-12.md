@@ -32,3 +32,11 @@ Minimal obligation: `RemoveDeadCall => UnusedResult && StructuralValidity && Hos
 5. Continue non-Wist language-authoring tests as an independent product track.
 
 Relevant alternatives: [MLIR interfaces](https://mlir.llvm.org/docs/Interfaces/), [LLVM analysis invalidation](https://llvm.org/docs/NewPassManager.html). This finding changes experimental priority, **not** the public SDK or roadmap status automatically.
+
+## Execution receipt at tested code SHA (not a production theorem)
+
+At code commit [`d94432bd5f12364b859e85035f357b51e364da58`](https://github.com/Misha1302/UniversalToolchain/commit/d94432bd5f12364b859e85035f357b51e364da58), Linux [`.NET CI` run `38247619227`](https://github.com/Misha1302/UniversalToolchain/actions/runs/38247619227), `build-test` job `114805378137`, **completed successfully**. The canonical run emitted `TEST-CONTRACT COMPLETE passed=1328 entries=15`; the four new NUnit tests are in the 504 passing `Core` results. Documentation-status and Wist release-readiness validation passed at the exact 1328 count, and strict test-contract mutants were rejected. The run also completed documentation/link checks. This is real provider-backed CI evidence, not a local dry run.
+
+The new *same-test* A4 stock-profile assertion passed as part of that suite: with `SsaRouteFactory.CreateOptimizer(SsaRouteProfiles.Create(SsaRoutePolicy.Prefer))`, the previously dishonest managed call remains. With a **manually injected** matching trusted semantic descriptor in the low-level DCE constructor, the call disappears despite its observable counter increment. The ordinary host-owned allowlist control retains the unapproved call. Hence **default Wist unsafety was NOT established**; the demonstrated contrast is *low-level configurable trust vs conservatively scoped stock optimization*. The check does not prove the downstream `LanguagePlan` path's full safety for all external extensions, or completeness of host-policy enforcement.
+
+Other workflow checks and Windows receipts must be recorded separately at their **own** commit/result; Linux success alone is not a cross-platform completion claim. Historical candidate receipts in current docs remain pinned and unchanged.
