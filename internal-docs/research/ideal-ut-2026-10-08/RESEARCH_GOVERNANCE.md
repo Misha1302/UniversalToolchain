@@ -76,7 +76,7 @@ For the first decision-driving slice, prioritize: program/revision/implementatio
 
 ## Minimum mechanical validation for docs-only PRs
 
-- Verify changed paths are restricted to this directory unless a root pointer must change.
+- Verify changed paths are restricted to this directory unless a documented, source-verified cross-document correction is justified (here: language-authoring lock schema v5→v6).
 - Verify new relative Markdown links resolve against the fetched master tree and newly created files; external links remain grounded in inspected official/paper sources.
 - Verify 15 IR note questions are individually numbered once in [review](ANNOTATED_NOTE_2026-10-12.md).
 - Verify inventory line count remains unchanged and older research files remain byte-identical except intentional index update.
