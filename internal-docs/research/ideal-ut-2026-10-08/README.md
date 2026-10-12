@@ -27,7 +27,7 @@ This folder is the **single canonical Ideal UT research entrypoint**, not a seco
 
 ## 2026-10-12 executable trust-boundary cycle (stacked research PR)
 
-The [frozen experimental protocol](SSA_TRUST_PREREG_2026-10-12.md) and its [decision memo](SSA_TRUST_DECISION_2026-10-12.md) test a **real UT SSA dead-call elimination path** against a CLR side-effect oracle and direct host-approval alternative. This does not complete E1, prove hostile-package runtime reachability or introduce a production semantic-evidence API. Documentation of necessary exact-count CI reconciliation is retained in [amendment A1](SSA_TRUST_PROTOCOL_AMENDMENT_2026-10-12.md) and [amendment A2](SSA_TRUST_DOC_SYNC_2026-10-12.md). The experiment is in a separate branch stacked on research PR #376, and its results must be interpreted at the specific CI commit.
+The [frozen experimental protocol](SSA_TRUST_PREREG_2026-10-12.md) and its [decision memo](SSA_TRUST_DECISION_2026-10-12.md) test a **real UT SSA dead-call elimination path** against a CLR side-effect oracle and direct host-approval alternative. This does not complete E1, prove hostile-package runtime reachability or introduce a production semantic-evidence API. Documentation of necessary exact-count CI reconciliation is retained in [amendment A1](SSA_TRUST_PROTOCOL_AMENDMENT_2026-10-12.md) and [amendment A2](SSA_TRUST_DOC_SYNC_2026-10-12.md). Additional source-discovered controls: [A3 release-readiness documentation synchronization](SSA_TRUST_READINESS_SYNC_2026-10-12.md) and [A4 stock SSA-profile discriminator](SSA_TRUST_PROFILE_CONTROL_2026-10-12.md). The experiment is in a separate branch stacked on research PR #376, and its results must be interpreted at the specific CI commit.
 
 ## Documentation map
 
