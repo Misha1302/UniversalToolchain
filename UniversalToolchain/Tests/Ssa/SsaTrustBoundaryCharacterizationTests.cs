@@ -89,6 +89,16 @@ public sealed class SsaTrustBoundaryCharacterizationTests
             Assert.That(callAfter, Is.False, "Characterization: a forgeable purity claim permits SSA dead-call elimination.");
         });
 
+        // Post-freeze registered A4 control: the stock SSA optimizer profile does not
+        // install arbitrary bound managed-method descriptors as DCE premises.
+        var stockProfileResult = SsaRouteFactory
+            .CreateOptimizer(SsaRouteProfiles.Create(SsaRoutePolicy.Prefer))
+            .Run(artifact, new IrPipelineContext())
+            .Artifact.As<SsaArtifact>();
+        var stockRetainsCall = ContainsCandidateCall(stockProfileResult);
+        Assert.That(stockRetainsCall, Is.True,
+            "Stock route must not generalize externally declared purity into rewrite authorization.");
+
         // H-A: straightforward host-owned approval gate; intentionally conservative.
         // This is a control for trust authorization, not an implementation of N+1.
         var approval = new HashSet<MethodInfo> { Method(nameof(ActuallyPure)) };
@@ -102,7 +112,8 @@ public sealed class SsaTrustBoundaryCharacterizationTests
         TestContext.Progress.WriteLine(
             $"case=self_asserted_verified_effectful original_call=1 optimized_call={(callAfter ? 1 : 0)} " +
             $"oracle_effect_delta={oracleDelta} baseline_host_approved=0 baseline_call=1 " +
-            $"semantic_safety={(lostEffect ? "FAIL_SAFE" : "PRESERVED")} structural_acceptance=PASS");
+            $"semantic_safety={(lostEffect ? "FAIL_SAFE" : "PRESERVED")} structural_acceptance=PASS " +
+            $"stock_profile_retained_call={(stockRetainsCall ? 1 : 0)}");
     }
 
     private static MethodInfo Method(string name) =>
