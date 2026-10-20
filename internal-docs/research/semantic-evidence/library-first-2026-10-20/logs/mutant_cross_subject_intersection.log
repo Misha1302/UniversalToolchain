@@ -1,0 +1,15 @@
+exit=-6
+STDOUT:
+MODEL_ONLY=YES; UT_NATIVE_GATE=NOT_IMPLEMENTED; TRUSTED_ROOTS_ARE_AXIOMS
+PASS P1 only: Q cannot infer i range without P2
+PASS P2 + unchanged Q derives a safe i range and rewrites
+PASS unsafe x=[0,7] must retain the check
+PASS cross-subject inference is rejected
+
+STDERR:
+Unhandled exception. System.InvalidOperationException: assertion failed
+   at Program.Require(Boolean condition, String message) in /tmp/ut-l3-mutant-_zu6cr_f/Runner/Program.cs:line 23
+   at Program.<>c.<Main>b__16_4() in /tmp/ut-l3-mutant-_zu6cr_f/Runner/Program.cs:line 113
+   at Program.Check(String name, Action action) in /tmp/ut-l3-mutant-_zu6cr_f/Runner/Program.cs:line 17
+   at Program.Main(String[] args) in /tmp/ut-l3-mutant-_zu6cr_f/Runner/Program.cs:line 110
+

@@ -1,0 +1,17 @@
+MODEL_ONLY=YES; UT_NATIVE_GATE=NOT_IMPLEMENTED; TRUSTED_ROOTS_ARE_AXIOMS
+PASS P1 only: Q cannot infer i range without P2
+PASS P2 + unchanged Q derives a safe i range and rewrites
+PASS unsafe x=[0,7] must retain the check
+PASS cross-subject inference is rejected
+PASS intersection forbids cross-subject and accepts shared DAG ancestors
+PASS checked arithmetic refuses overflow
+PASS unapproved roots do not enter session
+PASS spoofed producer ID is not trusted without selected implementation identity
+PASS invalid batch import is atomic
+PASS stale revision blocks use and commit
+PASS changed world/policy invalidates old permits
+PASS revocation transitively invalidates descendants
+PASS foreign-session permit is not reusable
+PASS concurrent permits yield exactly one commit
+PASS signed overflow and bounds match baseline for preregistered safe subset
+P2_LOADED=YES checks=15 false_accepts=0 current_ut_commit=NOT_TESTED_BY_THIS_MODEL
