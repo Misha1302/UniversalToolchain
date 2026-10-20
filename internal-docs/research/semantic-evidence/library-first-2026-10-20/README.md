@@ -1,6 +1,6 @@
 # CompilationLab — SemanticEvidence: library-first Level 2 + Level 3 implementation plan
 
-**Revision:** 2026-10-20 (supersedes architecture ownership in 2026-10-16 plan). **Status:** design frozen for a *scoped pilot*, NOT implemented in UT or released as a standalone package. **Reference UT commit:** `886bf241623e83566585bf2aec5b635fefe1675f` (historical audited baseline; refresh before source changes). No GitHub writes made for this revision.
+**Revision:** 2026-10-20 (supersedes architecture ownership in 2026-10-16 plan). **Status:** design frozen for a *scoped pilot*, NOT implemented in UT or released as a standalone package. **Reference UT commit:** `886bf241623e83566585bf2aec5b635fefe1675f` (historical audited baseline; refresh before source changes). This document is part of a research-only draft PR; it does not assert that any library or UT adapter has been implemented.
 
 ## One-sentence decision
 
@@ -18,12 +18,14 @@ Create **standalone .NET `SemanticEvidence.Core` (+ optional `SemanticEvidence.R
 
 ## Preserved evidence, not the new implementation
 
-The `prototype/` and `logs/` folders are **byte-for-byte preserved** from the 2026-10-16 40-file evidence package. In that old research prototype, `prototype/Contracts/SemanticCore.cs` mixes generic inference with simulated rewrite permission and uses SSA-flavored subjects. **It is not the proposed independent library.** Do not rename it and call extraction complete; perform the migration described in `docs/08_MIGRATION_AND_ACCEPTANCE.md`.
+The original `prototype/` and `logs/` trees are preserved **byte-for-byte inside** `evidence/P1_P2_Q_research_snapshot_2026-10-16.zip` (30 files, with an internal SHA-256 manifest). The working Git tree intentionally contains no historical `*.csproj` files: the repository-wide project-ownership validator must see only actual UT projects. In that old research prototype, `prototype/Contracts/SemanticCore.cs` mixes generic inference with simulated rewrite permission and uses SSA-flavored subjects. **It is not the proposed independent library.** Do not rename it and call extraction complete; perform the migration described in `docs/08_MIGRATION_AND_ACCEPTANCE.md`.
 
 Previous replay, if .NET 10 is available:
 
 ```bash
-cd prototype
+tmp=$(mktemp -d)
+unzip -q evidence/P1_P2_Q_research_snapshot_2026-10-16.zip -d "$tmp"
+cd "$tmp/prototype"
 DOTNET=/path/to/dotnet ./run_repro.sh
 DOTNET=/path/to/dotnet python3 run_mutation_tests.py
 ```
@@ -32,4 +34,4 @@ This only replays the historical C# model; it does not prove portable API indepe
 
 ## Integrity
 
-`SHA256SUMS.txt` and `VERIFY_PACKAGE.sh` cover all files of this revision (apart from those two manifest/check scripts as described in verifier). No original experimental source/logs were altered. The original 2026-10-16 ZIP is a separate immutable predecessor.
+`SHA256SUMS.txt` and `VERIFY_PACKAGE.sh` cover current Git-tracked research files and the complete preserved historical snapshot, including 30 original source/log files verified through the snapshot's internal `PRESERVED_SHA256SUMS.txt`. The historical bytes are unchanged. The original 2026-10-16 ZIP is a separate immutable predecessor.

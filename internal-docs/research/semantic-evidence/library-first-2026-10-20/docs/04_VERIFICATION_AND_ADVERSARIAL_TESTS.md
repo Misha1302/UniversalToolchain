@@ -2,7 +2,7 @@
 
 ## Already executed, historical (NOT the new library)
 
-The archived `prototype/` and `logs/` contain the **original 2026-10-16** C# research model: 15/15 assertions, 18,081 bounded direct C# comparisons with no disagreements, independent P2 and SHA-stable Q, 3/3 mutation detections and one winning commit among 32 contenders. That prototype uses `SemanticPrototype` / `Contracts`, simulates a compiler world, contains `RewritePermit` in its session and is **not** the standalone SemanticEvidence design. None of these historical results are silently upgraded to the new artifact's new-package tests.
+The `prototype/` and `logs/` trees inside `evidence/P1_P2_Q_research_snapshot_2026-10-16.zip` contain the **original 2026-10-16** C# research model: 15/15 assertions, 18,081 bounded direct C# comparisons with no disagreements, independent P2 and SHA-stable Q, 3/3 mutation detections and one winning commit among 32 contenders. That prototype uses `SemanticPrototype` / `Contracts`, simulates a compiler world, contains `RewritePermit` in its session and is **not** the standalone SemanticEvidence design. None of these historical results are silently upgraded to the new artifact's new-package tests.
 
 Earlier UT source-level experiments observed valid SSA but incorrect 0→1 transformation accepted by a deliberately low-level pass, malformed SSA rejected; Wist restricted arithmetic produced 4,680 matching comparisons. TLC (22,568 finite states) validated a different staleness protocol. They **do not** verify a standalone library, UT adapter or guarded rewrite.
 

@@ -15,10 +15,10 @@
 
 ## Migration mechanics
 
-1. **Preserve** original `prototype/` and `logs/`. They document 15 checks, 18,081 bounded comparisons and 3 mutation detections; do not move/rename them into a package and silently call them standalone.
+1. **Preserve** original `prototype/` and `logs/` within the immutable evidence ZIP. They document 15 checks, 18,081 bounded comparisons and 3 mutation detections; do not move/rename them into a package and silently call them standalone.
 2. Extract only the core logic of root batch admission, scoped facts/handles, trusted parent derivation, liveness/revocation and graph validation. Redesign `World/Subject/Scope` into opaque generic host-bound IDs. Do not import `SemanticPrototype.RewritePermit`, `TryCommit`, `RewriteApplied` or `ProgramView` as public core contracts; rewrite the latter as portable read-only contexts.
 3. Port checked arithmetic as trusted rules into `SemanticEvidence.Rules.Numeric`. Keep roots/derivations and integer model explicit. Tests prove typed premise identity, not just matching strings.
-4. Run all old model tests unchanged as regression (preserved in ZIP). Add fresh tests of *new* Core; do not reuse old PASS numbers as new-package evidence.
+4. Extract `evidence/P1_P2_Q_research_snapshot_2026-10-16.zip` into an isolated directory and run all old model tests unchanged as regression. Add fresh tests of *new* Core; do not reuse old PASS numbers as new-package evidence.
 5. Implement a toy non-UT host referencing only the new Core+Numeric DLLs. Reproduce P1→P2→Q and optionally demonstrate a completely different subject domain.
 6. Implement selected `LanguagePlan` mapping in thin UT adapter and **only there** an opt-in guarded transformation. Keep a strict log of protected old UT behavior.
 7. Compare strong typed C# baseline and decide whether the package wins in maintenance/provenance/diagnostics despite ordinary typed C# being equally expressive.
@@ -39,6 +39,6 @@ G5 PERFORMANCE/CI/ABI/PUBLIC RELEASE DECISION          : NOT_RUN
 ## What to verify for the archive itself
 
 - `bash VERIFY_PACKAGE.sh` returns `PACKAGE_INTEGRITY=PASS`.
-- Compare every `prototype/` and `logs/` file SHA to predecessor ZIP; **all bytes must match**.
+- Compare every `prototype/` and `logs/` entry inside the evidence ZIP against its internal `PRESERVED_SHA256SUMS.txt` and the predecessor package; **all bytes must match**.
 - Clean-unpack ZIP then re-run verification; ensure there are no `obj/bin` or accidental local SDK binaries.
 - No GitHub write. Package is standalone deliverable; it does not update the original plan archive in-place.

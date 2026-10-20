@@ -1,4 +1,0 @@
-KILLED cross_subject_intersection: exit=-6
-KILLED cross_subject_affine: exit=-6
-KILLED spoofed_producer_id: exit=-6
-MUTANT_CAMPAIGN=3_KILLED; originals_unchanged=YES

@@ -4,7 +4,7 @@
 
 1. Historical `CompilationLab_UT_SemanticProof_Research_2026-10-16_FINAL.zip` — earlier current-source UT smoke and real TLC staleness evidence; production gate NOT implemented.
 2. Historical `CompilationLab_Level2_Level3_Final_Implementation_Plan_2026-10-16.zip` — decision for trusted rule model, C# `prototype/` research (15/15 checks, 18,081 bounded direct-C# comparisons, 3/3 mutants, Q DLL unchanged), docs and logs.
-3. **This** 2026-10-20 revision — user-approved **library-first plan update**. All `prototype/` and `logs/` copied exactly without modifying a line or changing a log. Documentation and API ownership/roadmap were revised. **No** standalone `SemanticEvidence.Core`/`Rules.Numeric`, UT adapter or guarded rewrite implemented or compiled as part of this revision.
+3. **This** 2026-10-20 revision — user-approved **library-first plan update**. All `prototype/` and `logs/` bytes preserved exactly within `evidence/P1_P2_Q_research_snapshot_2026-10-16.zip`; the repository stores that evidence as an archive to avoid registering research `*.csproj` as production projects. Documentation and API ownership/roadmap were revised. **No** standalone `SemanticEvidence.Core`/`Rules.Numeric`, UT adapter or guarded rewrite implemented or compiled as part of this revision.
 
 ## Source reference
 
@@ -24,8 +24,8 @@ One coherent provided archive root `compilationlab-static-protocol-bundle-person
 ## Status and artifact claim
 
 - **VERIFIED**: source package ZIP access, original 40-file SHA verification before edits, new plan documents, manifest/clean-unpack checks performed after packaging.
-- **PRESERVED HISTORY**: logs and model code in `prototype/` and `logs/` are original experimental evidence, not new run results.
+- **PRESERVED HISTORY**: logs and model code under `prototype/` and `logs/` inside the evidence ZIP are original experimental evidence, not new run results.
 - **DESIGNED, NOT IMPLEMENTED**: standalone library, second host, actual UT adapter, new guarded IR commit, NuGet publishing, multi-platform CI.
-- No GitHub master/PR write, no remote package publication.
+- The original deliverable was made before GitHub import; this research-only draft PR tracks its documentation and preserved evidence. `master` remains unchanged until reviewed. No remote package publication.
 
 This release is a **revised implementation plan**, not an implemented framework or proof of general semantic correctness.

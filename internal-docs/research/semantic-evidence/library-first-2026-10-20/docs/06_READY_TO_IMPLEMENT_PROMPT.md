@@ -6,7 +6,7 @@
 
 - Read this complete revised archive and `docs/00_DECISION.md`, `docs/02_IMPLEMENTATION_ARCHITECTURE.md`, `docs/03_UT_INTEGRATION_ROADMAP.md`, `docs/07_LIBRARY_PACKAGING_AND_API.md`, `docs/08_MIGRATION_AND_ACCEPTANCE.md` before changing source.
 - Historical UT audit baseline: `Misha1302/UniversalToolchain master@886bf241623e83566585bf2aec5b635fefe1675f`. Fetch the **actual** current HEAD before editing, note differences and preserve architectural owners. Review `LanguageCompiler -> selected LanguagePlan -> LanguageRuntime`, `LanguageArtifactBuildPipeline`, `SsaRoundtripRoute`, `SsaOptimizerPipeline`, `IrStageContract`, structural SSA verification, selected profile registrations.
-- Work locally. Preserve old original P1/P2/Q `prototype/` and `logs/` as model/reference and immutable evidence; don't mechanically call its `Contracts` project the new library.
+- Work locally. Preserve old original P1/P2/Q `prototype/` and `logs/` from `evidence/P1_P2_Q_research_snapshot_2026-10-16.zip` as model/reference and immutable evidence; don't mechanically call its `Contracts` project the new library.
 
 ## Mandatory direction-of-dependency contract
 
