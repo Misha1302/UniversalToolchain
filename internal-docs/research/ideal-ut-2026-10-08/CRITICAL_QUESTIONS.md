@@ -3,7 +3,7 @@
 **Status:** bounded source review + one local direct-interface control, **not** an integrated four-system comparative experiment.
 **Reviewed:** 2026-10-23. **UT source commit:** [`de0da4a81b1ce38fc296f9de7b1e9ad10515f9a1`](https://github.com/Misha1302/UniversalToolchain/tree/de0da4a81b1ce38fc296f9de7b1e9ad10515f9a1).
 **Input:** [QUESTION_LEDGER_V1](ADVERSARIAL_QUESTION_LEDGER_2026-10-22.md), stable question IDs and original wording.
-**Provenance / no overclaims:** Implementation status is taken from reviewed source files, not the Ideal UT proposal. LLVM/MLIR descriptions below refer to documented upstream API behavior and are **not claims that our own production A/B experiment ran**. A 10-assertion local C# decision-only control was executed, but it does **not** remove machine bounds checks.
+**Provenance / no overclaims:** Implementation status is taken from reviewed source files, not the Ideal UT proposal. LLVM/MLIR descriptions below refer to documented upstream API behavior and are **not claims that our own production A/B experiment ran**. A 12-assertion local C# decision-only control was executed, but it does **not** remove machine bounds checks.
 
 ## How to read this ledger
 
@@ -20,7 +20,7 @@
 1. [LLVM AAManager](https://llvm.org/docs/doxygen/classllvm_1_1AAManager.html) already aggregates independently registered analyses for unchanged consumers of `AAResults`. [MLIR external models](https://mlir.llvm.org/docs/Interfaces/) and [bufferization](https://mlir.llvm.org/docs/Bufferization/) independently provide analogous extensibility patterns. Abstract "N+1 improves old optimizer" is therefore not a defensible originality claim.
 2. The source-implemented UT strength is **deterministic global selection and exact route/runtime materialization** from `LanguageDefinition → LanguageCompiler → LanguagePlan → LanguageRuntime`, independently of a particular language family. This does not make program-specific optimizations automatically legal.
 3. Evidence handling in UT is **narrowly real**: module contracts, `ReverificationRequest` and deterministic verifier scheduling. The general cross-provider fact calculus, proof provenance, trusted laws and transport across IR are still proposals.
-4. A local, separate-project C# implementation exercised ten decision predicates successfully with an unchanged consumer, including Unknown, conflict, stale revision, wrong claimed implementation hash and explicit mutation. Because this is a mock decision gate—not real code generation or independently certified digest—it falsifies no general safety claim and proves no UT integration. It does demonstrate why simpler architectures must be treated seriously.
+4. A local, separate-project C# implementation exercised twelve decision predicates successfully with an unchanged consumer, including Unknown, conflict, stale revision, wrong claimed implementation hash and explicit mutation. Because this is a mock decision gate—not real code generation or independently certified digest—it falsifies no general safety claim and proves no UT integration. It does demonstrate why simpler architectures must be treated seriously.
 5. [PlanFuzz](../../proposals/planfuzz/implementation-status.md) and [ContractExperiments](../../../UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/STUDY_PROTOCOL_V3.md) have tangible, inspectable experimental code/protocols and may support a stronger talk once compared against honest baselines.
 
 ## ANSWER_LEDGER_V1 — 42 IDs
@@ -82,7 +82,7 @@
 ### Q07 — Могут ли обычные C# interfaces, DI и explicit adapters пройти тот же Range+Shape→Bounds corpus проще evidence service?
 
 - **Status:** `PARTIAL`. **Answer:** Direct typed C# contracts are demonstrably sufficient for a small unchanged BoundsOptimization decision consumer using independent Shape/Range assemblies.
-- **Mechanism / evidence:** Local .NET 10.0.301 baseline compiled and ran 10/10 decision assertions; this is neither real bounds-check elimination nor a UT/MLIR/LLVM integration test. [B1](EXPERIMENT_DESIGN.md#executed-small-c-control-not-a-ut-integration-experiment)
+- **Mechanism / evidence:** Local .NET 10.0.301 baseline compiled and ran 12/12 decision assertions; this is neither real bounds-check elimination nor a UT/MLIR/LLVM integration test. [B1](EXPERIMENT_DESIGN.md#executed-small-c-control-not-a-ut-integration-experiment)
 - **Remaining uncertainty:** No equal-budget comparison, proof of actual target semantics or independent package deployment.
 - **Architecture consequence:** Treat simple C# as default until defeated by held-out complexity/correctness tests.
 - **Meetup narrative:** Present it as negative pressure on necessity, not a general win.
@@ -100,7 +100,7 @@
 ### Q09 — Какие исходники, adapters, registries, schema и composition root реально меняются при добавлении нового независимого анализа?
 
 - **Status:** `PARTIAL`. **Answer:** The bounded C# baseline changes host registration/provider selection while Consumer.cs and prior provider source remain untouched.
-- **Mechanism / evidence:** Consumer/Shape/Range/Shared projects were separately built and 10 decision assertions ran; all consume a preagreed ISafeIndexQuery. [B1](EXPERIMENT_DESIGN.md#executed-small-c-control-not-a-ut-integration-experiment)
+- **Mechanism / evidence:** Consumer/Shape/Range/Shared projects were separately built and 12 decision assertions ran; all consume a preagreed ISafeIndexQuery. [B1](EXPERIMENT_DESIGN.md#executed-small-c-control-not-a-ut-integration-experiment)
 - **Remaining uncertainty:** No measured published package upgrade, binary ABI matrix, central registry changes or real optimizer rewrite.
 - **Architecture consequence:** Measure A and B separately from C and D; require all integration edits in reports.
 - **Meetup narrative:** Say no consumer edits only with explicit registration caveat.
