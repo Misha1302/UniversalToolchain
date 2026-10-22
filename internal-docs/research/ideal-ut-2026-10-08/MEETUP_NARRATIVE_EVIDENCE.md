@@ -64,7 +64,7 @@ These are qualitative editorial ratings, **not measured audience outcomes**. “
 
 **Hook:** “Add one analysis; old optimizer improves.” Then show LLVM AA and MLIR counterexamples immediately. Ask what *harder* property we actually need—revision-aware trust across independent source and runtime packages and mismatched representations.
 
-**Sequence:** old assumption → strongest competitors → tiny C# baseline (10 decision assertions, **not actual check elimination**) → exact unsolved E1 requirements → precommitted failure criteria. This is an intellectually honest *open research* talk only.
+**Sequence:** old assumption → strongest competitors → tiny C# baseline (12 decision assertions, **not actual check elimination**) → exact unsolved E1 requirements → precommitted failure criteria. This is an intellectually honest *open research* talk only.
 
 **Why risky:** the most impressive kernel behaviors are not shipped; a 10-minute talk may look like a proposal rather than a concrete open-source result. Use only if the audience explicitly wants a research process/negative-result talk.
 
