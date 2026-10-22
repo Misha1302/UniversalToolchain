@@ -93,8 +93,8 @@ Explicitly record `not-applicable` rather than inventing measurement coverage.
 ## Executed small C# control (NOT a UT integration experiment)
 
 **Status:** actually run in the research task environment on 2026-10-23 with .NET SDK `10.0.301` (Linux x64).
-**Original source package:** attached to the research conversation as `ut_stage2_csharp_baseline_2026-10-23.tar.gz`; archive SHA-256:
-`c795bab0e2ff7d0995bc530fc09a0d453381b331e7d68e2de7ac8e9074572021`. Its `SOURCE_SHA256.txt` lists exact source file hashes; captured `run.log` SHA-256 is `75ef05c2daa05e69028363a91aeee4484738d6be81af6ab333cd32e386c86137`. **Not stored or executed by this repository's CI.** Copy the attached archive before trying the reproduction steps; do not invent a GitHub download.
+**Versioned runnable source:** [controls/static-csharp-baseline/](controls/static-csharp-baseline/README.md) (five .NET projects, 10 decision assertions, exact `SOURCE_SHA256.txt`). The original research conversation also contains `ut_stage2_csharp_baseline_2026-10-23.tar.gz`; archive SHA-256:
+`c795bab0e2ff7d0995bc530fc09a0d453381b331e7d68e2de7ac8e9074572021`. Its `SOURCE_SHA256.txt` lists exact source file hashes; captured `run.log` SHA-256 is `75ef05c2daa05e69028363a91aeee4484738d6be81af6ab333cd32e386c86137`. **Source is now preserved in this research repository; the project CI does not run this isolated control automatically.** Reproduce from `controls/static-csharp-baseline/` or the independently attached archive. Run `sha256sum -c SOURCE_SHA256.txt` on the checked-in copy to validate exact source bytes.
 
 Structure: `Shared` typed `Query/Observation/IFactProvider/ISafeIndexQuery`; `Shape` and `Range` provider projects; consumer project `BoundsOptimization` calls the predeclared `ISafeIndexQuery`; `Host` wires them via `SimpleSafetyQuery`. The reference is intentionally hand-authored conventional C#, not an UT extension. Command from extracted archive root:
 
