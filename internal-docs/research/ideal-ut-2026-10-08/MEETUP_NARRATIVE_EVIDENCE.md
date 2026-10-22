@@ -98,9 +98,9 @@ For a strict **9m30s** slot: cut secondary pipeline taxonomy and reserve one min
 
 ## Four adversarial checks
 
-**LLVM/MLIR specialist:** candidate A must not pretend configuration-aware fuzzing was invented here or that regular LLVM/MLIR tests cannot test passes/diagnostics; advantage over their current testing ecosystems is unproven.  
-**Researcher:** use no novelty/p-value claim from an author-designed fault corpus without holdouts and fair baselines.  
-**Systems architect:** candidate C is ordinary but source-backed; an elaborate semantic graph is not necessary to explain it.  
+**LLVM/MLIR specialist:** candidate A must not pretend configuration-aware fuzzing was invented here or that regular LLVM/MLIR tests cannot test passes/diagnostics; advantage over their current testing ecosystems is unproven.
+**Researcher:** use no novelty/p-value claim from an author-designed fault corpus without holdouts and fair baselines.
+**Systems architect:** candidate C is ordinary but source-backed; an elaborate semantic graph is not necessary to explain it.
 **Speaker:** candidate D contains too many missing demonstrations; it is not a suitable “we solved it” story.
 
 **Status after review:** alternatives identified; none selected as final. Follow [stage-3 handoff](#what-stage-3-must-verify-before-editing-any-slide). See [question answers](CRITICAL_QUESTIONS.md) and [findings](SEMANTIC_COMPOSITION_FINDINGS.md).
