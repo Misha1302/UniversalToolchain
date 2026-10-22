@@ -82,7 +82,7 @@
 ### Q07 — Могут ли обычные C# interfaces, DI и explicit adapters пройти тот же Range+Shape→Bounds corpus проще evidence service?
 
 - **Status:** `PARTIAL`. **Answer:** Direct typed C# contracts are demonstrably sufficient for a small unchanged BoundsOptimization decision consumer using independent Shape/Range assemblies.
-- **Mechanism / evidence:** Local .NET 10.0.301 baseline compiled and ran 10/10 decision assertions; this is neither real bounds-check elimination nor a UT/MLIR/LLVM integration test. [B1](EXPERIMENT_DESIGN.md#executed-small-csharp-control-not-a-ut-integration-experiment)
+- **Mechanism / evidence:** Local .NET 10.0.301 baseline compiled and ran 10/10 decision assertions; this is neither real bounds-check elimination nor a UT/MLIR/LLVM integration test. [B1](EXPERIMENT_DESIGN.md#executed-small-c-control-not-a-ut-integration-experiment)
 - **Remaining uncertainty:** No equal-budget comparison, proof of actual target semantics or independent package deployment.
 - **Architecture consequence:** Treat simple C# as default until defeated by held-out complexity/correctness tests.
 - **Meetup narrative:** Present it as negative pressure on necessity, not a general win.
@@ -100,7 +100,7 @@
 ### Q09 — Какие исходники, adapters, registries, schema и composition root реально меняются при добавлении нового независимого анализа?
 
 - **Status:** `PARTIAL`. **Answer:** The bounded C# baseline changes host registration/provider selection while Consumer.cs and prior provider source remain untouched.
-- **Mechanism / evidence:** Consumer/Shape/Range/Shared projects were separately built and 10 decision assertions ran; all consume a preagreed ISafeIndexQuery. [B1](EXPERIMENT_DESIGN.md#executed-small-csharp-control-not-a-ut-integration-experiment)
+- **Mechanism / evidence:** Consumer/Shape/Range/Shared projects were separately built and 10 decision assertions ran; all consume a preagreed ISafeIndexQuery. [B1](EXPERIMENT_DESIGN.md#executed-small-c-control-not-a-ut-integration-experiment)
 - **Remaining uncertainty:** No measured published package upgrade, binary ABI matrix, central registry changes or real optimizer rewrite.
 - **Architecture consequence:** Measure A and B separately from C and D; require all integration edits in reports.
 - **Meetup narrative:** Say no consumer edits only with explicit registration caveat.
@@ -109,7 +109,7 @@
 ### Q10 — Кто использует новую категорию факта, если старый optimizer даже не знает о SafeIndex и не имеет общей точки запроса?
 
 - **Status:** `PARTIAL`. **Answer:** A consumer cannot act on a wholly unqueried semantic category without some predefined generic hook, transformation registry or updated consumer logic.
-- **Mechanism / evidence:** The C# sample consumer queries a deliberately predeclared ISafeIndexQuery; MLIR and LLVM also rely on known interfaces. [B1](EXPERIMENT_DESIGN.md#executed-small-csharp-control-not-a-ut-integration-experiment) [M1](https://mlir.llvm.org/docs/Interfaces/) [L1](https://llvm.org/docs/doxygen/classllvm_1_1AAManager.html)
+- **Mechanism / evidence:** The C# sample consumer queries a deliberately predeclared ISafeIndexQuery; MLIR and LLVM also rely on known interfaces. [B1](EXPERIMENT_DESIGN.md#executed-small-c-control-not-a-ut-integration-experiment) [M1](https://mlir.llvm.org/docs/Interfaces/) [L1](https://llvm.org/docs/doxygen/classllvm_1_1AAManager.html)
 - **Remaining uncertainty:** No experiment meaningfully adds a never-before-defined consumer obligation.
 - **Architecture consequence:** Ban fully automatic semantic discovery wording.
 - **Meetup narrative:** Make the predetermined contract explicit in story.
@@ -127,7 +127,7 @@
 ### Q12 — Достаточны ли Range и Shape для безопасного удаления Read(a,i) bounds check при aliasing, mutable length, path, exceptions и overflow?
 
 - **Status:** `UNTESTED`. **Answer:** Range and Shape are insufficient alone in presence of mutable length, path uncertainty, aliasing, arithmetic or trap behavior.
-- **Mechanism / evidence:** UT proposal itself enumerates extra obligations; local C# sample only gates decisions and never removes an actual instruction. [U7](https://github.com/Misha1302/UniversalToolchain/blob/de0da4a81b1ce38fc296f9de7b1e9ad10515f9a1/internal-docs/research/ideal-ut-2026-10-08/EXPERIMENTS.md) [B1](EXPERIMENT_DESIGN.md#executed-small-csharp-control-not-a-ut-integration-experiment)
+- **Mechanism / evidence:** UT proposal itself enumerates extra obligations; local C# sample only gates decisions and never removes an actual instruction. [U7](https://github.com/Misha1302/UniversalToolchain/blob/de0da4a81b1ce38fc296f9de7b1e9ad10515f9a1/internal-docs/research/ideal-ut-2026-10-08/EXPERIMENTS.md) [B1](EXPERIMENT_DESIGN.md#executed-small-c-control-not-a-ut-integration-experiment)
 - **Remaining uncertainty:** No independent execution/translation-validation oracle yet.
 - **Architecture consequence:** Never allow removal based only on bare Range/Shape.
 - **Meetup narrative:** Explain why this is a stringent future experiment, not success.
@@ -154,7 +154,7 @@
 ### Q15 — Как предотвратить опасную оптимизацию от заведомо ложного факта стороннего provider (Pure/NoAlias/SafeIndex)?
 
 - **Status:** `PARTIAL`. **Answer:** A typed false premise remains false: the semantic evidence calculus cannot manufacture trust. UT current module traits are attestations, not hostile-plugin proofs.
-- **Mechanism / evidence:** Current architecture explicitly disclaims sandbox/soundness; local baseline conservatively rejects contradictory values but not colluding false positive claims. [U9](https://github.com/Misha1302/UniversalToolchain/blob/de0da4a81b1ce38fc296f9de7b1e9ad10515f9a1/docs/CURRENT_ARCHITECTURE_STATUS.md) [U11](https://github.com/Misha1302/UniversalToolchain/blob/de0da4a81b1ce38fc296f9de7b1e9ad10515f9a1/internal-docs/research/ideal-ut-2026-10-08/PROPOSED_API_CONTRACTS.md) [B1](EXPERIMENT_DESIGN.md#executed-small-csharp-control-not-a-ut-integration-experiment)
+- **Mechanism / evidence:** Current architecture explicitly disclaims sandbox/soundness; local baseline conservatively rejects contradictory values but not colluding false positive claims. [U9](https://github.com/Misha1302/UniversalToolchain/blob/de0da4a81b1ce38fc296f9de7b1e9ad10515f9a1/docs/CURRENT_ARCHITECTURE_STATUS.md) [U11](https://github.com/Misha1302/UniversalToolchain/blob/de0da4a81b1ce38fc296f9de7b1e9ad10515f9a1/internal-docs/research/ideal-ut-2026-10-08/PROPOSED_API_CONTRACTS.md) [B1](EXPERIMENT_DESIGN.md#executed-small-c-control-not-a-ut-integration-experiment)
 - **Remaining uncertainty:** No malicious independent provider run against UT; verifier coverage limited to represented contracts.
 - **Architecture consequence:** Independent verifier or conservative fallback is mandatory.
 - **Meetup narrative:** Do not claim untrusted plugin safety.
@@ -325,7 +325,7 @@
 ### Q34 — Сколько стоит UT versus handwritten pipeline для planning/runtime/compile/steady-state, включая amortization?
 
 - **Status:** `UNTESTED`. **Answer:** No equal-workload measured planning/materialization/compile/steady-state comparison supports zero-cost or performance win claims in this review.
-- **Mechanism / evidence:** Existing boundary benchmark documents are separate and not controlled A/B/C/D comparisons. [U9](https://github.com/Misha1302/UniversalToolchain/blob/de0da4a81b1ce38fc296f9de7b1e9ad10515f9a1/docs/CURRENT_ARCHITECTURE_STATUS.md) [B1](EXPERIMENT_DESIGN.md#executed-small-csharp-control-not-a-ut-integration-experiment)
+- **Mechanism / evidence:** Existing boundary benchmark documents are separate and not controlled A/B/C/D comparisons. [U9](https://github.com/Misha1302/UniversalToolchain/blob/de0da4a81b1ce38fc296f9de7b1e9ad10515f9a1/docs/CURRENT_ARCHITECTURE_STATUS.md) [B1](EXPERIMENT_DESIGN.md#executed-small-c-control-not-a-ut-integration-experiment)
 - **Remaining uncertainty:** No valid numeric estimate; local baseline measured only boolean correctness.
 - **Architecture consequence:** Avoid performance adjectives without timing and environments.
 - **Meetup narrative:** Talk must not claim zero cost.
@@ -388,7 +388,7 @@
 ### Q41 — Уменьшается ли полная стоимость добавления 1/3/5/10 расширений с учётом glue/tests/schema evolution?
 
 - **Status:** `UNTESTED`. **Answer:** No measured 1/3/5/10 extension integration study establishes lower total engineering cost; source independence alone does not imply lower cost.
-- **Mechanism / evidence:** Small C# baseline is insufficient; generic UT composition exists, but no matched authoring-study results. [B1](EXPERIMENT_DESIGN.md#executed-small-csharp-control-not-a-ut-integration-experiment) [U5](https://github.com/Misha1302/UniversalToolchain/blob/de0da4a81b1ce38fc296f9de7b1e9ad10515f9a1/samples/Acme.PricingLanguage/Program.cs)
+- **Mechanism / evidence:** Small C# baseline is insufficient; generic UT composition exists, but no matched authoring-study results. [B1](EXPERIMENT_DESIGN.md#executed-small-c-control-not-a-ut-integration-experiment) [U5](https://github.com/Misha1302/UniversalToolchain/blob/de0da4a81b1ce38fc296f9de7b1e9ad10515f9a1/samples/Acme.PricingLanguage/Program.cs)
 - **Remaining uncertainty:** No developer-time, regression, schema-change or glue budget.
 - **Architecture consequence:** Make ROI a measured variable instead of assumption.
 - **Meetup narrative:** No broad productivity multiplier claims.
@@ -397,7 +397,7 @@
 ### Q42 — При каких заранее заданных исходах следует прекратить разработку общего semantic core?
 
 - **Status:** `PARTIAL`. **Answer:** The proposal already allows abandonment on equal simpler baseline, unsafe transforms, pervasive old-code edits and untrusted proof, but thresholds and integrated runs are not yet frozen.
-- **Mechanism / evidence:** UT EXPeriments.md explicit go/no-go and Q07 baseline pressures necessity. [U7](https://github.com/Misha1302/UniversalToolchain/blob/de0da4a81b1ce38fc296f9de7b1e9ad10515f9a1/internal-docs/research/ideal-ut-2026-10-08/EXPERIMENTS.md) [B1](EXPERIMENT_DESIGN.md#executed-small-csharp-control-not-a-ut-integration-experiment)
+- **Mechanism / evidence:** UT EXPeriments.md explicit go/no-go and Q07 baseline pressures necessity. [U7](https://github.com/Misha1302/UniversalToolchain/blob/de0da4a81b1ce38fc296f9de7b1e9ad10515f9a1/internal-docs/research/ideal-ut-2026-10-08/EXPERIMENTS.md) [B1](EXPERIMENT_DESIGN.md#executed-small-c-control-not-a-ut-integration-experiment)
 - **Remaining uncertainty:** No full E1 or formal precommit record, therefore cannot declare project killed.
 - **Architecture consequence:** Keep decision provisional and smallest safe design preferred.
 - **Meetup narrative:** State legitimate negative outcomes explicitly.
@@ -430,7 +430,7 @@
 | M5 | [MLIR dialect conversion](https://mlir.llvm.org/docs/DialectConversion/) |
 | S1 | [Salsa incremental recomputation](https://salsa-rs.github.io/salsa/reference/algorithm.html) |
 | V1 | [Alive2 bounded LLVM validation](https://github.com/AliveToolkit/alive2) |
-| B1 | [Executed local C# baseline](EXPERIMENT_DESIGN.md#executed-small-csharp-control-not-a-ut-integration-experiment) |
+| B1 | [Executed local C# baseline](EXPERIMENT_DESIGN.md#executed-small-c-control-not-a-ut-integration-experiment) |
 
 ## LIMITS / CRITIQUE
 
