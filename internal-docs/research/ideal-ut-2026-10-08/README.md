@@ -25,6 +25,7 @@ The proposed *semantic evidence* service must not be a second language planner, 
 | Source packages → all 14 deliverables, 20 DoD and AI hypothesis provenance | [RESEARCH_TRACEABILITY.md](RESEARCH_TRACEABILITY.md) |
 | Strategic options, original 18 competitive dimensions, strongest alternatives | [STRATEGY_PRIOR_ART.md](STRATEGY_PRIOR_ART.md) |
 | Proposed C# semantic contracts and rule-of-use caveats | [PROPOSED_API_CONTRACTS.md](PROPOSED_API_CONTRACTS.md) |
+| Adversarial stage-1 questions (42 IDs; evidence requirements; negative go/no-go outcomes) | [ADVERSARIAL_QUESTION_LEDGER_2026-10-22.md](ADVERSARIAL_QUESTION_LEDGER_2026-10-22.md) |
 | Independent Language Engineering Platform: LSP, debugging, author/end-user journeys | [LANGUAGE_ENGINEERING_PLATFORM.md](LANGUAGE_ENGINEERING_PLATFORM.md) |
 | Task-ready S0–S8 reversible implementation backlog | [ENGINEERING_BACKLOG.md](ENGINEERING_BACKLOG.md) |
 
