@@ -7,6 +7,8 @@ var shape = new ShapeProvider();var range = new RangeProvider();
 Check("shape-only-retains",Decide(good,shape),false);
 Check("independent-range-enables",Decide(good,shape,range),true);
 Check("higher-precision-range-substitution",Decide(good,shape,new PreciseRangeProvider()),true);
+Check("baseline-index-zero-conservative",Decide(good with { Index=0 },shape,range),false);
+Check("precise-index-zero-enabled",Decide(good with { Index=0 },shape,new PreciseRangeProvider()),true);
 Check("invalid-index-retains",Decide(good with { Index=5 },shape,range),false);
 Check("negative-index-retains",Decide(good with { Index=-1 },shape,range),false);
 Check("conflict-retains",Decide(good,shape,range,new ConflictingRangeProvider()),false);
