@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "metrics": {
+    "control": {
+      "production_sloc": 26,
+      "duplicated_lines": 0,
+      "duplication_eligible_lines": 15,
+      "duplication_ratio": 0.0,
+      "e3": {
+        "commit": "11ea672ed10c6756b52a0494718109f5caf28b45",
+        "added": 6,
+        "deleted": 1,
+        "changed_existing_loc": 7,
+        "touched_existing_files": 1,
+        "propagation_sites": 1
+      },
+      "first_case_loc": 16
+    },
+    "clone-own": {
+      "production_sloc": 61,
+      "duplicated_lines": 18,
+      "duplication_eligible_lines": 37,
+      "duplication_ratio": 0.4865,
+      "e3": {
+        "commit": "11ea672ed10c6756b52a0494718109f5caf28b45",
+        "added": 6,
+        "deleted": 1,
+        "changed_existing_loc": 7,
+        "touched_existing_files": 1,
+        "propagation_sites": 1
+      },
+      "e1_feature_loc": 16,
+      "e2_feature_loc": 35
+    },
+    "universal-toolchain": {
+      "production_sloc": 105,
+      "duplicated_lines": 18,
+      "duplication_eligible_lines": 81,
+      "duplication_ratio": 0.2222,
+      "e3": {
+        "commit": "11ea672ed10c6756b52a0494718109f5caf28b45",
+        "added": 6,
+        "deleted": 1,
+        "changed_existing_loc": 7,
+        "touched_existing_files": 1,
+        "propagation_sites": 1
+      },
+      "semantic_loc": 29,
+      "ceremony_platform_loc": 76,
+      "e1_feature_loc": 19,
+      "e2_feature_loc": 19
+    }
+  },
+  "method": {
+    "duplication": "Repeated normalized 3-line windows within each treatment source; string literals, numeric literals, and discount/surcharge names normalized; using/namespace/brace-only lines excluded.",
+    "loc": "Nonblank non-comment handwritten C# lines.",
+    "e3": "Git numstat churn at the frozen E3 commit, per treatment file. PF is number of treatment-local logical rule sites edited."
+  }
+}

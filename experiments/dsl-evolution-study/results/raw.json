@@ -1,0 +1,45 @@
+[
+  {
+    "treatment": "control",
+    "production_sloc": 26,
+    "duplicated_lines": 0,
+    "duplication_eligible_lines": 15,
+    "duplication_ratio": 0.0,
+    "first_case_loc": 16,
+    "e3_added": 6,
+    "e3_deleted": 1,
+    "e3_changed_existing_loc": 7,
+    "e3_touched_existing_files": 1,
+    "e3_propagation_sites": 1
+  },
+  {
+    "treatment": "clone-own",
+    "production_sloc": 61,
+    "duplicated_lines": 18,
+    "duplication_eligible_lines": 37,
+    "duplication_ratio": 0.4865,
+    "e1_feature_loc": 16,
+    "e2_feature_loc": 35,
+    "e3_added": 6,
+    "e3_deleted": 1,
+    "e3_changed_existing_loc": 7,
+    "e3_touched_existing_files": 1,
+    "e3_propagation_sites": 1
+  },
+  {
+    "treatment": "universal-toolchain",
+    "production_sloc": 105,
+    "duplicated_lines": 18,
+    "duplication_eligible_lines": 81,
+    "duplication_ratio": 0.2222,
+    "semantic_loc": 29,
+    "ceremony_platform_loc": 76,
+    "e1_feature_loc": 19,
+    "e2_feature_loc": 19,
+    "e3_added": 6,
+    "e3_deleted": 1,
+    "e3_changed_existing_loc": 7,
+    "e3_touched_existing_files": 1,
+    "e3_propagation_sites": 1
+  }
+]
