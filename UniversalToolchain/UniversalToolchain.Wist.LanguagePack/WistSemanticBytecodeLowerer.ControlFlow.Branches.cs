@@ -28,22 +28,14 @@ internal sealed partial class WistSemanticBytecodeLowerer
 
         var target = assignment.Target.Symbol;
         var targetType = target.Type.Resolve();
-        var method = new AbstractMethodImpl(
-            $"Set_{target.Name}",
-            (il, context) =>
-            {
-                if (context.Stack.Count == 0)
-                    Thrower.InvalidOpEx("Assignment requires a value on the stack.");
-                if (target.Kind == WistSemanticSymbolKind.ExternalConstant)
-                    Thrower.InvalidOpEx($"External constant '{target.Name}' cannot be assigned.");
-                if (target.Kind == WistSemanticSymbolKind.ExternalVariable)
-                {
-                    il.StExternal(target.ExternalSlot, targetType);
-                    return;
-                }
-                il.SetValueToLocal(target.StorageKey, context.Stack[^1]);
-            });
-        bytecode.Instructions.Add(new BytecodeInstruction(method));
+        IBytecodeOperationData operation = target.Kind switch
+        {
+            WistSemanticSymbolKind.ExternalConstant => throw new InvalidOperationException(
+                $"External constant '{target.Name}' cannot be assigned."),
+            WistSemanticSymbolKind.ExternalVariable => new WistStoreExternalOperation(target.ExternalSlot, targetType),
+            _ => new WistStoreLocalOperation(target.StorageKey)
+        };
+        bytecode.Instructions.Add(new BytecodeInstruction(Declarative($"Set_{target.Name}", operation)));
     }
 
     private void LowerShortCircuit(WistShortCircuitNode node, Bytecode bytecode)
@@ -107,21 +99,17 @@ internal sealed partial class WistSemanticBytecodeLowerer
     {
         RequireModule(WistContributionIds.ConditionalControlFlowModule);
         LowerNode(node.Condition, bytecode);
-        bytecode.Instructions.Add(new BytecodeInstruction(new AbstractMethodImpl(
-            $"CondFGoto_!Intrinsic_{node.ElseLabel}",
-            (il, _) => il.JmpIfNot(node.ElseLabel))));
+        bytecode.Instructions.Add(new BytecodeInstruction(
+            Declarative($"CondFGoto_!Intrinsic_{node.ElseLabel}", new WistJumpIfFalseOperation(node.ElseLabel))));
         LowerNode(node.Body, bytecode);
-        bytecode.Instructions.Add(new BytecodeInstruction(new AbstractMethodImpl(
-            $"Goto_!Intrinsic_{node.EndLabel}",
-            (il, _) => il.Jmp(node.EndLabel))));
-        bytecode.Instructions.Add(new BytecodeInstruction(new AbstractMethodImpl(
-            $"Label_!Intrinsic_{node.ElseLabel}",
-            (il, _) => il.SetLabel(node.ElseLabel))));
+        bytecode.Instructions.Add(new BytecodeInstruction(
+            Declarative($"Goto_!Intrinsic_{node.EndLabel}", new WistJumpOperation(node.EndLabel))));
+        bytecode.Instructions.Add(new BytecodeInstruction(
+            Declarative($"Label_!Intrinsic_{node.ElseLabel}", new WistLabelOperation(node.ElseLabel))));
         foreach (var alternative in node.Alternatives)
             LowerNode(alternative, bytecode);
-        bytecode.Instructions.Add(new BytecodeInstruction(new AbstractMethodImpl(
-            $"Label_!Intrinsic_{node.EndLabel}",
-            (il, _) => il.SetLabel(node.EndLabel))));
+        bytecode.Instructions.Add(new BytecodeInstruction(
+            Declarative($"Label_!Intrinsic_{node.EndLabel}", new WistLabelOperation(node.EndLabel))));
     }
 
     private void LowerIfExpression(WistIfExpressionNode node, Bytecode bytecode)
