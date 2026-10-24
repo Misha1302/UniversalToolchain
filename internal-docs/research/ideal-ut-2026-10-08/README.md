@@ -10,6 +10,21 @@ Current UT answers **which independent language packages, contributions, capabil
 
 The proposed *semantic evidence* service must not be a second language planner, mandatory SSA, a claim of formal universal correctness, a sandbox, or an agent-owned authority. It may be rejected entirely if the strongest alternative—ordinary typed C# interfaces and explicit adapters—solves the held-out cases more simply.
 
+## Independent 2026-10-12 review
+
+This folder is the **single canonical Ideal UT research entrypoint**, not a second architecture authority. [Research governance](RESEARCH_GOVERNANCE.md) names the existing document owners for current implementation, hypotheses, inventory, evidence, experiments and roadmap; new dated reviews do **not** create parallel statuses.
+
+| New incremental review | Purpose |
+| --- | --- |
+| [Independent architecture review](REVIEW_2026-10-12.md) | 2026-10-12 HEAD audit, three genuine architecture alternatives, eight decisions, conditional chosen direction |
+| [Original note annotated](ANNOTATED_NOTE_2026-10-12.md) | All fifteen representation questions separately, ambiguities preserved, hypotheses and rejection controls |
+| [Prior-art comparison delta](PRIOR_ART_DELTA_2026-10-12.md) | Papers and mature implementations, concrete competitor mechanisms and adaptation limits |
+| [Falsification addendum](FALSIFICATION_ADDENDUM_2026-10-12.md) | E1–E8, M0–M6, S0–S8 independent oracles, positive/negative/holdout cases and kill criteria |
+| [Research governance](RESEARCH_GOVERNANCE.md) | Single-owner knowledge base, statuses, traceability, inventory preservation and maintenance workflow |
+| [222-item inventory audit](INVENTORY_AUDIT_2026-10-12.md) | Actual 15-domain counts, proposed priority lens, overlap groups and one verified documentation drift correction |
+
+**Current head considered:** `master@886bf241623e83566585bf2aec5b635fefe1675f` (observed 2026-10-12). The prior dossier's 2026-09-20 audit and the inventory's 2026-10-08 audit are retained as **historical pinned baselines**, not overwritten. PRs [#370](https://github.com/Misha1302/UniversalToolchain/pull/370) and [#371](https://github.com/Misha1302/UniversalToolchain/pull/371) were open and unmerged when reviewed. All newly added research files are documentation only: no new UT runtime API, integrated E1–E8 test or formal proof is claimed.
+
 ## Documentation map
 
 | Purpose | Document |
