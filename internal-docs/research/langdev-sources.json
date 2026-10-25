@@ -1,0 +1,47 @@
+{
+  "reviewed_on": "2026-10-25",
+  "baseline_commit": "de0da4a81b1ce38fc296f9de7b1e9ad10515f9a1",
+  "raw_transcripts_included": false,
+  "sources": [
+    {
+      "id": "xQd8bCu1bj8",
+      "title": "Context Over Corpus: AI Autocompletion for Low-Resource DSLs",
+      "sha256": "fa55496c14ec62f1d058c43631f04274e309f92f357ae232acf7f8b632717632",
+      "bytes": 14612,
+      "url": "https://www.youtube.com/watch?v=xQd8bCu1bj8",
+      "evidence_type": "ASR transcript; excerpts examined, not slide verification"
+    },
+    {
+      "id": "rOB4V547hU8",
+      "title": "Teaching AI Agents to Work with MPS",
+      "sha256": "86999986f988074296ee61a7de04477ee30ed89255c4f63b884ba6737704e13e",
+      "bytes": 24241,
+      "url": "https://www.youtube.com/watch?v=rOB4V547hU8",
+      "evidence_type": "ASR transcript; excerpts examined, not slide verification"
+    },
+    {
+      "id": "oEzJOoCkzb0",
+      "title": "Lanzer: Agent-Driven, Fuzzer & Sample Generator for Langium DSLs",
+      "sha256": "250dd6afcb2f8c5da298039cec3d89a96db61dd8cfba655e2487ed3cae889e35",
+      "bytes": 24239,
+      "url": "https://www.youtube.com/watch?v=oEzJOoCkzb0",
+      "evidence_type": "ASR transcript; excerpts examined, not slide verification"
+    },
+    {
+      "id": "JNoVmvOOwOM",
+      "title": "Release the mops   How to let coding agents loose on MPS projects without driving you crazy",
+      "sha256": "1f5b75fddd395dc98a84655d488ba6cc4f3f069bb1c889f245cc0c5bba98c9f2",
+      "bytes": 25025,
+      "url": "https://www.youtube.com/watch?v=JNoVmvOOwOM",
+      "evidence_type": "ASR transcript; excerpts examined, not slide verification"
+    },
+    {
+      "id": "942AXKahgpg",
+      "title": "LionWeb in the Real World: Lessons from a Massive Legacy Migration",
+      "sha256": "44f8256496e7a92a41478546b15ce7be25ca43dacdb32426b97da3413a35ddc5",
+      "bytes": 10640,
+      "url": "https://www.youtube.com/watch?v=942AXKahgpg",
+      "evidence_type": "ASR transcript; excerpts examined, not slide verification"
+    }
+  ]
+}
