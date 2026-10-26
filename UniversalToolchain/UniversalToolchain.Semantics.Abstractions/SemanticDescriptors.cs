@@ -144,7 +144,7 @@ public sealed class SemanticDescriptorSet
 
     private static void ValidateCallable(CallableDescriptor callable)
     {
-        if (callable.Effects.IsPure && callable.Effects.Effects.Count > 1)
+        if (callable.Effects.Contains(SemanticEffectKind.Pure) && callable.Effects.Effects.Count > 1)
         {
             throw new ArgumentException(
                 $"Callable descriptor '{callable.Id}' mixes Pure with other effects.",

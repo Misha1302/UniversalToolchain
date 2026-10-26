@@ -8,7 +8,7 @@ Read this file before editing code. If a local task conflicts with this file, th
 
 Markdown files are architectural source material, not optional notes.
 
-Before non-trivial code changes, AI agents must identify the Markdown files that govern the task and the constraints they impose. Use `docs/DOCUMENTATION_INDEX.md` to find the relevant documents and `docs/CURRENT_ARCHITECTURE_STATUS.md` to distinguish current supported behavior from future or historical plans.
+Before non-trivial code changes, AI agents must identify the Markdown files that govern the task and the constraints they impose. Use `internal-docs/policies-and-reports/DOCUMENTATION_INDEX.md` to find the relevant documents and `docs/CURRENT_ARCHITECTURE_STATUS.md` to distinguish current supported behavior from future or historical plans.
 
 For small typo fixes, formatting-only edits, or obviously local mechanical changes, a short mental check is enough. Do not create heavy process for ordinary development.
 
@@ -49,7 +49,7 @@ Breaking these rules is a release-blocking architectural defect.
 
 ## Syntax ownership law
 
-`docs/SYNTAX_OWNERSHIP_RULES.md` is mandatory for all agents.
+`internal-docs/policies-and-reports/SYNTAX_OWNERSHIP_RULES.md` is mandatory for all agents.
 
 Language syntax must be recognized only by the owning lexer, parser, AST node creators, AST visitors, or syntax-specific extractors built from parser output.
 
@@ -190,7 +190,7 @@ Before editing:
 - if the change needs to understand language syntax, identify the owning parser/AST/declaration model first; do not parse raw source text locally,
 - verify whether the change preserves the project's existing universality and layering principles,
 - check whether controlled reflection can reduce coupling without becoming a hidden source of truth,
-- for non-trivial architecture or public-surface changes, check `docs/DOCUMENTATION_INDEX.md` and `docs/CURRENT_ARCHITECTURE_STATUS.md` before code changes.
+- for non-trivial architecture or public-surface changes, check `internal-docs/policies-and-reports/DOCUMENTATION_INDEX.md` and `docs/CURRENT_ARCHITECTURE_STATUS.md` before code changes.
 
 While editing:
 
@@ -201,7 +201,7 @@ While editing:
 - prefer designs where built-in or product-specific entities are data-only when reasonably possible,
 - convert reflection results into immutable descriptors/catalog entries/runtime bindings,
 - keep reflection discovery out of hot execution paths,
-- follow `docs/PROJECT_RULES.md` for coding standards.
+- follow `internal-docs/policies-and-reports/PROJECT_RULES.md` for coding standards.
 
 After editing:
 
@@ -213,11 +213,11 @@ After editing:
 ## Documentation policy
 
 - `readme.md` is the canonical repository overview.
-- `docs/DOCUMENTATION_INDEX.md` helps agents choose the right Markdown files before changing code.
-- `docs/DOCUMENTATION_RULES.md` defines how agents must preserve and update architectural Markdown.
+- `internal-docs/policies-and-reports/DOCUMENTATION_INDEX.md` helps agents choose the right Markdown files before changing code.
+- `internal-docs/policies-and-reports/DOCUMENTATION_RULES.md` defines how agents must preserve and update architectural Markdown.
 - `docs/CURRENT_ARCHITECTURE_STATUS.md` defines the current supported runtime surface of the branch.
-- `docs/PROJECT_RULES.md` is the canonical coding standard and architecture rule set.
-- `docs/ARCHITECTURE_RULES.md` is the canonical architecture guardrail document.
-- `docs/SYNTAX_OWNERSHIP_RULES.md` is the canonical syntax ownership policy.
+- `internal-docs/policies-and-reports/PROJECT_RULES.md` is the canonical coding standard and architecture rule set.
+- `internal-docs/policies-and-reports/ARCHITECTURE_RULES.md` is the canonical architecture guardrail document.
+- `internal-docs/policies-and-reports/SYNTAX_OWNERSHIP_RULES.md` is the canonical syntax ownership policy.
 - `docs/CONTRIBUTING.md` is the canonical contribution workflow.
 - This file (`AGENTS.md`) is the canonical AI-agent behavior guide.

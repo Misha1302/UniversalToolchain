@@ -38,3 +38,7 @@ This is a **supplement to, not one of, the original 14 research deliverables**. 
 ## Source of truth
 
 Actual code and tests > [current architecture](../../../docs/CURRENT_ARCHITECTURE_STATUS.md) > revision-bound experimental records > these proposals > historical recollection. This research folder must not be used to claim implementation or release readiness. Future work is activated only by held-out experiments or measured developer needs.
+
+## Heterogeneous DSL follow-up (2026-10-26)
+
+[The dated CPU/GPU specialization review](../heterogeneous-dsl-2026-10-26/README.md) reconciles subsequent research branches, answers Q01–Q42 with explicit evidence limits, and proposes one numerical experiment against a direct DSL-to-the-same-backend baseline. It does not promote the general semantic core or announce hardware backend support.

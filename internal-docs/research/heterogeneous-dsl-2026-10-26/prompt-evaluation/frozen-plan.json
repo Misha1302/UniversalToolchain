@@ -1,0 +1,75 @@
+{
+  "status": "FROZEN_BEFORE_RESPONSES",
+  "frozen_at_utc": "2026-10-26T16:20:31Z",
+  "design": "three synthetic cases, one fresh-context response per variant/case; exploratory, not statistical",
+  "candidate_path": "../NEXT_ANALYSIS_PROMPT.md",
+  "candidate_sha256": "dd01c84cea0646864d112e1f098ccf1b1b34cfbc87f99ab78f52ee0027042b56",
+  "baseline_path": "baseline.txt",
+  "baseline_sha256": "0c4b861096ca9329a89cfc5bfcc13ff0a981b197f9c0bc026cbfa973452ea795",
+  "fixtures_sha256": "c041730af0bef9f51b5b602bc84874fe44537b270a60034d7e1369eb0f12eab3",
+  "rubric_sha256": "45c2f26d76280ab7e9b25542603c187b1933ffe3f2a72addc801c5ed68424dc7",
+  "model": "inherited collaboration deployment; exact provider revision and seeds not exposed",
+  "output_budget_words": 900,
+  "runs": [
+    {
+      "id": "r01",
+      "case_id": "C1",
+      "variant": "baseline",
+      "prompt_sha256": "0c4b861096ca9329a89cfc5bfcc13ff0a981b197f9c0bc026cbfa973452ea795",
+      "case_sha256": "f92f75d44fe16d8dd9675ea195452a4a59940808a73b9fb8e9b0e677091af2cc",
+      "task_path": "inputs/r01_task.txt",
+      "task_sha256": "bbf7235e4cccab7b99ce8cf9f1fa097633150af371fe0700c09608c7c48e212a",
+      "response_path": "responses/r01.txt"
+    },
+    {
+      "id": "r02",
+      "case_id": "C2",
+      "variant": "candidate",
+      "prompt_sha256": "dd01c84cea0646864d112e1f098ccf1b1b34cfbc87f99ab78f52ee0027042b56",
+      "case_sha256": "0fb1bbffb8ec8f53402a9e13d1297b9865e3c9866afb5c4a038916904375acaa",
+      "task_path": "inputs/r02_task.txt",
+      "task_sha256": "56947767a115f7ac63dfb33349fa476db0eb326db6bc540ef32df7bda6d86974",
+      "response_path": "responses/r02.txt"
+    },
+    {
+      "id": "r03",
+      "case_id": "C3",
+      "variant": "baseline",
+      "prompt_sha256": "0c4b861096ca9329a89cfc5bfcc13ff0a981b197f9c0bc026cbfa973452ea795",
+      "case_sha256": "6fe0e7b5fd2f74abc8d3483f0a44d32257ec5554fabe09e8ea01925e46108f8e",
+      "task_path": "inputs/r03_task.txt",
+      "task_sha256": "0a6d96344820513d229bdd6c48e1ae63de1cb6861a2fc13dd17ab02d874a71b2",
+      "response_path": "responses/r03.txt"
+    },
+    {
+      "id": "r04",
+      "case_id": "C1",
+      "variant": "candidate",
+      "prompt_sha256": "dd01c84cea0646864d112e1f098ccf1b1b34cfbc87f99ab78f52ee0027042b56",
+      "case_sha256": "f92f75d44fe16d8dd9675ea195452a4a59940808a73b9fb8e9b0e677091af2cc",
+      "task_path": "inputs/r04_task.txt",
+      "task_sha256": "e7e1a08d25a4ca5e47a95907b4e6ec052c14d2df29b70725a51cf923b6b2c990",
+      "response_path": "responses/r04.txt"
+    },
+    {
+      "id": "r05",
+      "case_id": "C2",
+      "variant": "baseline",
+      "prompt_sha256": "0c4b861096ca9329a89cfc5bfcc13ff0a981b197f9c0bc026cbfa973452ea795",
+      "case_sha256": "0fb1bbffb8ec8f53402a9e13d1297b9865e3c9866afb5c4a038916904375acaa",
+      "task_path": "inputs/r05_task.txt",
+      "task_sha256": "dadfbba351b6664a023f419b4c862bf7b8b9f8f4c6c6c2f9cf6c6da177149e6f",
+      "response_path": "responses/r05.txt"
+    },
+    {
+      "id": "r06",
+      "case_id": "C3",
+      "variant": "candidate",
+      "prompt_sha256": "dd01c84cea0646864d112e1f098ccf1b1b34cfbc87f99ab78f52ee0027042b56",
+      "case_sha256": "6fe0e7b5fd2f74abc8d3483f0a44d32257ec5554fabe09e8ea01925e46108f8e",
+      "task_path": "inputs/r06_task.txt",
+      "task_sha256": "4efdb89ac7070ed64e32116dc0397c4685090f3f60689aa3ad9411e0e05b7baf",
+      "response_path": "responses/r06.txt"
+    }
+  ]
+}

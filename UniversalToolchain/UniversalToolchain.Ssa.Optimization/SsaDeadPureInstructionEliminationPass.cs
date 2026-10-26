@@ -92,6 +92,7 @@ public sealed class SsaDeadPureInstructionEliminationPass : IIrOptimizationPass
     private static (SsaFunction Function, bool Changed) RemoveUnusedBlockParameters(
         SsaFunction function)
     {
+        var useDef = SsaUseDefMap.Build(function);
         var nonRewritableTargets = function.Blocks
             .Select(static block => block.Terminator)
             .Where(static terminator =>
@@ -108,7 +109,7 @@ public sealed class SsaDeadPureInstructionEliminationPass : IIrOptimizationPass
             .Select(block => new
             {
                 block.Id,
-                Indices = FindUnusedParameterIndices(block)
+                Indices = FindUnusedParameterIndices(block, useDef)
             })
             .Where(static item => item.Indices.Count != 0)
             .ToDictionary(static item => item.Id, static item => item.Indices);
@@ -126,19 +127,12 @@ public sealed class SsaDeadPureInstructionEliminationPass : IIrOptimizationPass
             true);
     }
 
-    private static IReadOnlySet<int> FindUnusedParameterIndices(SsaBlock block)
+    private static IReadOnlySet<int> FindUnusedParameterIndices(SsaBlock block, SsaUseDefMap useDef)
     {
-        var used = new HashSet<SsaValueId>(
-            block.Instructions.SelectMany(static instruction => instruction.Operands));
-        if (block.Terminator is not null)
-        {
-            used.UnionWith(block.Terminator.Operands);
-            used.UnionWith(block.Terminator.Transfers.SelectMany(static transfer => transfer.Arguments));
-        }
-
+        // Block parameters may be used directly in any dominated block.
         return block.Parameters
             .Select(static (parameter, index) => (parameter, index))
-            .Where(item => !used.Contains(item.parameter.Value.Id))
+            .Where(item => !useDef.Uses.ContainsKey(item.parameter.Value.Id))
             .Select(static item => item.index)
             .ToHashSet();
     }

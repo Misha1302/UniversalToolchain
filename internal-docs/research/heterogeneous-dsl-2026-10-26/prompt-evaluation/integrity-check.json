@@ -1,0 +1,79 @@
+{
+  "integrity_pass": true,
+  "errors": [],
+  "runs": [
+    {
+      "response_id": "r01",
+      "case_id": "C1",
+      "variant": "baseline",
+      "words_whitespace": 780,
+      "response_sha256": "aca961a16afd3be192151e90d5e91a5b5145ffd14527877889bd572f701b009f",
+      "original_response_sha256": "aca961a16afd3be192151e90d5e91a5b5145ffd14527877889bd572f701b009f",
+      "met": 8,
+      "criteria": 8,
+      "critical_errors": 0,
+      "global_met": 3
+    },
+    {
+      "response_id": "r02",
+      "case_id": "C2",
+      "variant": "candidate",
+      "words_whitespace": 587,
+      "response_sha256": "249d347625ed7eb6eab3ba4f12e38b503b404ccfed5109257184b767c127b0e4",
+      "original_response_sha256": "249d347625ed7eb6eab3ba4f12e38b503b404ccfed5109257184b767c127b0e4",
+      "met": 8,
+      "criteria": 8,
+      "critical_errors": 0,
+      "global_met": 3
+    },
+    {
+      "response_id": "r03",
+      "case_id": "C3",
+      "variant": "baseline",
+      "words_whitespace": 743,
+      "response_sha256": "03b38d793f97c77815b9c59fafb275b987c1fb37e92049972243eebdffab4a57",
+      "original_response_sha256": "03b38d793f97c77815b9c59fafb275b987c1fb37e92049972243eebdffab4a57",
+      "met": 8,
+      "criteria": 8,
+      "critical_errors": 0,
+      "global_met": 3
+    },
+    {
+      "response_id": "r04",
+      "case_id": "C1",
+      "variant": "candidate",
+      "words_whitespace": 821,
+      "response_sha256": "15fa8e3b77c69d77ec1fbdddfedc5553c8196b36f953153a5d6c2e909c048542",
+      "original_response_sha256": "15fa8e3b77c69d77ec1fbdddfedc5553c8196b36f953153a5d6c2e909c048542",
+      "met": 8,
+      "criteria": 8,
+      "critical_errors": 0,
+      "global_met": 3
+    },
+    {
+      "response_id": "r05",
+      "case_id": "C2",
+      "variant": "baseline",
+      "words_whitespace": 582,
+      "response_sha256": "cf2deaa22f9f5d92b4835dfda50a3f2c74e431dd029c0a60267d02937e2ea9d1",
+      "original_response_sha256": "cf2deaa22f9f5d92b4835dfda50a3f2c74e431dd029c0a60267d02937e2ea9d1",
+      "met": 8,
+      "criteria": 8,
+      "critical_errors": 0,
+      "global_met": 3
+    },
+    {
+      "response_id": "r06",
+      "case_id": "C3",
+      "variant": "candidate",
+      "words_whitespace": 819,
+      "response_sha256": "1a05ecaa14159bc49ad1fb1f8e8af8077bd41c991629bbaaf2d8cde3c4239fbd",
+      "original_response_sha256": "ff6a579cc3a0375722df9c9b421da1db468a31d7b658d7ece7e207dd9e8b94e1",
+      "met": 8,
+      "criteria": 8,
+      "critical_errors": 0,
+      "global_met": 3
+    }
+  ],
+  "scope": "Mechanical hashes, completeness, word counts and exact quotations only; no semantic-score validation."
+}

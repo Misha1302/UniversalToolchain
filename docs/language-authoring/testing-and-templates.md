@@ -60,7 +60,7 @@ The language-authoring release matrix includes separate packages for abstraction
 Implemented now:
 
 - typed low-level authoring;
-- deterministic planning and schema-v5 lock snapshot;
+- deterministic planning and schema-v6 lock snapshot;
 - cross-package runtime assembly;
 - route execution and exact backend selection;
 - runtime policy validation and component lifecycle;
