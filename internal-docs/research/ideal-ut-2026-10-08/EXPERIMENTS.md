@@ -39,3 +39,7 @@ False `Pure`, incorrect `Serializable`, missing complete dependency enumeration,
 Pin UT SHA, .NET SDK, test seeds, exact oracle, target runtime/OS, commands, selected configurations, raw logs and counterexample minimization. Compare to holdout cases independently authored. Pass under selected assumptions != mathematical equivalence.
 
 **Go/no-go:** false-safe results, pervasive integration patches to old packages, unverifiable trust, or equal outcomes with simpler C# interfaces kill generalization. A valid negative result is a useful final outcome.
+
+## 2026-10-26 numerical vertical slice
+
+The [CPU/GPU experiment protocol](../heterogeneous-dsl-2026-10-26/EXPERIMENT_PLAN.md) specializes these gates for one real numerical workload. It adds a direct frontend to the same backend as the main control and separates artifact acceptance, device execution, correctness, performance and extension cost. No hardware gate is claimed completed by that proposal.

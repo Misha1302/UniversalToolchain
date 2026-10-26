@@ -1,0 +1,268 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-26",
+  "base_commit": "de0da4a81b1ce38fc296f9de7b1e9ad10515f9a1",
+  "environment": {
+    "os": "Fedora Linux",
+    "architecture": "x86_64",
+    "dotnet_sdk": "10.0.111",
+    "hardware_execution": "CPU tests only; no GPU/TPU/NPU numerical run"
+  },
+  "code_and_test_sha256": {
+    "UniversalToolchain/UniversalToolchain.Semantics.Abstractions/SemanticDescriptors.cs": "44ed5bbac023e9680d3299c3c301471b55f1921ef75274262bb8b44914d692e3",
+    "UniversalToolchain/UniversalToolchain.Ssa.Optimization/SsaDeadPureInstructionEliminationPass.cs": "049d79a0f1d826bbebde130587ef711319759f16fc0025e5e40b307af97f6adb",
+    "UniversalToolchain/Tests/Ssa/SsaCallableDescriptorTests.cs": "7a4dc71178e1783cfaca5c7fdc66fccebf8b6e889e0b37b22df215cedbe97bc5",
+    "UniversalToolchain/Tests/Ssa/SsaDeadBlockArgumentEliminationTests.cs": "7346844cfebe21e92f53cb70e620c48de1e0143e78bb9255c6917fe5864791ab",
+    "eng/test-counts.json": "591835cacc43dced32088c9aa213ac28a3bc01f2ee8be06c4a1e523d2ab97216"
+  },
+  "baseline_with_new_tests_only": {
+    "result": "expected_regressions_reproduced",
+    "trx_file": "baseline.trx",
+    "trx_sha256": "2ba7b0a4c7e927648581d47bc48a33753d0dd6c58e1ebaef57f1b4e4d4a21008",
+    "total": 24,
+    "passed": 19,
+    "failed": 5,
+    "skipped": 0,
+    "non_passed": [
+      {
+        "test": "SemanticDescriptorSet_WhenPureIsMixedWithObservableEffect_RejectsIt(MayThrow)",
+        "outcome": "Failed"
+      },
+      {
+        "test": "Run_WhenBlockParameterIsUsedOnlyInDominatedBlock_PreservesLiveParameterAndPrunesDeadSibling",
+        "outcome": "Failed"
+      },
+      {
+        "test": "SemanticDescriptorSet_WhenPureIsMixedWithObservableEffect_RejectsIt(UnknownExternalEffect)",
+        "outcome": "Failed"
+      },
+      {
+        "test": "Run_WhenBlockParameterIsUsedByDominatedTransfer_PreservesDefinitionAndIncomingArgument",
+        "outcome": "Failed"
+      },
+      {
+        "test": "SemanticDescriptorSet_WhenPureIsMixedWithObservableEffect_RejectsIt(WritesMemory)",
+        "outcome": "Failed"
+      }
+    ]
+  },
+  "fixed_core": {
+    "trx_file": "fixed-core.trx",
+    "trx_sha256": "18aeeeee1da87b06324b888ae5534e711f98c09352122fa3775f159bdd316fb9",
+    "total": 507,
+    "passed": 507,
+    "failed": 0,
+    "skipped": 0,
+    "non_passed": []
+  },
+  "canonical_integration": {
+    "command": "./build.sh --jobs 4 --skip-docs --skip-pack",
+    "exit_code": 0,
+    "total": 1331,
+    "passed": 1331,
+    "failed": 0,
+    "skipped": 0,
+    "entries": [
+      {
+        "trx_file": "Core.trx",
+        "trx_sha256": "a64d36ec0bd0b578694bd53e772a735a4a19f55a04a08ddfd48245082f5725db",
+        "total": 507,
+        "passed": 507,
+        "failed": 0,
+        "skipped": 0,
+        "non_passed": []
+      },
+      {
+        "trx_file": "Dialects.trx",
+        "trx_sha256": "0451ce1caa43e6e0c53376e3717dd9bf265401952762c3676f68387e2b1302f9",
+        "total": 234,
+        "passed": 234,
+        "failed": 0,
+        "skipped": 0,
+        "non_passed": []
+      },
+      {
+        "trx_file": "Integration.AcmeOption.trx",
+        "trx_sha256": "6a4c8e6bd8f3feebc6552e96e125f98e82d393ee38b9f3273187c7d19a190ce0",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "non_passed": []
+      },
+      {
+        "trx_file": "Integration.CleanReplay.trx",
+        "trx_sha256": "1a6ae576cc92bea6a69344257b7bdda44786bef9f0daf9b3d639bbbaf46d4ec8",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "non_passed": []
+      },
+      {
+        "trx_file": "Integration.NoOracle.trx",
+        "trx_sha256": "52f7c867de8509d1b0d4358ca77db6c56a16298c0a6af9999ee7a2c3525d146c",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "non_passed": []
+      },
+      {
+        "trx_file": "Integration.OutputDirectory.trx",
+        "trx_sha256": "e68c036618a4e6be1a6be811e9c904ecef56ab4645cc9940225b9211cd213a67",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "non_passed": []
+      },
+      {
+        "trx_file": "Integration.ReductionClean.trx",
+        "trx_sha256": "918fdb1e85830e9f311c6b3dbab377032db5c4a70e19db47b84b072febac570f",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "non_passed": []
+      },
+      {
+        "trx_file": "Integration.ReductionFault.trx",
+        "trx_sha256": "c16537469221e9da54b04662bd8e9cf940c5f3c7e7da96819475fc45c9a998f8",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "non_passed": []
+      },
+      {
+        "trx_file": "Integration.SeededFault.trx",
+        "trx_sha256": "e350a39279c452c6da67b38099d89d9e335547b70e4f5df0646016e5ef56ec97",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "non_passed": []
+      },
+      {
+        "trx_file": "Integration.SurfaceFaults.trx",
+        "trx_sha256": "768414ad8e8d9cb528e148688e0533a26e1097753c227cd1f9055903f0d6f1cd",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0,
+        "non_passed": []
+      },
+      {
+        "trx_file": "Integration.WistParameter.trx",
+        "trx_sha256": "33352c9677fe68f10e8f0223a87f8ab88331435789664dccbe4de9ab8578aad4",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "non_passed": []
+      },
+      {
+        "trx_file": "LanguageSdk.Generic.trx",
+        "trx_sha256": "a585ebf6a3b1d374ce70dbeca3478e38cafd2b20ff67fb3f25e60ce3cb524000",
+        "total": 62,
+        "passed": 62,
+        "failed": 0,
+        "skipped": 0,
+        "non_passed": []
+      },
+      {
+        "trx_file": "LanguageSdk.trx",
+        "trx_sha256": "62ba7cd638dba0b8297d9f0a50c01f2beac156f4d0215210670d348c63ef3c62",
+        "total": 185,
+        "passed": 185,
+        "failed": 0,
+        "skipped": 0,
+        "non_passed": []
+      },
+      {
+        "trx_file": "Modules.trx",
+        "trx_sha256": "e4153a9c5b7eb8a1e41dcc9ea25d8ef26d1ab0386e6dc01f7916c6f05fabe244",
+        "total": 292,
+        "passed": 292,
+        "failed": 0,
+        "skipped": 0,
+        "non_passed": []
+      },
+      {
+        "trx_file": "PlanFuzz.trx",
+        "trx_sha256": "6766ca3c12cddb2fa57f1ee450d6f99d6b7b2a942ce190889f7f44a3c3f45d6c",
+        "total": 41,
+        "passed": 41,
+        "failed": 0,
+        "skipped": 0,
+        "non_passed": []
+      }
+    ],
+    "other_gates": [
+      "build topology static/mutants/runtime",
+      "test-count contract and mutants",
+      "retired-surface contract and mutants",
+      "hardening contract and mutants",
+      "documentation-status contract and mutants"
+    ]
+  },
+  "documentation": {
+    "command": "npm ci --no-audit --no-fund && npm run docs:check",
+    "result": "passed",
+    "checks": [
+      "status",
+      "release state",
+      "readiness and mutants",
+      "links/split/navigation",
+      "first-contact compiled snippets",
+      "Pages invariants and selftest",
+      "VitePress build"
+    ],
+    "public_markdown_files": 121,
+    "internal_markdown_files": 57,
+    "navigated_targets": 104
+  },
+  "markdown_smoke": {
+    "command": "python3 .github/scripts/run-markdown-bash-blocks.py",
+    "exit_code": 0,
+    "result": "all enabled bash blocks passed; existing ci-run=false blocks skipped according to policy",
+    "discovered_blocks": 53
+  },
+  "historical_csharp_control": {
+    "source_commit": "a1e5f25bf0afd7850075ed4aeafc8b2a48c6c99d",
+    "source_checksums_passed": 10,
+    "decision_assertions_passed": 12,
+    "exit_code": 0,
+    "output_sha256": "f9ca3d06d8783ac59627e88d5b777d3f94fb44f44796bd02c82888565ccb914b",
+    "scope": "Known ISafeIndexQuery boolean decisions only; no actual bounds-check rewrite"
+  },
+  "raw_local_log_fingerprints": {
+    "baseline": {
+      "sha256": "ecaf590c2c31d5345190e10bb7b8d7f9299bea0673c019e754d99e8b26ec124f",
+      "bytes": 34841
+    },
+    "fixed-core": {
+      "sha256": "508f7ff547d785b86eb237160ca54feb51f33960b0a38f379fa860337b94018b",
+      "bytes": 14647
+    },
+    "build": {
+      "sha256": "d0c58797d304ffd77eaf5a2497a589d25850822c803f9b86eeab64b0e82def62",
+      "bytes": 77951
+    },
+    "docs": {
+      "sha256": "d9395423db8a028a2e17d703c0fa4e451554330d0950c27d5c9712861a7ab865",
+      "bytes": 5912
+    },
+    "markdown-smoke": {
+      "sha256": "e6ce3bcef98e71f5ecee7f558a1207c927d05b0f66acd38e548bef84ca31e13c",
+      "bytes": 26347
+    }
+  },
+  "limitations": [
+    "Log/TRX hashes identify this local run; raw files include machine-specific paths and are not published in this receipt.",
+    "No new hardware backend or performance benchmark was implemented.",
+    "Release packaging, API/package baseline gates and publication were not run.",
+    "Historical experiments other than the named C# control were inspected, not rerun."
+  ]
+}

@@ -24,3 +24,7 @@ Research choices are reversible. The right result may be **not** adopting an abs
 | Valid `LanguagePlan` as hostile plugin sandbox | REJECT | needs process/OS isolation and separate threat model |
 
 Potential prior-art controls: typed .NET interfaces/hand-coded pipeline; MLIR ODS/interfaces/PDLL/conversion; Silver/ableC and JastAdd; LLVM New PM; Salsa; Alive2; egg/e-graphs; Soufflé provenance; Truffle; MPS; Calcite. Typed facts, Datalog, SSA and source generators are **not new inventions**. Possible distinguishing result: independently authored cross-layer semantic interop with exact validity, measured against strongest controls. Scientific novelty is currently **UNPROVEN**.
+
+## 2026-10-26 specialization assessment
+
+See the [heterogeneous numerical DSL decision](../heterogeneous-dsl-2026-10-26/README.md) for the distinction between necessary operation semantics and a conditional general evidence engine. Existing negative controls remain part of the decision.
