@@ -4,4 +4,6 @@
 
 - [CPU/GPU DSL specialization review (2026-10-26): semantic contracts, alternatives, all 42 research questions and a falsifiable experiment](heterogeneous-dsl-2026-10-26/README.md).
 
+- [Research needed for the next UTS specification: workload/hardware gates, bounded integration studies and requirement acceptance](heterogeneous-dsl-2026-10-26/SPEC_RESEARCH_PLAN.md).
+
 These files are research/proposals, not shipped contracts. See [current architecture](../../docs/CURRENT_ARCHITECTURE_STATUS.md) for supported behavior.

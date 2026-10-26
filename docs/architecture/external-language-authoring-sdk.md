@@ -15,7 +15,7 @@ LanguageDefinition
 -> feature and contribution resolution
 -> slot, dependency, capability and conflict validation
 -> typed conversion-route and same-artifact pass planning per backend
--> immutable LanguagePlan + schema-v5 lock snapshot
+-> immutable LanguagePlan + schema-v6 lock snapshot
 -> exact package-manifest binding
 -> runtime assembly from all selected package component catalogs
 -> runtime-policy validation
@@ -234,9 +234,11 @@ Wist package descriptor, runtime provider and NuGet package versions are derived
 
 ## Manifest and lock contract
 
-Schema v5 includes typed transformation endpoints, backend input contracts, pass ordering, runtime inputs, route steps and the plan entry artifact. It also defines `universaltoolchain-json-v1` canonicalization and SHA-256 over compact UTF-8 bytes without a BOM or platform-dependent line ending. Pretty JSON always uses LF but is not itself the package-identity input.
+Package manifests use schema v5 and include typed transformation endpoints, backend input contracts, pass ordering and runtime inputs. They define `universaltoolchain-json-v1` canonicalization and SHA-256 over compact UTF-8 bytes without a BOM or platform-dependent line ending. Pretty JSON always uses LF but is not itself the package-identity input.
 
-The reader accepts schema v5 only. Older manifest schemas must be migrated before loading; they are not normalized implicitly. Executable transformation endpoints, backend inputs and runtime inputs require explicit contract identities. Plan hashes include the entry artifact, selected contributions and typed route contracts, so changing an executable contract changes the reproducible plan identity.
+The package manifest reader accepts schema v5 only. Older manifest schemas must be migrated before loading; they are not normalized implicitly. Executable transformation endpoints, backend inputs and runtime inputs require explicit contract identities.
+
+`LanguagePlan` lock snapshots use schema v6 and record the plan entry artifact, selected contributions and route steps. Plan hashes include the entry artifact, selected contributions and typed route contracts, so changing an executable contract changes the reproducible plan identity. The package manifest and plan lock are separate formats; their schema versions need not match.
 
 ## Current boundary
 

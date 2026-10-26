@@ -48,7 +48,7 @@ A `LanguageDiagnostic` contains code, severity, stage, message, owner and sugges
 - same-artifact passes use deterministic topological ordering;
 - ordering cycles fail;
 - a selected pass that cannot be placed on a route fails rather than being ignored;
-- the resulting plan has a canonical schema-v5 lock representation and plan hash.
+- the resulting plan has a canonical schema-v6 lock representation and plan hash.
 
 ## Planning-only definitions
 
