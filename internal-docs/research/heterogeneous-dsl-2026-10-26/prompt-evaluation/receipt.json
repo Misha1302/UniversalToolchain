@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "status": "COMPLETED_BOUNDED_SYNTHETIC_EVALUATION",
+  "created_at_utc": "2026-10-26T16:32:07.991549+00:00",
+  "repository_baseline_sha": "a950f2011ecc0f1cdd85702fc07fabd3effbbc07",
+  "final_prompt_sha256": "dd01c84cea0646864d112e1f098ccf1b1b34cfbc87f99ab78f52ee0027042b56",
+  "freeze_plan_sha256": "505d9aff0ac5449324c13438d8cccd660d4fc35b3cc855a1db91b56af13c9459",
+  "agents": {
+    "fixture_author": "/root/handoff_audit",
+    "critic": "/root/prompt_critic",
+    "judge": "/root/prompt_judge",
+    "probes": {
+      "r01": "/root/probe_01",
+      "r02": "/root/probe_02",
+      "r03": "/root/probe_03",
+      "r04": "/root/probe_04",
+      "r05": "/root/probe_05",
+      "r06": "/root/probe_06"
+    }
+  },
+  "fresh_context_probes": true,
+  "probe_fork_turns": "none",
+  "judge_fork_turns": "none",
+  "model_configuration": "Inherited collaboration deployment; exact provider revision and sampling seeds not exposed; no model override.",
+  "execution_boundary": "Instructions restrict designated files and synthetic task; not an enforced separate sandbox. Full provider traces unavailable.",
+  "results": {
+    "baseline": {
+      "case_criteria_met": 24,
+      "case_criteria_total": 24,
+      "global_checks_met": 9,
+      "global_checks_total": 9,
+      "critical_errors": 0
+    },
+    "candidate": {
+      "case_criteria_met": 24,
+      "case_criteria_total": 24,
+      "global_checks_met": 9,
+      "global_checks_total": 9,
+      "critical_errors": 0
+    },
+    "evidence_quotes_exactly_matched": 125,
+    "general_superiority_established": false,
+    "candidate_known_limitation": "r04 calls an experiment cheapest without comparative cost evidence; preserved as a qualitative limitation, not a retroactive rubric criterion."
+  },
+  "integrity_validator": {
+    "command": "python3 internal-docs/research/heterogeneous-dsl-2026-10-26/prompt-evaluation/verify_artifacts.py",
+    "exit_code": 0,
+    "output_path": "integrity-check.json",
+    "semantic_scores_validated_by_script": false
+  },
+  "root_review": "Read all 48 substantive criterion reasons and cross-case notes; reviewed source responses for material decisions; mechanical check independently matched hashes, counts and every quoted span.",
+  "artifact_sha256": {
+    "README.md": "54446729f5e152d734ff986ec818c08ec5dee229c4de10432f6e547ed3fa7a5c",
+    "baseline.txt": "0c4b861096ca9329a89cfc5bfcc13ff0a981b197f9c0bc026cbfa973452ea795",
+    "critique_final.txt": "61949cb71f9878e32bda9c85f1043ef54133140bfa408d74c39b25caa39d475f",
+    "critique_v1.txt": "a0e5465eecc2e02dad75362ab5f682f1a9d477a5f59ea30ab2c369e1a3b7716d",
+    "drafts/reviewed_prompt_v1.txt": "342c05a2e2e44d30ab7fd933121f2476067e29d0300f3e092ad960d53d1d4df5",
+    "fixtures.json": "c041730af0bef9f51b5b602bc84874fe44537b270a60034d7e1369eb0f12eab3",
+    "frozen-plan.json": "505d9aff0ac5449324c13438d8cccd660d4fc35b3cc855a1db91b56af13c9459",
+    "inputs/C1.json": "f92f75d44fe16d8dd9675ea195452a4a59940808a73b9fb8e9b0e677091af2cc",
+    "inputs/C2.json": "0fb1bbffb8ec8f53402a9e13d1297b9865e3c9866afb5c4a038916904375acaa",
+    "inputs/C3.json": "6fe0e7b5fd2f74abc8d3483f0a44d32257ec5554fabe09e8ea01925e46108f8e",
+    "inputs/judge_task.txt": "27c3e51d8f038b8f9f2dea068517fb596bdbc1f5afc9ca00a6f30d68d7fab2aa",
+    "inputs/r01_task.txt": "bbf7235e4cccab7b99ce8cf9f1fa097633150af371fe0700c09608c7c48e212a",
+    "inputs/r02_task.txt": "56947767a115f7ac63dfb33349fa476db0eb326db6bc540ef32df7bda6d86974",
+    "inputs/r03_task.txt": "0a6d96344820513d229bdd6c48e1ae63de1cb6861a2fc13dd17ab02d874a71b2",
+    "inputs/r04_task.txt": "e7e1a08d25a4ca5e47a95907b4e6ec052c14d2df29b70725a51cf923b6b2c990",
+    "inputs/r05_task.txt": "dadfbba351b6664a023f419b4c862bf7b8b9f8f4c6c6c2f9cf6c6da177149e6f",
+    "inputs/r06_task.txt": "4efdb89ac7070ed64e32116dc0397c4685090f3f60689aa3ad9411e0e05b7baf",
+    "integrity-check.json": "5821d9cfebc96254986a4bfe4cb899e0c9b1e03dcc2696f1ecb3fc00bd974e37",
+    "judge.json": "e47c3ba8d33ce9dcc9a3dddaad0a0a871b51868345ccd83b2305ee5556424769",
+    "judge_review.txt": "bb8d6a6645e63727f75c3ce7c7afaaddcca177fd992220fc3fde4d93bd87885e",
+    "responses/r01.txt": "aca961a16afd3be192151e90d5e91a5b5145ffd14527877889bd572f701b009f",
+    "responses/r02.txt": "249d347625ed7eb6eab3ba4f12e38b503b404ccfed5109257184b767c127b0e4",
+    "responses/r03.txt": "03b38d793f97c77815b9c59fafb275b987c1fb37e92049972243eebdffab4a57",
+    "responses/r04.txt": "15fa8e3b77c69d77ec1fbdddfedc5553c8196b36f953153a5d6c2e909c048542",
+    "responses/r05.txt": "cf2deaa22f9f5d92b4835dfda50a3f2c74e431dd029c0a60267d02937e2ea9d1",
+    "responses/r06.txt": "1a05ecaa14159bc49ad1fb1f8e8af8077bd41c991629bbaaf2d8cde3c4239fbd",
+    "responses/raw-responses.json": "02ab314a23d72bc77a4d23f7ff46dd4889ef0fd9d8100e16b5d9779468968d76",
+    "rubric.json": "45c2f26d76280ab7e9b25542603c187b1933ffe3f2a72addc801c5ed68424dc7",
+    "verify_artifacts.py": "a2595c944cab4e5a117edc5243264e7c70b3bf0d79c9bda04babd86515898448",
+    "../NEXT_ANALYSIS_PROMPT.md": "dd01c84cea0646864d112e1f098ccf1b1b34cfbc87f99ab78f52ee0027042b56",
+    "../PROMPT_VALIDATION.md": "1d471f9e6584365326a8d143ae25d7514e0f14948beb57755bd18cb7502e07e0"
+  },
+  "limits": [
+    "One response per variant/case; three authored synthetic cases; no statistical or generalization claim.",
+    "One model-family evaluator; not independent human review.",
+    "No full real-repository run of the handoff prompt in this evaluation.",
+    "No journal eligibility, publication, external UTS fault corpus, hardware execution or customer validation established.",
+    "Repository documentation validation and commit/CI status are recorded separately in PR #382."
+  ],
+  "response_provenance": "Exact original UTF-8 texts and hashes preserved in responses/raw-responses.json. Only r06.txt terminal LF normalized after judging; validator checks original and view identities. No new model run claimed."
+}

@@ -8,4 +8,10 @@
 
 - [Business and scientific reassessment: existing CGO27 evidence, external product pilots, portability limits and conditional direction changes](heterogeneous-dsl-2026-10-26/BUSINESS_AND_RESEARCH_STRATEGY.md).
 
+- [Independent next-analysis prompt: business, scientific contribution, publication requirements and a concrete specification](heterogeneous-dsl-2026-10-26/NEXT_ANALYSIS_PROMPT.md).
+
+- [Publication requirements review: HSE procedure unknowns, quartile evidence, journal candidates and CGO27 status boundaries](heterogeneous-dsl-2026-10-26/PUBLICATION_REQUIREMENTS.md).
+
+- [Prompt validation: independent critique, frozen synthetic cases, six actual responses and separate rubric-based judgments](heterogeneous-dsl-2026-10-26/PROMPT_VALIDATION.md).
+
 These files are research/proposals, not shipped contracts. See [current architecture](../../docs/CURRENT_ARCHITECTURE_STATUS.md) for supported behavior.
