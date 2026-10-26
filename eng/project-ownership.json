@@ -44,6 +44,7 @@
     ],
     "UNIVERSAL": [
       "UniversalToolchain/**/*.csproj",
+      "internal-docs/research/heterogeneous-dsl-2026-10-26/journal-decision/probe/DiagnosticProbe.csproj",
       "samples/Acme.PricingLanguage/Acme.PricingLanguage.csproj"
     ]
   },

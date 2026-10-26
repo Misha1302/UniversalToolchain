@@ -42,6 +42,14 @@ CompilationLab использован из выборочно прочитанн
 
 ## Сохранение и scope
 
-Изменения ограничены новым `journal-decision/` и ссылками на него из трёх существующих документов досье. Production compiler/runtime/ModuleContracts, CGO27 raw evidence/corpora/thresholds и прежние verification receipts не изменяются. Probe лежит вне product topology, не пакуется и не вводит public API. Сохранение commit/push и статус новых CI будут зафиксированы по фактическому результату в PR #382; данный файл не самоподтверждает ещё не существующий commit.
+Основной комплект сохранён и опубликован коммитом [5fd04ca7](https://github.com/Misha1302/UniversalToolchain/commit/5fd04ca7d3c90024f8d5dfdc3c82beca76f8df84) в существующем draft PR #382. Исходная пользовательская worktree осталась чистой на `f4d1dd1`; отдельная delivery worktree и локальная копия были чистыми на опубликованной ревизии.
+
+CI этой ревизии выявил пропущенную регистрацию нового `.csproj`: [Architecture Boundaries run](https://github.com/Misha1302/UniversalToolchain/actions/runs/40371914170) завершился ошибкой `project has no owner`. Она воспроизведена обычным локальным checker. Исправление — одна точная запись probe в `owners.UNIVERSAL` файла `eng/project-ownership.json`; validator, total coverage и запрет `UNIVERSAL -> WIST_PRODUCT` не ослабляются. Отдельный reviewer проверил все шесть разрешённых `$(RepoRoot)` ProjectReference: они существуют и относятся к UNIVERSAL. Это manual resolution свойства MSBuild; validator сам такие property-valued references не раскрывает.
+
+После исправления локальный `python3 Tools/check-project-ownership.py --root .` завершился exit 0: `PROJECT_OWNERSHIP=PASS UNIVERSAL=58 WIST_PRODUCT=39`. Вторая исходная ошибка workflow Ownership and Package Verification имела ту же причину на ownership step; его отдельный Packed Wist clean consumer job прошёл. Эти результаты относятся к конкретным указанным проверкам, не к будущему статусу всего нового CI.
+
+Во время доставки исправления Fedora отключилась: передача patch подтверждена отдельным completed tool receipt, следующая remote process request завершилась timeout, head GitHub остался `5fd04ca7`. Эта мутация не повторялась вслепую. Исправление доставляется через GitHub tree/commit API с ожидаемым head и обычным fast-forward; состояние remote worktree после timeout неизвестно. Успешные probe/docs execution receipts выше получены до отключения и сохраняют свою силу.
+
+Итоговый scope — 18 файлов досье и одна запись ownership manifest. Production compiler/runtime/ModuleContracts, CGO27 raw evidence/corpora/thresholds и прежние verification receipts не изменяются. Probe не добавлен в product solution или пакеты и не вводит public API; он зарегистрирован в полном repository ownership inventory. Итог нового ownership gate и CI следующей ревизии фиксируется в PR #382. Первый неуспешный run не выдаётся за зелёный.
 
 Ни статья, ни заявка, ни письмо внешнему человеку не отправлялись; принятие, indexing, зачёт и календарная выполнимость не подтверждены. Персональные документы/данные в ветку не добавлялись.
