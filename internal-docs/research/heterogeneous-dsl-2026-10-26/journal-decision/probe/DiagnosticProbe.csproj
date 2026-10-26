@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><LangVersion>14</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><StartupObject>DiagnosticProbe</StartupObject>
+    <RepoRoot Condition="'$(RepoRoot)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../../../../../'))</RepoRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)/UniversalToolchain/Experiments/UniversalToolchain.TensorRules/Program.cs" Link="OriginalTensorRules.cs" />
+    <ProjectReference Include="$(RepoRoot)/UniversalToolchain/UniversalToolchain.FeatureSdk/UniversalToolchain.FeatureSdk.csproj" />
+    <ProjectReference Include="$(RepoRoot)/UniversalToolchain/UniversalToolchain.Language.Abstractions/UniversalToolchain.Language.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)/UniversalToolchain/UniversalToolchain.LanguageAuthoring/UniversalToolchain.LanguageAuthoring.csproj" />
+    <ProjectReference Include="$(RepoRoot)/UniversalToolchain/UniversalToolchain.LanguageSdk/UniversalToolchain.LanguageSdk.csproj" />
+    <ProjectReference Include="$(RepoRoot)/UniversalToolchain/UniversalToolchain.Runtime/UniversalToolchain.Runtime.csproj" />
+    <ProjectReference Include="$(RepoRoot)/UniversalToolchain/UniversalToolchain.ModuleContracts/UniversalToolchain.ModuleContracts.csproj" />
+  </ItemGroup>
+</Project>

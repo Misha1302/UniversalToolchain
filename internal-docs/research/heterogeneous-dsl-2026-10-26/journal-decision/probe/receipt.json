@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "authority": "dated-review / execution receipt",
+  "date": "2026-10-26",
+  "baseline_commit": "f4d1dd1de2d2e140437613191008b9cdf2552605",
+  "case_count": 4,
+  "direct_policy_observations": 8,
+  "matched_observations": 12,
+  "scheduler_counts": 2,
+  "scope": "Model-designed mechanism diagnostic. No external human corpus, numerical tensor execution, performance or full source-to-result claim.",
+  "environment": {
+    "os": "Fedora Linux",
+    "dotnet_sdk": "10.0.111",
+    "execution": "isolated detached worktree; actual remote execution"
+  },
+  "first_execution": {
+    "exit_code": 0,
+    "result_sha256": "cb0cca960de68749d4b7415e0d1010a3c3ad99325ab99bd89bbd39c0f96aef28",
+    "csproj_sha256": "946c7ba239b4cf6ceb6f5cc6abee5d367c13be39e1a64b2d8e30da619486e780",
+    "csproj_difference": "Delivery changes only default RepoRoot to relative and IsPackable=false; C# is unchanged."
+  },
+  "delivered_project_replay": {
+    "status": "PASS",
+    "run_exit_code": 0,
+    "verify_exit_code": 0,
+    "result_sha256": "cb0cca960de68749d4b7415e0d1010a3c3ad99325ab99bd89bbd39c0f96aef28",
+    "project_sha256": "0bbc23d98f9637ff9a1f58ccb1209e1bb640a723c69d025d1d8e8eeca8fc5e2c",
+    "command": "dotnet run --project internal-docs/research/heterogeneous-dsl-2026-10-26/journal-decision/probe/DiagnosticProbe.csproj -c Release -p:NuGetAudit=false -- <new-output-path>",
+    "comparison": "verify_probe.py --replay; exact parsed JSON equality and equal file SHA-256"
+  },
+  "artifact_sha256": {
+    "DiagnosticProbe.cs": "ee3aa211b3d6d2aca91de07229f7269d477856dce07912c644a342ee8077e958",
+    "DiagnosticProbe.csproj": "0bbc23d98f9637ff9a1f58ccb1209e1bb640a723c69d025d1d8e8eeca8fc5e2c",
+    "results.json": "cb0cca960de68749d4b7415e0d1010a3c3ad99325ab99bd89bbd39c0f96aef28",
+    "verify_probe.py": "ff3fc2b72bc197abdbe3a6dcc4be8253352eeeaa6629df9f4d6fb073c268b802"
+  },
+  "linked_production_source_sha256": {
+    "UniversalToolchain/Experiments/UniversalToolchain.TensorRules/Program.cs": "8ada930b0f22ab102039021ce399eae648895e07b3cb3e3a63f052e466b983af",
+    "UniversalToolchain/UniversalToolchain.ModuleContracts/ModuleContractVerificationScheduler.cs": "b4f36e427abcaf0a9947f3727047bcd2859e7e079d87f7044e7393e2e5a00a34"
+  }
+}

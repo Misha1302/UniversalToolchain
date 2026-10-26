@@ -1,0 +1,200 @@
+{
+  "schemaVersion": 1,
+  "scope": "Model-designed deterministic mechanism probe; linked unmodified TensorRules source and production generic scheduler; not external blind evidence or numerical execution",
+  "rows": [
+    {
+      "Name": "clean-control",
+      "policy": "P2_SELECTIVE",
+      "status": "accepted",
+      "Output": "2x4:row",
+      "VerifierInvocations": 0,
+      "independentValid": true,
+      "diagnostic": null
+    },
+    {
+      "Name": "clean-control",
+      "policy": "P3_ALWAYS",
+      "status": "accepted",
+      "Output": "2x4:row",
+      "VerifierInvocations": 1,
+      "independentValid": true,
+      "diagnostic": null
+    },
+    {
+      "Name": "declared-inner-corruption",
+      "policy": "P2_SELECTIVE",
+      "status": "rejected",
+      "Output": null,
+      "VerifierInvocations": 1,
+      "independentValid": false,
+      "diagnostic": "TR-SHAPE-001"
+    },
+    {
+      "Name": "declared-inner-corruption",
+      "policy": "P3_ALWAYS",
+      "status": "rejected",
+      "Output": null,
+      "VerifierInvocations": 1,
+      "independentValid": false,
+      "diagnostic": "TR-SHAPE-001"
+    },
+    {
+      "Name": "undeclared-inner-corruption",
+      "policy": "P2_SELECTIVE",
+      "status": "accepted",
+      "Output": "2x4:row",
+      "VerifierInvocations": 0,
+      "independentValid": false,
+      "diagnostic": null
+    },
+    {
+      "Name": "undeclared-inner-corruption",
+      "policy": "P3_ALWAYS",
+      "status": "rejected",
+      "Output": null,
+      "VerifierInvocations": 1,
+      "independentValid": false,
+      "diagnostic": "TR-SHAPE-001"
+    },
+    {
+      "Name": "unverified-output-corruption",
+      "policy": "P2_SELECTIVE",
+      "status": "accepted",
+      "Output": "unrelated-output",
+      "VerifierInvocations": 0,
+      "independentValid": false,
+      "diagnostic": null
+    },
+    {
+      "Name": "unverified-output-corruption",
+      "policy": "P3_ALWAYS",
+      "status": "accepted",
+      "Output": "unrelated-output",
+      "VerifierInvocations": 1,
+      "independentValid": false,
+      "diagnostic": null
+    }
+  ],
+  "matchedSchedulerRows": [
+    {
+      "Name": "clean-control",
+      "treatment": "production-selective",
+      "declaredInvalidation": false,
+      "status": "accepted",
+      "invocations": 0,
+      "independentValid": true,
+      "diagnostic": null
+    },
+    {
+      "Name": "clean-control",
+      "treatment": "production-always",
+      "declaredInvalidation": false,
+      "status": "accepted",
+      "invocations": 1,
+      "independentValid": true,
+      "diagnostic": null
+    },
+    {
+      "Name": "clean-control",
+      "treatment": "typed-manual-selective",
+      "declaredInvalidation": false,
+      "status": "accepted",
+      "invocations": 0,
+      "independentValid": true,
+      "diagnostic": null
+    },
+    {
+      "Name": "declared-inner-corruption",
+      "treatment": "production-selective",
+      "declaredInvalidation": true,
+      "status": "rejected",
+      "invocations": 1,
+      "independentValid": false,
+      "diagnostic": "TR-SHAPE-001"
+    },
+    {
+      "Name": "declared-inner-corruption",
+      "treatment": "production-always",
+      "declaredInvalidation": true,
+      "status": "rejected",
+      "invocations": 1,
+      "independentValid": false,
+      "diagnostic": "TR-SHAPE-001"
+    },
+    {
+      "Name": "declared-inner-corruption",
+      "treatment": "typed-manual-selective",
+      "declaredInvalidation": true,
+      "status": "rejected",
+      "invocations": 1,
+      "independentValid": false,
+      "diagnostic": "TR-SHAPE-001"
+    },
+    {
+      "Name": "undeclared-inner-corruption",
+      "treatment": "production-selective",
+      "declaredInvalidation": false,
+      "status": "accepted",
+      "invocations": 0,
+      "independentValid": false,
+      "diagnostic": null
+    },
+    {
+      "Name": "undeclared-inner-corruption",
+      "treatment": "production-always",
+      "declaredInvalidation": false,
+      "status": "rejected",
+      "invocations": 1,
+      "independentValid": false,
+      "diagnostic": "TR-SHAPE-001"
+    },
+    {
+      "Name": "undeclared-inner-corruption",
+      "treatment": "typed-manual-selective",
+      "declaredInvalidation": false,
+      "status": "accepted",
+      "invocations": 0,
+      "independentValid": false,
+      "diagnostic": null
+    },
+    {
+      "Name": "unverified-output-corruption",
+      "treatment": "production-selective",
+      "declaredInvalidation": false,
+      "status": "accepted",
+      "invocations": 0,
+      "independentValid": false,
+      "diagnostic": null
+    },
+    {
+      "Name": "unverified-output-corruption",
+      "treatment": "production-always",
+      "declaredInvalidation": false,
+      "status": "accepted",
+      "invocations": 1,
+      "independentValid": false,
+      "diagnostic": null
+    },
+    {
+      "Name": "unverified-output-corruption",
+      "treatment": "typed-manual-selective",
+      "declaredInvalidation": false,
+      "status": "accepted",
+      "invocations": 0,
+      "independentValid": false,
+      "diagnostic": null
+    }
+  ],
+  "genericCounts": [
+    {
+      "policy": "P2Selective",
+      "requests": 0,
+      "scheduled": 0
+    },
+    {
+      "policy": "P3Always",
+      "requests": 0,
+      "scheduled": 1
+    }
+  ]
+}
