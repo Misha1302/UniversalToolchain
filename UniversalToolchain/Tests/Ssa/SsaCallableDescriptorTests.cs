@@ -42,6 +42,58 @@ public sealed class SsaCallableDescriptorTests
         Assert.That(exception!.Message, Does.Contain("cannot expose algebraic traits"));
     }
 
+    [TestCase(SemanticEffectKind.MayThrow)]
+    [TestCase(SemanticEffectKind.WritesMemory)]
+    [TestCase(SemanticEffectKind.UnknownExternalEffect)]
+    public void SemanticDescriptorSet_WhenPureIsMixedWithObservableEffect_RejectsIt(
+        SemanticEffectKind observableEffect)
+    {
+        var descriptor = new CallableDescriptor(
+            new CallableId("plugin.contradictory.effects"),
+            new CallableSignature(),
+            effects: new SemanticEffectSummary([SemanticEffectKind.Pure, observableEffect]));
+
+        var exception = Assert.Throws<ArgumentException>(() =>
+            new SemanticDescriptorSet(callables: [descriptor]));
+
+        Assert.That(exception?.Message, Does.Contain("mixes Pure with other effects"));
+    }
+
+    [Test]
+    public void SemanticDescriptorSet_WhenEffectsAreEmptyOrOnlyPure_AcceptsDescriptors()
+    {
+        var descriptors = new[]
+        {
+            new CallableDescriptor(new CallableId("plugin.default"), new CallableSignature()),
+            new CallableDescriptor(
+                new CallableId("plugin.empty"),
+                new CallableSignature(),
+                effects: new SemanticEffectSummary()),
+            new CallableDescriptor(
+                new CallableId("plugin.pure"),
+                new CallableSignature(),
+                effects: new SemanticEffectSummary([SemanticEffectKind.Pure, SemanticEffectKind.Pure]))
+        };
+
+        var descriptorSet = new SemanticDescriptorSet(callables: descriptors);
+
+        Assert.That(descriptorSet.Callables.All(static descriptor => descriptor.Effects.IsPure), Is.True);
+    }
+
+    [Test]
+    public void SemanticDescriptorSet_WhenObservableEffectsAreCombinedWithoutPure_AcceptsDescriptor()
+    {
+        var descriptor = new CallableDescriptor(
+            new CallableId("plugin.observable.effects"),
+            new CallableSignature(),
+            effects: new SemanticEffectSummary(
+                [SemanticEffectKind.ReadsMemory, SemanticEffectKind.WritesMemory, SemanticEffectKind.MayThrow]));
+
+        var descriptorSet = new SemanticDescriptorSet(callables: [descriptor]);
+
+        Assert.That(descriptorSet.Callables.Single().Effects.HasObservableEffects, Is.True);
+    }
+
     [Test]
     public void StandardSemantics_ShouldKeepArithmeticOutsideSsaCore()
     {

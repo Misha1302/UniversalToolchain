@@ -177,6 +177,8 @@ Conservative defaults:
 - unknown callables fail verification;
 - untrusted callables cannot expose algebraic traits;
 - managed methods and constructors default to conservative external effects;
+- descriptor sets reject an explicit `Pure` marker combined with any other
+  effect; empty summaries and a lone `Pure` marker both express purity;
 - `SsaManagedCallableAttribute` changes optimizer-visible semantics only when
   the descriptor is admitted through the normal trust checks;
 - effectful calls must not be removed or reordered by pure passes;

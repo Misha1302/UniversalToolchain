@@ -115,6 +115,91 @@ public sealed class SsaDeadBlockArgumentEliminationTests
     }
 
     [Test]
+    public void Run_WhenBlockParameterIsUsedOnlyInDominatedBlock_PreservesLiveParameterAndPrunesDeadSibling()
+    {
+        var payload = new SsaValue(new SsaValueId("%payload"), SsaTypes.Int32);
+        var unusedPayload = new SsaValue(new SsaValueId("%unused.payload"), SsaTypes.Int32);
+        var argument = new SsaBlockParameter(new SsaValue(new SsaValueId("%argument"), SsaTypes.Int32));
+        var unusedArgument = new SsaBlockParameter(new SsaValue(new SsaValueId("%unused.argument"), SsaTypes.Int32));
+        var artifact = Artifact(
+            new SsaBlock(
+                new SsaBlockId("entry"),
+                instructions:
+                [
+                    SsaConstantMaterializer.Int32(new SsaOperationId("payload"), payload, 42),
+                    SsaConstantMaterializer.Int32(new SsaOperationId("unused.payload"), unusedPayload, 7)
+                ],
+                terminator: SsaTerminator.Jump(new SsaBlockId("middle"), [payload.Id, unusedPayload.Id])),
+            new SsaBlock(
+                new SsaBlockId("middle"),
+                parameters: [argument, unusedArgument],
+                terminator: SsaTerminator.Jump(new SsaBlockId("exit"))),
+            new SsaBlock(
+                new SsaBlockId("exit"),
+                terminator: SsaTerminator.Return([argument.Value.Id])));
+        var verifier = new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization);
+        Assert.That(verifier.Verify(artifact, new IrPipelineContext()).IsSuccess, Is.True);
+
+        var optimized = Run(artifact);
+        var function = optimized.Module.Functions.Single();
+        var entry = function.Blocks.Single(block => block.Id.Value == "entry");
+        var middle = function.Blocks.Single(block => block.Id.Value == "middle");
+        var verification = verifier.Verify(optimized, new IrPipelineContext());
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(entry.Instructions.Select(static instruction => instruction.Id.Value),
+                Is.EqualTo(new[] { "payload" }));
+            Assert.That(entry.Terminator?.Transfers.Single().Arguments, Is.EqualTo(new[] { payload.Id }));
+            Assert.That(middle.Parameters.Select(static parameter => parameter.Value.Id),
+                Is.EqualTo(new[] { argument.Value.Id }));
+            Assert.That(verification.IsSuccess, Is.True,
+                string.Join("; ", verification.Diagnostics.Select(static diagnostic =>
+                    $"{diagnostic.Code}: {diagnostic.Message}")));
+        });
+    }
+
+    [Test]
+    public void Run_WhenBlockParameterIsUsedByDominatedTransfer_PreservesDefinitionAndIncomingArgument()
+    {
+        var payload = new SsaValue(new SsaValueId("%payload"), SsaTypes.Int32);
+        var argument = new SsaBlockParameter(new SsaValue(new SsaValueId("%argument"), SsaTypes.Int32));
+        var result = new SsaBlockParameter(new SsaValue(new SsaValueId("%result"), SsaTypes.Int32));
+        var artifact = Artifact(
+            new SsaBlock(
+                new SsaBlockId("entry"),
+                instructions: [SsaConstantMaterializer.Int32(new SsaOperationId("payload"), payload, 42)],
+                terminator: SsaTerminator.Jump(new SsaBlockId("middle"), [payload.Id])),
+            new SsaBlock(
+                new SsaBlockId("middle"),
+                parameters: [argument],
+                terminator: SsaTerminator.Jump(new SsaBlockId("forward"))),
+            new SsaBlock(
+                new SsaBlockId("forward"),
+                terminator: SsaTerminator.Jump(new SsaBlockId("exit"), [argument.Value.Id])),
+            new SsaBlock(
+                new SsaBlockId("exit"),
+                parameters: [result],
+                terminator: SsaTerminator.Return([result.Value.Id])));
+        var verifier = new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization);
+        Assert.That(verifier.Verify(artifact, new IrPipelineContext()).IsSuccess, Is.True);
+
+        var optimized = Run(artifact);
+        var function = optimized.Module.Functions.Single();
+        var middle = function.Blocks.Single(block => block.Id.Value == "middle");
+        var verification = verifier.Verify(optimized, new IrPipelineContext());
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(middle.Parameters.Select(static parameter => parameter.Value.Id),
+                Is.EqualTo(new[] { argument.Value.Id }));
+            Assert.That(verification.IsSuccess, Is.True,
+                string.Join("; ", verification.Diagnostics.Select(static diagnostic =>
+                    $"{diagnostic.Code}: {diagnostic.Message}")));
+        });
+    }
+
+    [Test]
     public void Run_WhenSccpMakesBlockArgumentDead_FullRouteEmitsNoTransferPushOrDrop()
     {
         var result = SsaRouteFactory

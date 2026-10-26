@@ -15,7 +15,7 @@ It is a coverage contract, not a promise that SSA is the default optimizer/backe
 | Area | Status | Evidence |
 |---|---|---|
 | Public Wist opt-in | Supported | `WistEngineOptions.Optimization.Ssa` and facade end-to-end tests |
-| Policies | `Disabled`, `Prefer`, `Require`, `Debug` | `SsaRoundtripRouteTests`; only known unsupported diagnostics may fall back under `Prefer` |
+| Policies | `Disabled`, `Prefer`, `Require`, `Debug` | `SsaRoundtripRouteTests` and `SsaRouteOperationalContractTests`; typed route failures may fall back under `Prefer`, while unexpected exceptions fail |
 | Observability | Supported | `WistOptimizationReport` exposes route, fallback, profile, counts, passes, stage-qualified diagnostics, and trace |
 | Route report state invariants | Enforced | impossible success/fallback/policy/count combinations are rejected by `SsaRouteReportInvariantTests` |
 | AIR artifact input | Supported for `AirArtifact` only | `AirToSsaConverter.Run` rejects non-AIR artifacts |
@@ -35,7 +35,7 @@ It is a coverage contract, not a promise that SSA is the default optimizer/backe
 | SCCP-lite | Supported | block-argument constant propagation tests |
 | Local common-subexpression elimination | Explicit SSA pass only; gated from the preview AIR roundtrip until repeated-value scheduling is supported | local CSE safety, substitution, and profile-gate regressions |
 | Branch/unreachable cleanup | Supported | branch folding and cleanup tests |
-| Dead pure instruction elimination | Supported | effect-aware elimination tests |
+| Dead pure instruction elimination | Supported, with function-wide block-parameter use tracking | effect-aware elimination and dominated-use block-argument regressions |
 | Extension-pack/pass conflicts | Fail-fast | route profile construction tests |
 
 ## Stable Unsupported-Shape Diagnostics
@@ -53,7 +53,13 @@ The route rejects unsupported shapes with explicit codes rather than guessing:
 
 Route diagnostics preserve their canonical stage (`lowering`, `optimization`, `emission`, or `route`) through the low-level report and the public Wist optimization report. Public failure diagnostics project those values as `SSA Lowering`, `SSA Optimization`, `SSA Emission`, or `SSA Route`.
 
-Under `Prefer`, only explicitly classified unsupported-shape diagnostics may trigger a controlled AIR fallback. `Require` and `Debug` preserve the route report and fail instead of silently changing execution strategy.
+Under `Prefer`, typed lowering, optimization and emission failures can trigger a
+controlled fallback to the input AIR, with diagnostics preserved. This includes
+invalid optimizer output detected by post-pass verification, as covered by
+`SsaRouteOperationalContractTests`. Unexpected exceptions still fail with an
+`ssa.route.unexpected` diagnostic. `Require` and `Debug` preserve the route report
+and fail instead of changing execution strategy. A successful fallback does not
+establish that the attempted optimization was correct.
 
 ## Not Production-Ready Yet
 
