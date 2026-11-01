@@ -15,7 +15,7 @@ LanguageDefinition
 -> feature and contribution resolution
 -> slot, dependency, capability and conflict validation
 -> typed conversion-route and same-artifact pass planning per backend
--> immutable LanguagePlan + schema-v5 lock snapshot
+-> immutable LanguagePlan + schema-v6 lock snapshot
 -> exact package-manifest binding
 -> runtime assembly from all selected package component catalogs
 -> runtime-policy validation
@@ -234,9 +234,12 @@ Wist package descriptor, runtime provider and NuGet package versions are derived
 
 ## Manifest and lock contract
 
-Schema v5 includes typed transformation endpoints, backend input contracts, pass ordering, runtime inputs, route steps and the plan entry artifact. It also defines `universaltoolchain-json-v1` canonicalization and SHA-256 over compact UTF-8 bytes without a BOM or platform-dependent line ending. Pretty JSON always uses LF but is not itself the package-identity input.
+Two versioned formats have different owners:
 
-The reader accepts schema v5 only. Older manifest schemas must be migrated before loading; they are not normalized implicitly. Executable transformation endpoints, backend inputs and runtime inputs require explicit contract identities. Plan hashes include the entry artifact, selected contributions and typed route contracts, so changing an executable contract changes the reproducible plan identity.
+- **Feature-package manifest, schema v5:** `LanguageFeatureManifestSerializer` includes typed transformation endpoints, backend input contracts and pass metadata. Its reader accepts schema v5 only; older manifest schemas require migration. Package identity uses SHA-256 of compact canonical UTF-8 JSON (`universaltoolchain-json-v1`), not pretty-printed output.
+- **Language-plan lock snapshot, schema v6:** `LanguageLockFile` projects the selected `LanguagePlan`, including entry artifact, routes, runtime provider, contribution order and runtime/intrinsic policy. `LanguagePlanCanonicalizer` computes the plan hash; the lock does not choose an implementation.
+
+Executable contracts require explicit type identities. Changing route contracts or the selected package graph can change plan identity. Neither serialization format proves semantic compatibility between arbitrary extensions.
 
 ## Current boundary
 

@@ -48,7 +48,13 @@ A `LanguageDiagnostic` contains code, severity, stage, message, owner and sugges
 - same-artifact passes use deterministic topological ordering;
 - ordering cycles fail;
 - a selected pass that cannot be placed on a route fails rather than being ignored;
-- the resulting plan has a canonical schema-v5 lock representation and plan hash.
+- the resulting plan has a canonical schema-v6 lock representation and plan hash.
+
+## Ambiguity is not resolved by arbitrary ordering
+
+Normalized IDs give stable traversal order, but they do not authorize a semantic choice. Ambiguous providers fail with `UTL2002`, multiple single-owner slot participants with `UTL2101`, feasible equal-cost routes with `UTL2207` and unresolved same-artifact pass order with `UTL2208`. Order cycles fail with `UTL2202`. Explicit preferences and ordering constraints belong to the language definition.
+
+A successful plan certifies only that **declared structure** can be resolved. It does not verify whether passes preserve semantics or whether third-party implementations are trustworthy. Runtime traits are package attestations, not sandboxing.
 
 ## Planning-only definitions
 
