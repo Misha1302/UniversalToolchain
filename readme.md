@@ -1,4 +1,12 @@
-# Wist for .NET
+# UniversalToolchain
+
+UniversalToolchain is a .NET compiler and runtime framework for composing language implementations from package-owned features, contributions, typed artifact transformations, backends and runtime providers. A `LanguageDefinition` is resolved by `LanguageCompiler` into an immutable `LanguagePlan`; `LanguageRuntime` binds the exact selected implementations.
+
+Planning checks declared dependencies, ownership, routes and package identity. It does **not** prove the semantics, performance or safety of arbitrary extensions.
+
+**Two starting points:** [Wist](docs/start/index.md) for restricted formulas and typed .NET delegates; [External Language Authoring SDK](docs/language-authoring/index.md) for building independent non-Wist languages. Both are alpha surfaces, not 1.0 compatibility promises.
+
+## Wist for .NET
 
 [![NuGet](https://img.shields.io/nuget/vpre/UniversalToolchain.Wist.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/UniversalToolchain.Wist.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist)
@@ -11,7 +19,7 @@
 
 `UniversalToolchain.Wist` is the first-contact package for .NET applications that need configurable numeric logic without exposing a broad scripting language. Your application owns inputs, authorization, persistence, resource isolation and side effects.
 
-UniversalToolchain is the modular compiler/runtime framework underneath Wist. Start with the package and practical formula API; explore dialect composition, AIR, backends and experimental SSA only when you need framework internals.
+Wist is the reference language and most approachable executable example. Its lexer, Bytecode, AIR and CIL pipeline is not mandatory for languages authored with the generic SDK. Start here for application formulas, or with the [independent Acme example](docs/language-authoring/quickstart.md) for language authoring.
 
 ## Choose the correct installation path
 
@@ -187,20 +195,26 @@ External .NET projects can define non-Wist languages through `UniversalToolchain
 
 Start with the [External Language Authoring quickstart](docs/language-authoring/quickstart.md), then use the [deep SDK architecture reference](docs/architecture/external-language-authoring-sdk.md). The independent `samples/Acme.PricingLanguage` and `dotnet new ut-language` exercise the non-Wist path. High-level grammar, binder and operation authoring remain future work.
 
-## UniversalToolchain underneath Wist
+## Language configuration precedes program compilation
+
+Before running a program, UT resolves the **implementation of the language itself**:
 
 ```text
-Source
-  -> Lexer / Parser
-  -> AST
-  -> Bytecode
-  -> AIR
-  -> Optimizers
-  -> Compiler / Interpreter
-  -> Execution
+Configuration time:
+  packages / registrations -> LanguageDefinition -> LanguageCompiler
+    -> immutable LanguagePlan (schema-v6 lock) -> LanguageRuntime
+
+Program compilation / execution:
+  input artifact -> planned transformations and passes -> selected backend
 ```
 
-The framework keeps language features composable, runtime selection dialect-driven and shared semantics protected by interpreter/CIL parity tests. Wist is the reference language and packaged first-contact experience.
+The package manifest is schema v5; the language lock snapshot is schema v6. The plan records declared selections, typed routes and package identity. It does not certify pass semantics, hostile plugins or backend parity. Wist's concrete AST/Bytecode/AIR route is documented in [Current Architecture Status](docs/CURRENT_ARCHITECTURE_STATUS.md), but non-Wist languages can supply their own representations.
+
+For example, [Acme.PricingLanguage](samples/Acme.PricingLanguage/Program.cs) registers a parser, an interpreter executor and a compiled executor; only the compiled route needs its syntax-to-delegate transformation. This is an existing executable sample, not a hypothetical API.
+
+### When is UT worth its additional machinery?
+
+A fixed parser and one backend usually need no planning framework: a handwritten pipeline with typed interfaces is simpler. UT becomes more relevant when independently packaged components, competing providers, global ownership constraints and multiple typed routes must be resolved and reproduced. See [alternatives](docs/alternatives.md) and [limitations](docs/limitations.md).
 
 ## Future direction: UniversalToolchain beyond Wist
 
@@ -246,7 +260,9 @@ Release packaging is intentionally separate. It requires `--baseline-source-arch
 
 ## Contributing
 
-External feedback is most useful when it describes observed behavior:
+For the generic SDK, reproducible cases of provider ambiguity, cross-package routing, plan/runtime mismatch or unclear authoring contracts are valuable. Start with [Acme](samples/Acme.PricingLanguage/Program.cs), [SDK architecture](docs/architecture/external-language-authoring-sdk.md) and the [contribution guide](docs/CONTRIBUTING.md).
+
+Wist feedback is most useful when it describes observed behavior:
 
 - could you reach the first numeric result without opening architecture documentation;
 - where did installation or the API make you hesitate;

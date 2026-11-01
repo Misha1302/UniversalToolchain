@@ -13,14 +13,14 @@ description: Implemented generic framework contracts and remaining product gaps.
 - explicit slot replacement and preferred capability provider;
 - configurable entry artifact;
 - deterministic conversion-route and same-artifact pass planning;
-- schema-v5 canonical lock representation and plan hash;
+- schema-v6 canonical lock representation and plan hash (package manifests remain schema v5);
 - exact package manifest binding during runtime assembly;
 - exact backend executor selection;
 - per-session and explicit stateless singleton lifetimes;
 - synchronous/asynchronous disposal with in-flight-operation coordination;
 - fail-closed determinism and host-interop policy validation;
 - independent non-Wist sample, template and package-consumer smoke;
-- 53 dedicated Language SDK tests in the recorded artifact.
+- Language SDK coverage tracked by the revision-bound `eng/test-counts.json` and `VERIFICATION.md` contracts.
 
 ## Alpha and expected to change
 

@@ -11,7 +11,7 @@ The goal is to reduce category confusion and make trade-offs explicit.
 
 ## Short positioning
 
-UniversalToolchain is best described as an **embeddable .NET DSL/runtime framework** for the point where:
+For **Wist application integration**, UniversalToolchain is encountered as an **embeddable .NET DSL/runtime framework** at the point where:
 
 - a plain expression evaluator is no longer enough,
 - a parser alone is not enough,
@@ -23,7 +23,29 @@ In practical terms, it sits between:
 - **parser-oriented tools** such as ANTLR, csly, and Irony,
 - **full language workbenches** such as JetBrains MPS.
 
-## Decision table
+## Framework-authoring alternatives
+
+The comparisons here concern the **generic Language Authoring SDK**, not Wist's formula API. These alternatives already provide important kinds of extensibility; UT should not claim to have invented independent language composition.
+
+### Handwritten pipeline and typed interfaces
+
+A fixed parser, a few typed transformation interfaces and one backend often make a simpler and more maintainable language implementation than UT. The planner is useful when separately owned packages, ambiguous providers, slot conflicts or multiple artifact routes require a checked configuration. Without those requirements, prefer the handwritten pipeline.
+
+### LLVM and MLIR
+
+[MLIR interfaces](https://mlir.llvm.org/docs/Interfaces/) already support cross-dialect semantic abstractions, [dialect conversion](https://mlir.llvm.org/docs/DialectConversion/) provides legality and conversion machinery, and the [pass manager](https://mlir.llvm.org/docs/PassManagement/) supports extensible transformations. MLIR is not limited to LLVM IR. The distinct UT boundary is **pre-compilation selection of a .NET language-package graph and exact runtime binding**. For rich IR rewriting and code generation, MLIR/LLVM have a substantially more mature ecosystem; UT does not claim superior optimizations.
+
+### Spoofax, Silver/AbleC, JetBrains MPS
+
+[Spoofax](https://spoofax.dev/) offers declarative language specifications, generated tooling and composition APIs. [Silver](https://melt.cs.umn.edu/silver/) and [AbleC](https://melt.cs.umn.edu/ableC/) explicitly analyze modular language extension composition. [JetBrains MPS](https://www.jetbrains.com/help/mps/mps-faq.html) supports language composition with projectional editing and editor tooling. All are stronger choices when high-level grammar/semantic authoring or a language IDE is the primary goal. The present UT SDK is lower-level and requires authors to implement their own syntax and semantics.
+
+### GraalVM / Truffle
+
+[Truffle](https://www.graalvm.org/dev/graalvm-as-a-platform/language-implementation-framework/) focuses on AST interpreters, Graal optimization, language tools and polyglot interoperability. UT does not supply equivalent JIT or polyglot capabilities. Compare host integration and architecture boundaries, not claimed performance superiority.
+
+UT's combination of `LanguageDefinition`, dependency/capability/slot checks, typed routes, immutable `LanguagePlan` and runtime provenance is a concrete .NET design choice, **not** a proof of general semantic composition. A hypothetical semantic-fact/proof-obligation kernel remains future research, to be measured against ordinary typed interfaces.
+
+## Wist application decision table
 
 | Need | Better choice |
 |---|---|

@@ -37,7 +37,7 @@ Expected output:
 
 The first value is produced by the interpreter backend; the second is produced by the compiled backend. Equality is the observable parity check for this sample.
 
-The complete source is in [`samples/Acme.PricingLanguage/Program.cs`](https://github.com/Misha1302/Wist2/blob/master/samples/Acme.PricingLanguage/Program.cs). The sample references the generic Language Authoring packages and does not reference Wist.
+The complete source is in [`samples/Acme.PricingLanguage/Program.cs`](https://github.com/Misha1302/UniversalToolchain/blob/master/samples/Acme.PricingLanguage/Program.cs). The sample references the generic Language Authoring packages and does not reference Wist.
 
 ## 2. Understand the five objects
 

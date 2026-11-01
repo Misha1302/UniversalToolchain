@@ -40,12 +40,12 @@ The repository tests these contracts in `UniversalToolchain.LanguageSdk.Tests`, 
 
 ## Template
 
-The canonical template package version for this alpha is `0.3.0-alpha.4`. The generic SDK family is currently documented as produced release artifacts rather than as a guaranteed NuGet.org publication.
+The template project in this source revision declares `0.3.0-alpha.5` (see `UniversalToolchain/UniversalToolchain.Templates/UniversalToolchain.Templates.csproj`). The generic SDK family is currently documented as produced release artifacts rather than as a guaranteed NuGet.org publication.
 
-The packable `UniversalToolchain.Templates` project provides `ut-language`.
+The packable `UniversalToolchain.Templates` project provides `ut-language`. The command below requires a reviewed **locally produced** candidate package at the shown path; ordinary source checkout or `./build.sh --skip-pack` does not create it. For a checkout-only walkthrough, run the [Acme sample](/language-authoring/quickstart) instead.
 
 ```bash ci-run=false
-dotnet new install ./artifacts/packages/UniversalToolchain.Templates.0.3.0-alpha.4.nupkg
+dotnet new install ./artifacts/packages/UniversalToolchain.Templates.0.3.0-alpha.5.nupkg
 dotnet new ut-language -n Example.Language
 ```
 
@@ -60,7 +60,7 @@ The language-authoring release matrix includes separate packages for abstraction
 Implemented now:
 
 - typed low-level authoring;
-- deterministic planning and schema-v5 lock snapshot;
+- deterministic planning and schema-v6 lock snapshot (feature-package manifests use schema v5);
 - cross-package runtime assembly;
 - route execution and exact backend selection;
 - runtime policy validation and component lifecycle;
