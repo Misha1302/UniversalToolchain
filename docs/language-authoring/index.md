@@ -33,4 +33,4 @@ The Language Authoring SDK is the generic framework surface for building a langu
 
 ## Current boundary
 
-This is a low-level alpha framework API, not yet a complete language workbench. The author still owns syntax representation, parsing, binding, semantic model, transformations and backend execution logic. The SDK composes and validates these components; it does not generate them from a grammar or semantic specification.
+This is a low-level alpha framework API, not yet a complete language workbench. The author still owns syntax representation, parsing, binding, semantic model, transformations and backend execution logic. The SDK composes and structurally validates these components; it does not generate them from a grammar or semantic specification. A valid plan is not proof that arbitrary transformations preserve semantics or that third-party packages are safe to run in-process. If a fixed pipeline with typed interfaces already solves the problem, that simpler design is often preferable.

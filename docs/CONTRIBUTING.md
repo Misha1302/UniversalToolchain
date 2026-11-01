@@ -18,6 +18,14 @@ lastVerifiedAgainst: languageplan-single-runtime-s11
     - `internal-docs/policies-and-reports/ARCHITECTURE_RULES.md` for repository-only architecture guardrails;
     - `AGENTS.md` when making AI-assisted or agent-driven changes.
 
+## Choose a contribution route
+
+If you want to work on **generic language composition**, begin with the [independent Acme example](/language-authoring/quickstart), [package model](/language-authoring/package-model), and [planning diagnostics](/language-authoring/contribution-planning). Then read `UniversalToolchain.LanguageSdk`, `UniversalToolchain.Runtime`, and the focused `UniversalToolchain.LanguageSdk.Tests` project. A useful bug report includes the language definition, registered packages, selected backend, expected provider/route, actual diagnostics, and exact revision.
+
+For a **Wist application or compiler change**, start with [First Program](/start/first-program), then follow the Wist facade, dialect, frontend, and backend documentation to the owning code. Interpreter/CIL parity only applies to the shared supported semantic subset.
+
+For **research proposals**, distinguish experiments from current SDK guarantees. Read [limitations](/limitations) and [alternatives](/alternatives), and compare proposed semantic-composition mechanisms against ordinary typed interfaces before assuming a new global abstraction is necessary. Contributor tasks should come from reproducible issues, not an inferred product roadmap.
+
 ## Build and test
 
 Run from repository root:

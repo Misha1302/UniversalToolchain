@@ -255,6 +255,7 @@ const homeSidebar = [
         collapsed: false,
         items: [
             { text: 'Documentation Home', link: '/' },
+            { text: 'What is UniversalToolchain?', link: '/start/what-is-universal-toolchain' },
             { text: 'Wist Application Developer', link: '/start/' },
             { text: 'External Language Author', link: '/language-authoring/' },
             { text: 'Wist Dialect Author', link: '/build-dsls/' },
@@ -277,7 +278,7 @@ const homeSidebar = [
 
 export default defineConfig({
     title: 'UniversalToolchain',
-    description: 'Task-oriented developer documentation for Wist and external UniversalToolchain language authoring.',
+    description: 'UniversalToolchain: .NET language composition, exact runtime planning, and the Wist reference language.',
     base: '/UniversalToolchain/',
     cleanUrls: true,
     lastUpdated: true,
@@ -299,6 +300,7 @@ export default defineConfig({
     themeConfig: {
         logo: '/logo.svg',
         nav: [
+            { text: 'Overview', link: '/start/what-is-universal-toolchain' },
             { text: 'Wist', link: '/start/' },
             { text: 'Language Authoring', link: '/language-authoring/' },
             { text: 'Architecture', link: '/architecture/project-map' },
