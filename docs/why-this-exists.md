@@ -1,6 +1,8 @@
 # Why This Exists
 
-## Problem
+Two related problems should not be confused: **Wist** offers embeddable, restricted application formulas, while **UniversalToolchain** lets language authors resolve an implementation from package-owned contributions before compiling source.
+
+## Application problem: controlled formulas (Wist)
 
 Hardcoded formulas, rules, and domain logic start simple and become expensive fast.
 
@@ -33,12 +35,11 @@ and broad language governance before the first production rule can run.
 
 ## Where UniversalToolchain fits
 
-UniversalToolchain sits between simple expression evaluators and heavy language-platform work.
+A handwritten parser, transformations and backend connected by typed .NET interfaces are usually sufficient for one fixed language. UT adds an independently inspectable **configuration step** when language implementations vary: dependency and capability resolution, single-owner slots, typed backend routes and exact runtime binding.
 
-It is for .NET applications that need configurable runtime language behavior, but still want the implementation to stay
-embeddable, modular, and practical.
+This additional planning machinery has a maintenance cost and does not guarantee semantic compatibility of arbitrary extensions. It is justified when packages and execution routes vary, rather than merely because a project contains a compiler. See [the package model](/language-authoring/package-model), [architecture status](/CURRENT_ARCHITECTURE_STATUS) and [alternatives](/alternatives).
 
-## Good entry scenarios
+## Good Wist entry scenarios
 
 - Pricing formulas that start as arithmetic and grow into controlled product logic.
 - Validation rules that need domain-specific constraints instead of arbitrary host-language behavior.

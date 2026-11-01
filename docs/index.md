@@ -15,6 +15,8 @@ UniversalToolchain is a modular .NET compiler/runtime framework with two public 
 
 Wist is the reference language and compatibility proving ground. It is not the mandatory frontend or IR of every language built with the generic SDK.
 
+At **configuration time**, before source compilation, `LanguageCompiler` resolves package-owned components into an explicit `LanguagePlan`. This is structural planning and exact runtime binding, not a general semantic proof. Read [What is UniversalToolchain?](/start/what-is-universal-toolchain) and [alternatives](/alternatives) for the boundary and trade-offs.
+
 ## Choose your role
 
 <div class="ut-paths">
@@ -73,7 +75,8 @@ The formula returns data. The host owns authorization, persistence, approval, ro
 package registrations
   -> immutable package descriptor + component catalog
   -> LanguageDefinition
-  -> deterministic LanguagePlan + schema-v5 lock snapshot
+  -> LanguageCompiler (dependency, slot, provider and route resolution)
+  -> immutable LanguagePlan + schema-v6 lock snapshot
   -> exact runtime package assembly
   -> typed artifact route
   -> exact backend executor

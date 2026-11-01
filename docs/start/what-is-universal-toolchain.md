@@ -5,7 +5,22 @@ description: Explain the framework, Wist facade and external language-authoring 
 
 # What is UniversalToolchain?
 
-UniversalToolchain is a .NET framework for composing language features, typed intermediate artifacts, deterministic execution routes and runtime providers. It is not one language and not only a parser library.
+UniversalToolchain is a .NET compiler and runtime framework for composing language implementations from package-owned features, contributions, typed artifacts, backends and runtime providers. It is not one language and not only a parser library.
+
+## Configuration time is a separate problem
+
+```text
+package descriptors + registrations
+  -> LanguageDefinition
+  -> LanguageCompiler
+  -> immutable LanguagePlan
+  -> LanguageRuntime (exact selected implementations)
+  -> typed routes for compiling/executing input artifacts
+```
+
+`LanguageCompiler` closes declared dependencies, checks capabilities and slot ownership, plans type-compatible backend routes and resolves a runtime provider. `LanguagePlan` captures the selected configuration. Runtime materialization verifies matching package/component sources rather than silently selecting a new graph. This is different from parsing a source file.
+
+[Feature, Contribution, Package, Capability, Slot, artifact contract and runtime provider](/language-authoring/package-model) are generic composition terms. Wist modules are reference-language implementations; the generic SDK does not require Wist's AST, Bytecode or AIR.
 
 ## Two current entry surfaces
 
@@ -36,6 +51,12 @@ The generic SDK lets an external project define a non-Wist language package thro
 - transformations and compiler passes;
 - backend executors and observable semantics;
 - trust model for third-party components.
+
+## What a successful plan does not prove
+
+The planner can diagnose multiple eligible capability providers, competing single-owner slots, ambiguous equal-cost routes, incompatible typed contracts and infeasible pass order. These are structural guarantees, not automatic proof of optimizer correctness, backend parity, isolation from untrusted extensions or runtime speed. See [planning diagnostics](/language-authoring/contribution-planning), [security](/SECURITY) and [limitations](/limitations).
+
+[Acme.PricingLanguage](/language-authoring/quickstart) provides an existing non-Wist parser with interpreter and compiled routes.
 
 ## When it fits
 

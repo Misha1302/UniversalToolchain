@@ -27,7 +27,7 @@ Wist application path
 source -> Wist frontend -> Bytecode -> AIR -> optimizer/backend -> typed delegate or execution result
 
 Generic language-authoring path
-package descriptors + runtime registrations -> LanguageDefinition -> LanguagePlan -> typed artifact route -> exact backend executor
+package descriptors + runtime registrations -> LanguageDefinition -> LanguageCompiler -> LanguagePlan -> LanguageRuntime -> typed artifact route -> exact backend executor
 ```
 
 The generic SDK does not force every language through Wist AST, Bytecode or AIR. Those are Wist/framework artifact protocols, not universal mandatory stages.
@@ -35,7 +35,7 @@ The generic SDK does not force every language through Wist AST, Bytecode or AIR.
 ## Current maturity
 
 - The package currently verified from NuGet.org is `UniversalToolchain.Wist` `0.1.0-alpha.1`.
-- The repository source candidate is `0.1.0-alpha.6`; it is not published on NuGet.org.
+- The repository source candidate is `0.1.0-alpha.7`; it is not published on NuGet.org.
 - Both are alpha surfaces for controlled evaluation and prototypes, not stable 1.0 contracts.
 - Generic language authoring is a low-level alpha with typed routing, deterministic planning and runtime lifecycle contracts.
 - Restricted composition is not a hardened sandbox.
