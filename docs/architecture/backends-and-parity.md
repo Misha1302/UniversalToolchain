@@ -40,6 +40,12 @@ It may use native lowering, optimized invokers, and backend-specific intrinsics 
 
 The CIL backend must not become a second semantic definition of the language.
 
+### CIL emission is not Roslyn or RyuJIT
+
+The current **Wist CIL route** emits .NET intermediate language using `System.Reflection.Emit.DynamicMethod` (see `BytecodeDynamicMethodsCompiler/Compilers/AbstractMethodsCompilerImpl.cs`); `BasicCilCompiler/Execution/DynamicMethodExecutor.cs` invokes the generated method. This is Wist's backend implementation, **not** a universal IR or backend required by the generic Language Authoring SDK.
+
+Roslyn compiles C# host/source projects, not Wist input on this route. The .NET runtime executes the emitted CIL, and its JIT (typically RyuJIT on CoreCLR) may compile it to machine code at invocation. These are different responsibilities: Wist produces the CIL; CLR/JIT services execute it. Neither the existence of a `DynamicMethod` nor the JIT establishes equivalence to handwritten C# performance. Compare engine setup, formula compilation, interpreter execution and prepared delegates separately as described in the [performance model](/reference/performance-model).
+
 ## Semantic parity contract
 
 When a feature is supported by both interpreter and CIL, the same program should produce the same observable result in both modes.
