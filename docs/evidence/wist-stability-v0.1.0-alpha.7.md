@@ -8,7 +8,7 @@ lastVerifiedAgainst: wist-release-readiness-2026-08-18
 
 # Wist 0.1.0-alpha.7 candidate stability
 
-`UniversalToolchain.Wist` `0.1.0-alpha.7` is the current source/release candidate for integration review. It is **not published on NuGet.org** and is not a stable 1.0 compatibility contract. The package currently exercised from NuGet.org remains `0.1.0-alpha.1`.
+`UniversalToolchain.Wist` `0.1.0-alpha.7` identifies the source/release candidate described here, not a stable 1.0 compatibility contract. **Availability clarification, 2026-11-03:** a same-number artifact exists on NuGet.org; this does not prove that artifact came from the current source revision. The pinned CI smoke version remains `0.1.0-alpha.1`. See [availability and binary provenance](/start/installation#availability-and-binary-provenance). The hardening evidence below remains tied to its original reviewed source boundary.
 
 ## Reviewed hardening surface
 
@@ -36,7 +36,7 @@ The alpha.7 hardening candidate adds or tightens:
 
 ## Package candidate matrix
 
-The source tree defines these unpublished candidate identities:
+The source tree defines these candidate identities; publication is a separate per-artifact fact:
 
 | Package | Source candidate |
 |---|---|
@@ -74,7 +74,7 @@ This document does **not** claim those gates are green for the final revision un
 
 ## Not promised
 
-- publication of `0.1.0-alpha.7` or any related package;
+- automatic publication or promotion of current-source artifacts;
 - automatic merge or release promotion;
 - OS/process sandboxing;
 - secure wiping of source text from managed process memory;
@@ -85,7 +85,7 @@ This document does **not** claim those gates are green for the final revision un
 
 ## Promotion rule
 
-Do not describe this candidate as the published package until:
+Do not promote the exact current-source candidate to the pinned installation/CI smoke version merely because a same-number artifact exists. Promotion requires:
 
 1. the exact candidate revision passes the full baseline-bearing package gate and required CI suite;
 2. an explicit release/publish decision is made separately;

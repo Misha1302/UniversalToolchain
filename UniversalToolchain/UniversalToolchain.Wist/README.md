@@ -26,7 +26,7 @@ This README belongs to `UniversalToolchain.Wist` `0.1.0-alpha.7`. Install that e
 dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.7 --source <reviewed-feed>
 ```
 
-For current NuGet.org availability, source-build evaluation and clean-room checks, follow the [package installation guide](https://misha1302.github.io/Wist2/start/installation). Do not assume a repository-local package output directory exists in an external consumer project.
+For current NuGet.org availability, source-build evaluation and clean-room checks, follow the [package installation guide](https://misha1302.github.io/UniversalToolchain/start/installation). Do not assume a repository-local package output directory exists in an external consumer project.
 
 Requirements:
 
@@ -199,4 +199,4 @@ CLR interop and type directives resolve only against the shipped `BasicStdLib` a
 
 Only the facade reference assembly under `ref/net10.0/UniversalToolchain.Wist.dll` is the supported compile-time API boundary. Its reviewed exported surface is recorded in `PublicAPI.Shipped.txt` in the source repository. Assemblies under `lib/net10.0` form the runtime implementation closure; all except the facade are implementation dependencies and are not compatibility promises.
 
-See the [Wist facade API reference](https://misha1302.github.io/Wist2/reference/wist-facade-api) for the supported entry points, result types and ownership rules.
+See the [Wist facade API reference](https://misha1302.github.io/UniversalToolchain/reference/wist-facade-api) for the supported entry points, result types and ownership rules.

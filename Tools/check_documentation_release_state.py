@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 import json
 import re
 import sys
@@ -58,6 +59,39 @@ def load_state(path: Path) -> dict[str, object]:
     if data.get("schemaVersion") != 1:
         raise ReleaseStateError(f"unsupported release state schemaVersion: {data.get('schemaVersion')!r}")
     return data
+
+
+def available_versions(state: dict[str, object]) -> list[str]:
+    snapshot = state.get("nugetAvailability")
+    if not isinstance(snapshot, dict):
+        raise ReleaseStateError("nugetAvailability must be a dated registry snapshot")
+    stamp = require_string(snapshot, "checkedAtUtc")
+    try:
+        checked_at = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ReleaseStateError("nugetAvailability.checkedAtUtc must be an ISO timestamp") from exc
+    if checked_at.utcoffset() is None:
+        raise ReleaseStateError("nugetAvailability.checkedAtUtc must include a timezone")
+    package_id = require_string(state, "packageId").lower()
+    expected = f"https://api.nuget.org/v3-flatcontainer/{package_id}/index.json"
+    if require_string(snapshot, "indexUrl") != expected:
+        raise ReleaseStateError("availability snapshot must identify the official package index")
+    versions = require_string_list(snapshot, "versions")
+    if len(set(versions)) != len(versions):
+        raise ReleaseStateError("availability snapshot contains duplicate versions")
+    return versions
+
+
+def validate_source_publication(document: Path, block: str, source_version: str, versions: list[str]) -> None:
+    lowered = block.lower()
+    negative = any(phrase in lowered for phrase in ("not published", "unpublished", "not on nuget.org"))
+    if source_version in versions:
+        if negative or "available on nuget.org" not in lowered:
+            raise ReleaseStateError(f"{document}: source version exists in the NuGet snapshot; label its availability accurately")
+        if "binary provenance" not in lowered:
+            raise ReleaseStateError(f"{document}: availability must not imply current-source binary provenance")
+    elif "publication is not verified" not in lowered or negative:
+        raise ReleaseStateError(f"{document}: an absent snapshot entry means publication is not verified, not that it is unpublished")
 
 
 def read_project_identity(project: Path) -> tuple[str, str, str]:
@@ -156,6 +190,9 @@ def validate(root: Path, state_path: Path) -> dict[str, str]:
     package_id = require_string(state, "packageId")
     source_version = require_string(state, "sourceVersion")
     published_version = require_string(state, "publishedVersion")
+    versions = available_versions(state)
+    if published_version not in versions:
+        raise ReleaseStateError("pinned installation/smoke version is absent from the NuGet snapshot")
     target_framework = require_string(state, "targetFramework")
     project_path = require_string(state, "project")
     stability_path = require_string(state, "stabilityDocument")
@@ -204,7 +241,7 @@ def validate(root: Path, state_path: Path) -> dict[str, str]:
         )
         if source_version != published_version and source_version in block:
             raise ReleaseStateError(
-                f"{relative}: published install block contains unpublished source version {source_version}"
+                f"{relative}: pinned install block contains a different source version {source_version}"
             )
 
     for relative in source_documents:
@@ -217,13 +254,7 @@ def validate(root: Path, state_path: Path) -> dict[str, str]:
             raise ReleaseStateError(
                 f"{relative}: source-candidate block does not identify source version {source_version}"
             )
-        lowered = block.lower()
-        if published_version != source_version and not any(
-            phrase in lowered for phrase in ("not published", "unpublished", "not on nuget.org")
-        ):
-            raise ReleaseStateError(
-                f"{relative}: unpublished source candidate must be labeled as not published"
-            )
+        validate_source_publication(document, block, source_version, versions)
 
     for relative in build_documents:
         document = root / relative
@@ -289,7 +320,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print(
             "documentation-release-state: PASS "
-            f"published={result['publishedVersion']} source={result['sourceVersion']} "
+            f"installSmoke={result['publishedVersion']} source={result['sourceVersion']} "
             f"target={result['targetFramework']}"
         )
     return 0

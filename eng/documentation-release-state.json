@@ -39,5 +39,15 @@
       "document": "UniversalToolchain/UniversalToolchain.Wist/README.md",
       "marker": "wist-package-quickstart-csharp"
     }
-  ]
+  ],
+  "nugetAvailability": {
+    "checkedAtUtc": "2026-11-03T04:24:43+00:00",
+    "indexUrl": "https://api.nuget.org/v3-flatcontainer/universaltoolchain.wist/index.json",
+    "versions": [
+      "0.1.0-alpha.1",
+      "0.1.0-alpha.7",
+      "0.1.0-preview.1",
+      "0.1.0-preview.2"
+    ]
+  }
 }

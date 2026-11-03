@@ -24,7 +24,7 @@ dotnet add package UniversalToolchain.Wist \
 ```
 <!-- wist-published-install:end -->
 
-The repository may contain a newer unpublished source candidate. Recipes do not silently switch package feeds or versions.
+Source and registry identities are separate; see the [availability snapshot](/start/installation#availability-and-binary-provenance). Recipes do not silently switch package feeds or versions.
 
 ## Pricing and commission
 

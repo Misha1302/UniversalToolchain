@@ -154,6 +154,17 @@ def main() -> int:
             "<!-- removed-wist-source-quickstart-csharp:begin -->",
         ),
     )
+    require_killed(
+        root, "stale-package-project-url",
+        lambda mutant: replace(mutant / state["project"],
+            "https://misha1302.github.io/UniversalToolchain/", "https://misha1302.github.io/Wist2/"),
+    )
+    require_killed(
+        root, "stale-embedded-documentation-url",
+        lambda mutant: replace(mutant / package_readme.relative_to(root),
+            "https://misha1302.github.io/UniversalToolchain/start/installation",
+            "https://misha1302.github.io/Wist2/start/installation"),
+    )
     return 0
 
 
