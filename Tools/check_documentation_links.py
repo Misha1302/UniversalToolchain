@@ -6,6 +6,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 from urllib.parse import unquote
+from check_documentation_onboarding import check as check_onboarding
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
@@ -282,7 +283,8 @@ def main() -> int:
     errors.extend(link_errors)
     internal_link_errors, _ = check_markdown_links(current_internal, public=False)
     errors.extend(internal_link_errors)
-    errors.extend(check_inline_repository_paths(public_markdown + current_internal))
+    errors.extend(check_inline_repository_paths(public_markdown + current_internal + [ROOT / "AGENTS.md"]))
+    errors.extend(check_onboarding(ROOT))
 
     sidebar_errors, sidebar_targets = check_sidebar()
     errors.extend(sidebar_errors)

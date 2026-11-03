@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'readme.md'
+      - 'AGENTS.md'
+      - 'samples/Acme.PricingLanguage/README.md'
       - 'docs/**'
       - 'internal-docs/**'
       - 'UniversalToolchain/UniversalToolchain.Wist/**'
@@ -51,6 +53,9 @@ jobs:
 
       - name: Validate documentation structure, release state and links
         run: npm run docs:status && npm run docs:links
+
+      - name: Reject SDK onboarding and policy-path regressions
+        run: python3 Tools/test-documentation-onboarding.py
 
       - name: Reject Wist release-readiness documentation mutants
         run: npm run docs:readiness-mutants
