@@ -103,6 +103,14 @@ def main() -> int:
             encoding='utf-8',
         ),
     )
+    require_killed(
+        root, 'false-unpublished-source',
+        lambda mutant: replace(mutant / 'readme.md', '**available on NuGet.org**', '**not published on NuGet.org**'),
+    )
+    require_killed(
+        root, 'source-binary-provenance-omitted',
+        lambda mutant: replace(mutant / 'readme.md', 'binary provenance', 'artifact identity'),
+    )
     return 0
 
 

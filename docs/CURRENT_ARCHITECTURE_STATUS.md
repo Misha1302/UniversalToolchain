@@ -10,7 +10,7 @@ This page is the current architecture authority for the repository. Historical c
 ## Current public/product surface
 
 <!-- wist-source-candidate:begin -->
-`UniversalToolchain.Wist` source candidate `0.1.0-alpha.7` is **not published on NuGet.org** and provides:
+`UniversalToolchain.Wist` source candidate `0.1.0-alpha.7` has a same-number artifact **available on NuGet.org**; current-source binary provenance is not verified. See the [availability snapshot](/start/installation#availability-and-binary-provenance). The source provides:
 <!-- wist-source-candidate:end -->
 
 - `WistEngine`;

@@ -10,7 +10,7 @@ lastVerifiedAgainst: wist-release-readiness-2026-08-18
 
 There are three different operations that must not be confused:
 
-1. install the package currently published on NuGet.org;
+1. install the pinned package verified by the NuGet.org smoke;
 2. build and run the current repository source;
 3. produce a reviewed release-candidate package bundle as a maintainer.
 
@@ -61,10 +61,32 @@ Both scripts require the exact version explicitly and use an isolated temporary 
 ## Current source candidate
 
 <!-- wist-source-candidate:begin -->
-The current source project defines `UniversalToolchain.Wist` `0.1.0-alpha.7`. This candidate is **not published on NuGet.org**. The repository does not present `./artifacts/packages` as a public feed: that directory exists only after the baseline-bearing maintainer packaging gate succeeds.
+The current source project defines `UniversalToolchain.Wist` `0.1.0-alpha.7`. The same version number is **available on NuGet.org**, but current-source binary provenance has not been established. See [Availability and binary provenance](#availability-and-binary-provenance). The repository does not present `./artifacts/packages` as a public feed: that directory exists only after the baseline-bearing maintainer packaging gate succeeds.
 <!-- wist-source-candidate:end -->
 
-To evaluate the current implementation, clone the repository and build/run it as source. Do not change the published install command to `0.1.0-alpha.7` unless you were given a reviewed feed containing that exact package.
+To evaluate this exact checkout, build/run it as source. Do not silently change the pinned installation version merely because another version is available.
+
+## Availability and binary provenance
+
+The official NuGet v3 index was checked on **2026-11-03**. It returned `0.1.0-alpha.1`, `0.1.0-alpha.7`, `0.1.0-preview.1` and `0.1.0-preview.2`. This is a dated observation, not a recommendation to select the greatest version string. The machine-readable snapshot is `nugetAvailability` in `eng/documentation-release-state.json`.
+
+| Status | Meaning |
+|---|---|
+| Available on NuGet | The official index lists the version; this does not verify its behavior. |
+| Pinned installation / CI smoke | `0.1.0-alpha.1`, retained as the documented installation choice for controlled evaluation. The legacy JSON key `publishedVersion` selects this one version; it does not mean “only published version” or “latest”. |
+| Clean-room verified | A successful smoke applies only to the downloaded version, tested scenario, environment and run. It is not a full compatibility certificate. |
+| Source identity | The project declares `0.1.0-alpha.7`; this does not identify every byte of a same-number NuGet package. |
+| Stable compatibility | Not promised by these prereleases. |
+
+The downloaded `alpha.7` package records repository commit `165e3b051bcc879a38f512c9cc8df63d1d172318` under the historical repository name `Misha1302/Wist2`. That metadata is not proof that its binary payload matches current `master`. Its embedded README and project URL still point to the old `/Wist2/` site. Source link corrections do not repair an already published package: a separately reviewed release with a new version is needed; do not repack the existing published identity.
+
+Run the bounded external check separately from offline documentation validation:
+
+```bash ci-run=false
+npm run docs:external
+```
+
+It checks the official index and current first-contact website links. Exit `0` means those checks passed, `1` means a confirmed availability/link defect, and `2` means **INCONCLUSIVE** (network/service unavailable). It does not certify existing embedded READMEs or choose a recommended version. Inspect the downloaded `.nupkg` and run the exact-version consumer smoke before release promotion.
 
 ## Minimal package smoke test
 
@@ -202,7 +224,7 @@ After the repository path:
 
 ## Common mistakes
 
-- replacing the published version with the newer source version even though that candidate is not on NuGet.org;
+- treating a version listed on NuGet as proof of current-source equivalence or an automatic upgrade recommendation;
 - using `--source ./artifacts/packages` from a clean external checkout where no reviewed package bundle exists;
 - running `./build.sh` or `./build.sh --skip-docs` without the required release-package baseline inputs;
 - installing into a project that does not target `net10.0`;
