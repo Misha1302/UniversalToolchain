@@ -1,0 +1,37 @@
+{
+  "treatment": "clone-own",
+  "status": "PASS",
+  "cases": [
+    {
+      "Id": "base",
+      "Value": "100",
+      "Error": null
+    },
+    {
+      "Id": "discount",
+      "Value": "90",
+      "Error": null
+    },
+    {
+      "Id": "surcharge",
+      "Value": "110",
+      "Error": null
+    },
+    {
+      "Id": "both",
+      "Value": "99",
+      "Error": null
+    },
+    {
+      "Id": "discount-invalid",
+      "Value": null,
+      "Error": "PERCENT_RANGE"
+    },
+    {
+      "Id": "surcharge-invalid",
+      "Value": null,
+      "Error": "PERCENT_RANGE"
+    }
+  ],
+  "failures": []
+}

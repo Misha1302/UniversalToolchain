@@ -1,0 +1,8 @@
+[
+  {"id":"base","source":"price 100","expected":"100"},
+  {"id":"discount","source":"price 100 | discount 10","expected":"90"},
+  {"id":"surcharge","source":"price 100 | surcharge 10","expected":"110"},
+  {"id":"both","source":"price 100 | discount 10 | surcharge 10","expected":"99"},
+  {"id":"discount-invalid","source":"price 100 | discount 120","error":"PERCENT_RANGE"},
+  {"id":"surcharge-invalid","source":"price 100 | surcharge -1","error":"PERCENT_RANGE"}
+]
