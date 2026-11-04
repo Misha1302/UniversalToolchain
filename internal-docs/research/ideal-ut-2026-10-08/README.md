@@ -26,6 +26,11 @@ The proposed *semantic evidence* service must not be a second language planner, 
 | Strategic options, original 18 competitive dimensions, strongest alternatives | [STRATEGY_PRIOR_ART.md](STRATEGY_PRIOR_ART.md) |
 | Proposed C# semantic contracts and rule-of-use caveats | [PROPOSED_API_CONTRACTS.md](PROPOSED_API_CONTRACTS.md) |
 | Adversarial stage-1 questions (42 IDs; evidence requirements; negative go/no-go outcomes) | [ADVERSARIAL_QUESTION_LEDGER_2026-10-22.md](ADVERSARIAL_QUESTION_LEDGER_2026-10-22.md) |
+| Stage-2 answers for all 42 Q-IDs, with bounded statuses and uncertainty | [CRITICAL_QUESTIONS.md](CRITICAL_QUESTIONS.md) |
+| Direct C#, LLVM, MLIR and proposed UT: strongest comparable mechanisms | [PRIOR_ART_COMPARISON.md](PRIOR_ART_COMPARISON.md) |
+| Confirmed engineering findings versus untested novelty hypotheses | [SEMANTIC_COMPOSITION_FINDINGS.md](SEMANTIC_COMPOSITION_FINDINGS.md) |
+| Experimental protocol, direct-interface control, independent oracle and no-go | [EXPERIMENT_DESIGN.md](EXPERIMENT_DESIGN.md) |
+| Evidence-safe meetup narrative alternatives (no slide edits) | [MEETUP_NARRATIVE_EVIDENCE.md](MEETUP_NARRATIVE_EVIDENCE.md) |
 | Independent Language Engineering Platform: LSP, debugging, author/end-user journeys | [LANGUAGE_ENGINEERING_PLATFORM.md](LANGUAGE_ENGINEERING_PLATFORM.md) |
 | Task-ready S0–S8 reversible implementation backlog | [ENGINEERING_BACKLOG.md](ENGINEERING_BACKLOG.md) |
 
