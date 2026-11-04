@@ -212,7 +212,7 @@ Program compilation / execution:
 
 The package manifest is schema v5; the language lock snapshot is schema v6. The plan records declared selections, typed routes and package identity. It does not certify pass semantics, hostile plugins or backend parity. Wist's concrete AST/Bytecode/AIR route is documented in [Current Architecture Status](docs/CURRENT_ARCHITECTURE_STATUS.md), but non-Wist languages can supply their own representations.
 
-For example, [Acme.PricingLanguage](samples/Acme.PricingLanguage/Program.cs) registers a parser, an interpreter executor and a compiled executor; only the compiled route needs its syntax-to-delegate transformation. This is an existing executable sample, not a hypothetical API.
+For example, [Acme.PricingLanguage](samples/Acme.PricingLanguage/README.md) registers a parser, an interpreter executor and an executor named `compiled`; only the latter route needs its syntax-to-delegate transformation. In this minimal sample, `PricingExpression.Compile() => Evaluate` binds an existing evaluator rather than emitting CIL. It demonstrates route selection, not independent code generation.
 
 ### When is UT worth its additional machinery?
 

@@ -35,7 +35,7 @@ Expected output:
 35.0:35.0
 ```
 
-The first value is produced by the interpreter backend; the second is produced by the compiled backend. Equality is the observable parity check for this sample.
+The first value uses the interpreter route; the second uses the route named `compiled`. Here `PricingExpression.Compile() => Evaluate` returns a delegate bound to the existing evaluator: it does **not** generate CIL or machine code. The sample demonstrates two typed artifact routes and executor selection, not independent interpreter/code-generator implementations or performance superiority. Both routes ultimately call the same evaluator.
 
 The complete source is in [`samples/Acme.PricingLanguage/Program.cs`](https://github.com/Misha1302/UniversalToolchain/blob/master/samples/Acme.PricingLanguage/Program.cs). The sample references the generic Language Authoring packages and does not reference Wist.
 
@@ -163,15 +163,19 @@ Runtime assembly verifies the exact package identity captured by the plan, contr
 
 ## 7. Create a project from release packages
 
-The generic SDK package family is currently verified as release artifacts at version `0.3.0-alpha.4`; only the Wist facade is documented as published on NuGet.org. Build or obtain the release package directory first.
+This step is **optional and requires a reviewed package bundle**. A clean checkout, the Acme run above, or `./build.sh --skip-docs --skip-pack` does not produce `artifacts/packages`. Without that bundle, use the source sample; do not try to install the generic SDK from NuGet.org as though it were the Wist facade. Obtain the bundle from a maintainer or follow the baseline-bearing [maintainer packaging guide](/evidence/maintainer-guide).
 
-After the canonical repository build, install the template from the produced package:
+The source-declared package versions are not uniform: `Language.Abstractions` and `FeatureSdk` use `0.3.0-alpha.4`; `LanguageAuthoring`, `LanguageSdk`, `Runtime`, `Testing` and `Templates` use `0.3.0-alpha.5`; the separate Wist language pack uses `0.3.0-alpha.6`. See the [package matrix](/evidence/current-verification#packagerelease-boundary). A non-Wist consumer does not need the Wist language pack.
+
+Only after the complete reviewed bundle is present at `artifacts/packages`, run from the repository root. Keep an absolute feed path so changing the directory cannot break restore:
 
 ```bash ci-run=false
-dotnet new install ./artifacts/packages/UniversalToolchain.Templates.0.3.0-alpha.4.nupkg
+package_feed="$(cd ./artifacts/packages && pwd)"
+dotnet new install "$package_feed/UniversalToolchain.Templates.0.3.0-alpha.5.nupkg"
 dotnet new ut-language -n MyCompany.MyLanguage
 cd MyCompany.MyLanguage
-dotnet run
+dotnet restore --source "$package_feed"
+dotnet run --no-restore
 ```
 
 To create a project without the template:
@@ -185,14 +189,14 @@ To create a project without the template:
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="UniversalToolchain.LanguageAuthoring" Version="0.3.0-alpha.4" />
-    <PackageReference Include="UniversalToolchain.LanguageSdk" Version="0.3.0-alpha.4" />
-    <PackageReference Include="UniversalToolchain.Runtime" Version="0.3.0-alpha.4" />
+    <PackageReference Include="UniversalToolchain.LanguageAuthoring" Version="0.3.0-alpha.5" />
+    <PackageReference Include="UniversalToolchain.LanguageSdk" Version="0.3.0-alpha.5" />
+    <PackageReference Include="UniversalToolchain.Runtime" Version="0.3.0-alpha.5" />
   </ItemGroup>
 </Project>
 ```
 
-Configure `artifacts/packages` (or the extracted release package directory) as a NuGet source before restore. The release smoke test verifies a clean consumer that restores only from the produced package set.
+Copy the complete program from the source sample into `Program.cs`, then explicitly restore from the absolute reviewed feed path as above. The bundle must include the transitive generic packages at their own declared versions. A normal source build is not a substitute for the release gate or its clean package-consumer smoke.
 
 ## Next steps
 
