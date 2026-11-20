@@ -241,7 +241,15 @@ public sealed class SemanticKnowledgeBase : ISemanticQuery
                 SemanticDiagnosticCodes.DerivationDepthExceeded,
                 LanguageDiagnosticSeverity.Warning,
                 $"Deriving {question} exceeded the maximum derivation depth of {MaxDerivationDepth}; the result is Unknown, not Disproved."));
+            return new SemanticAnswer(question, Judgment.Unknown, null, diagnostics);
         }
+
+        // Scenario 2: a consumer must be able to say *which* predicate it was missing, otherwise the
+        // diagnostic is useless to the author who has to fix the wiring.
+        diagnostics.Add(Diagnostic(
+            SemanticDiagnosticCodes.ObligationUnknown,
+            LanguageDiagnosticSeverity.Info,
+            $"No provider established '{question.Predicate}', so '{question}' is Unknown. Absence of evidence is not a disproof."));
 
         return new SemanticAnswer(question, Judgment.Unknown, null, diagnostics);
     }

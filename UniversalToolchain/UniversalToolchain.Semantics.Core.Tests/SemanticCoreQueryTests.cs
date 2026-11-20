@@ -50,6 +50,10 @@ public sealed class SemanticCoreQueryTests
                 "Absence of evidence must never be reported as a disproof; negation-as-failure is out of scope in v1.");
             Assert.That(answer.Judgment, Is.Not.EqualTo(Judgment.Disproved));
             Assert.That(answer.Proof, Is.Null);
+            // Scenario 2: the diagnostic must name the missing predicate so the author can fix the wiring.
+            Assert.That(answer.Diagnostics.Select(static diagnostic => diagnostic.Code),
+                Does.Contain(SemanticDiagnosticCodes.ObligationUnknown));
+            Assert.That(answer.Diagnostics.Single().Message, Does.Contain(question.Predicate.ToString()));
         });
     }
 

@@ -155,7 +155,8 @@ The study is bounded evidence for the exact UniversalToolchain boundaries and au
 - no hardened in-process sandbox is claimed;
 - legacy runtime-manifest emission/copy/package tooling is retired; component identity and activation are explicit typed contracts owned by the package/plan/runtime path;
 - S12 retires the old BasicCore end-to-end orchestration island; reusable BasicCore stage contracts remain while topology cleanup continues in S13;
-- release-package compatibility requires reviewed external baseline artifacts and is separate from ordinary CI.
+- release-package compatibility requires reviewed external baseline artifacts and is separate from ordinary CI;
+- `UniversalToolchain.Semantics.Core` is a **5-day spike with no production consumer**: it answers four-valued judgment queries (`Proved`/`Disproved`/`Unknown`/`Inconsistent`) over a monotone, ground rule set, and the only consumer is a test fixture optimizer. It is not formal verification, not a solver, not a planner, and it has no negation-as-failure, aggregation, recursion across scopes or timing/alias reasoning. If no production consumer materializes within one milestone, the spike is deleted rather than maintained; see `UT-A026`/`UT-A030` in the architecture research record.
 
 ## Verification identity
 
