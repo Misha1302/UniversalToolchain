@@ -91,6 +91,23 @@ Before updating verification claims:
 
 A verification page must identify its exact commit/artifact and status as a pinned snapshot. A historical test count must not be presented as live HEAD state.
 
+## Reviewed baseline contracts are inputs, never outputs
+
+`eng/package-release-baseline.json` and `eng/wist-api-baseline.json` describe the reviewed previous release. The `package-compatibility-review` workflow rebuilds those artifacts from `REVIEW_BASE_SHA` and then **compares** against the committed contracts; it must never regenerate them.
+
+This matters because regenerating the expectation from the artifact under test is a tautology: the gate then reports success no matter what the contract said. That is not hypothetical. Until this rule was enforced, the workflow rewrote both files before the gate read them, and both had silently drifted to artifacts that no longer existed (`UniversalToolchain-release-packages-pruned-2026-07-27.zip`, `Wist-no-legacy-remediated-2026-07-27.zip`) while the gate stayed green. Two guards now hold the invariant: the baseline step exits non-zero on any mismatch, and a dedicated step fails if either contract is modified during the run.
+
+### What the package contract pins, and what it must not
+
+`eng/package-release-baseline.json` (schema 2) pins the **identity set** — package id to version — and the reviewed bundle name. It deliberately does not pin the bundle digest.
+
+The baseline bundle is repacked from an archived source tree, so its bytes embed compiler output. A .NET SDK patch bump changed 72 bytes inside `FeatureSdk.dll` and moved the bundle digest from `5105d516…` to `23336d98…` while all nine package identities stayed identical. A digest pin would therefore fail every couple of weeks for a reason no consumer can observe, and the obvious remedy — regenerate the digest — is exactly the behaviour that hid the stale contracts. The identity set is stable across SDK patches and is what consumers actually resolve.
+
+`previousBundleSha256` is still honoured whenever a contract declares it; schema 1 remains accepted for compatibility.
+
+By contrast `eng/wist-api-baseline.json` keeps its archive digest, because `git archive` of a fixed commit is byte-stable: the same `f13ad13` archive produced digest `87891137…` seventeen days apart. Only the compiled bundle drifts with the toolchain.
+
+
 ## Promoting a Wist candidate to published
 
 The source project version and published version are allowed to differ. To promote a candidate:

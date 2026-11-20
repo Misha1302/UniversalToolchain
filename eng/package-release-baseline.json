@@ -1,5 +1,16 @@
 {
-  "schemaVersion": 1,
-  "previousBundleFileName": "UniversalToolchain-release-packages-pruned-2026-07-27.zip",
-  "previousBundleSha256": "8ed6bb1bd62b7e32274963459bba553d8d2eb4d35be491575432fb236767241b"
+  "schemaVersion": 2,
+  "previousBundleFileName": "UniversalToolchain-review-packages-f13ad131.zip",
+  "reviewedSourceCommit": "f13ad1310856e5618e1c3042c447ca543e0f3125",
+  "previousPackages": {
+    "UniversalToolchain.FeatureSdk": "0.3.0-alpha.3",
+    "UniversalToolchain.Language.Abstractions": "0.3.0-alpha.3",
+    "UniversalToolchain.LanguageAuthoring": "0.3.0-alpha.3",
+    "UniversalToolchain.LanguageSdk": "0.3.0-alpha.3",
+    "UniversalToolchain.Runtime": "0.3.0-alpha.3",
+    "UniversalToolchain.Templates": "0.3.0-alpha.3",
+    "UniversalToolchain.Testing": "0.3.0-alpha.3",
+    "UniversalToolchain.Wist": "0.1.0-alpha.5",
+    "UniversalToolchain.Wist.LanguagePack": "0.3.0-alpha.4"
+  }
 }

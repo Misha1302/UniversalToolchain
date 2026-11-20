@@ -84,17 +84,63 @@ def collect_packages_from_bundle(bundle: Path, temporary: Path) -> dict[str, tup
     return result
 
 
+def bundle_identities(bundle: Path) -> dict[str, str]:
+    with tempfile.TemporaryDirectory(prefix="ut-baseline-identities-") as temporary:
+        packages = collect_packages_from_bundle(bundle, Path(temporary))
+        return {package_id: version for package_id, (version, _path) in packages.items()}
+
+
+def validate_contract(contract_path: Path, previous_bundle: Path) -> None:
+    """Check the reviewed baseline contract against the bundle actually produced.
+
+    Schema 2 pins the *identity set* (package id -> version) rather than the bundle bytes. The
+    bundle is rebuilt from an archived source tree on every run, and that rebuild embeds the
+    compiler's own output: a .NET SDK patch bump (10.0.403 -> 10.0.404) changed 72 bytes inside
+    `FeatureSdk.dll` and with it the bundle digest, while every package id and version stayed
+    identical. Pinning the digest would therefore fail every couple of weeks for a reason that
+    carries no meaning for consumers, and the natural response to that noise is to regenerate the
+    digest - which is exactly how the previous circular check stayed green while both contracts
+    went stale. What a consumer can actually observe is which package versions exist, so that is
+    what is pinned.
+
+    Schema 1 is still accepted for compatibility; `previousBundleSha256` remains enforced whenever a
+    contract declares it.
+    """
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    schema = contract.get("schemaVersion")
+    if schema not in (1, 2):
+        raise ValueError(f"unsupported package release baseline schema: {schema!r}")
+
+    expected_name = contract.get("previousBundleFileName")
+    if expected_name and previous_bundle.name != expected_name:
+        raise ValueError(f"unexpected previous package bundle name: {previous_bundle.name!r}")
+
+    expected_sha = contract.get("previousBundleSha256")
+    if expected_sha and sha256(previous_bundle) != expected_sha:
+        raise ValueError("previous package bundle SHA-256 does not match the reviewed baseline")
+
+    if schema == 2:
+        declared = contract.get("previousPackages")
+        if not isinstance(declared, dict) or not declared:
+            raise ValueError("package release baseline schema 2 must declare previousPackages")
+        actual = bundle_identities(previous_bundle)
+        if actual != declared:
+            missing = sorted(set(declared) - set(actual))
+            unexpected = sorted(set(actual) - set(declared))
+            changed = sorted(
+                (package_id, declared[package_id], actual[package_id])
+                for package_id in set(actual) & set(declared)
+                if actual[package_id] != declared[package_id]
+            )
+            raise ValueError(
+                "previous package baseline identity drift: "
+                f"missing={missing}; unexpected={unexpected}; changed={changed}"
+            )
+
+
 def validate(previous_bundle: Path, current_dir: Path, baseline_contract: Path | None = None) -> int:
     if baseline_contract is not None:
-        contract = json.loads(baseline_contract.read_text(encoding="utf-8"))
-        if contract.get("schemaVersion") != 1:
-            raise ValueError("unsupported package release baseline schema")
-        expected_name = contract.get("previousBundleFileName")
-        expected_sha = contract.get("previousBundleSha256")
-        if expected_name and previous_bundle.name != expected_name:
-            raise ValueError(f"unexpected previous package bundle name: {previous_bundle.name!r}")
-        if expected_sha and sha256(previous_bundle) != expected_sha:
-            raise ValueError("previous package bundle SHA-256 does not match the reviewed baseline")
+        validate_contract(baseline_contract, previous_bundle)
     current_files = sorted(
         path for path in current_dir.glob("*.nupkg")
         if not path.name.endswith((".snupkg", ".symbols.nupkg"))
