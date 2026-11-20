@@ -4,7 +4,7 @@
 
 - Record refreshed: 2026-08-18.
 - Target CI environment: GitHub Actions Ubuntu 24.04, Linux x64.
-- SDK policy: `UniversalToolchain/global.json` with .NET 10 feature-band roll-forward.
+- SDK policy: `global.json` with .NET 10 feature-band roll-forward.
 - Ordinary integration command: `./build.sh --skip-docs --skip-pack`.
 - Contract-study command: `CONTRACT_EXPERIMENT_REPLICATES=5 ./Tools/run-contract-experiment.sh artifacts/contract-experiment`.
 - Review-holdout command: `bash ./Tools/run-contract-review-holdout.sh artifacts/contract-review-holdout`.

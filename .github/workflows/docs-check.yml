@@ -20,6 +20,7 @@ on:
       - '.github/workflows/docs-check.yml'
       - '.github/workflows/deploy-docs.yml'
       - '.github/workflows/published-package-smoke.yml'
+      - 'global.json'
   push:
     branches:
       - master
@@ -44,7 +45,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          global-json-file: UniversalToolchain/global.json
+          global-json-file: global.json
 
       - name: Install dependencies
         run: npm ci --no-audit --no-fund

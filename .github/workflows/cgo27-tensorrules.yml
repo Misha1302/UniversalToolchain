@@ -14,6 +14,7 @@ on:
       - "UniversalToolchain/UniversalToolchain.LanguageSdk/**"
       - "UniversalToolchain/UniversalToolchain.Runtime/**"
       - "CGO27/SECOND_LANGUAGE_REPORT.md"
+      - "global.json"
 
 permissions:
   contents: read
@@ -36,7 +37,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          global-json-file: UniversalToolchain/global.json
+          global-json-file: global.json
       - name: Run TensorRules second-language study
         shell: bash
         run: |

@@ -20,6 +20,7 @@ on:
       - "UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/**"
       - "UniversalToolchain/Experiments/UniversalToolchain.EndToEndExperiments/**"
       - "UniversalToolchain/Experiments/UniversalToolchain.TensorRules/**"
+      - "global.json"
 
 permissions:
   contents: read
@@ -43,7 +44,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          global-json-file: UniversalToolchain/global.json
+          global-json-file: global.json
       - name: Build anonymous paper
         uses: xu-cheng/latex-action@v4
         with:

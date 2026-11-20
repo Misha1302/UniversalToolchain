@@ -8,7 +8,7 @@ lastVerifiedAgainst: languageplan-single-runtime-s11
 
 ## Before you start
 
-- Use .NET SDK `10.0.103` with the roll-forward policy in `UniversalToolchain/global.json`.
+- Use .NET SDK `10.0.103` with the roll-forward policy in `global.json`.
 - Read canonical repo docs:
     - `readme.md` for project overview and scope;
     - [Current Architecture Status](/CURRENT_ARCHITECTURE_STATUS) and [Project Map](/architecture/project-map) for public boundaries;

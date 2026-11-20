@@ -12,6 +12,7 @@ on:
       - "UniversalToolchain/UniversalToolchain.ModuleContracts/**"
       - "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/**"
       - "UniversalToolchain/UniversalToolchain.Runtime/**"
+      - "global.json"
 
 permissions:
   contents: read
@@ -35,7 +36,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          global-json-file: UniversalToolchain/global.json
+          global-json-file: global.json
 
       - name: Run source-to-result experiment
         shell: bash

@@ -15,6 +15,7 @@ on:
       - "UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/**"
       - "UniversalToolchain/Experiments/UniversalToolchain.EndToEndExperiments/**"
       - "UniversalToolchain/Experiments/UniversalToolchain.TensorRules/**"
+      - "global.json"
 
 permissions:
   contents: read
@@ -37,7 +38,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          global-json-file: UniversalToolchain/global.json
+          global-json-file: global.json
       - name: Run cross-study ablations
         shell: bash
         run: |

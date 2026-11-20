@@ -117,7 +117,7 @@ Use the repository path when you want to modify UniversalToolchain, run the full
 Prerequisites:
 
 - Git;
-- .NET SDK `10.0.103` or a compatible SDK accepted by `UniversalToolchain/global.json`;
+- .NET SDK `10.0.103` or a compatible SDK accepted by `global.json`;
 - Node.js and npm for VitePress documentation;
 - a checked-out working branch for the change you are validating.
 
