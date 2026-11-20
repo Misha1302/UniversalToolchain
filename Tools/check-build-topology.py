@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -492,6 +493,70 @@ def require_benchmark_smoke_trigger_scope(root: Path) -> None:
         )
 
 
+def require_sdk_pin_is_discoverable(root: Path) -> None:
+    """The SDK pin must sit where `dotnet` will actually find it.
+
+    `dotnet` walks *up* from the working directory looking for `global.json`. `build.sh` and
+    `build.ps1` both run from the repository root, and every workflow invokes them from there, so a
+    pin living inside `UniversalToolchain/` is invisible to them: the CLI silently selects the
+    newest installed SDK instead. That is how the package-compatibility gate started building its
+    reviewed baseline with SDK 11 against a net10.0 target and failed on CS1705.
+
+    Both conditions are asserted because either one alone is a false green: the pin must exist at
+    the root, and it must not also exist nested where it would shadow the root one for nested work.
+    """
+    root_pin = root / "global.json"
+    if not root_pin.is_file():
+        raise BuildTopologyError(
+            "global.json must live at the repository root so the pinned SDK applies to build.sh, "
+            "build.ps1 and every workflow step that runs dotnet from the root"
+        )
+
+    try:
+        data = json.loads(root_pin.read_text(encoding="utf-8-sig"))
+    except json.JSONDecodeError as exc:
+        raise BuildTopologyError(f"root global.json is not valid JSON: {exc}") from exc
+
+    sdk = data.get("sdk")
+    if not isinstance(sdk, dict) or not str(sdk.get("version", "")).strip():
+        raise BuildTopologyError("root global.json must pin an sdk.version")
+
+    shadowing = sorted(
+        path.relative_to(root).as_posix()
+        for path in (root / "UniversalToolchain").rglob("global.json")
+        if "bin" not in path.parts and "obj" not in path.parts
+    )
+    if shadowing:
+        raise BuildTopologyError(
+            "nested global.json shadows the root SDK pin for nested builds: " + ", ".join(shadowing)
+        )
+
+    workflows = root / ".github" / "workflows"
+    drifted = []
+    unfiltered = []
+    for path in sorted(workflows.glob("*.yml")):
+        text = path.read_text(encoding="utf-8-sig")
+        for stale in ("UniversalToolchain/global.json", "./UniversalToolchain/global.json"):
+            if stale in text:
+                drifted.append(f"{path.name} references {stale}")
+
+        # A workflow that pins the SDK but is path-filtered will be skipped by a pin-only change,
+        # leaving the SDK contract unverified on exactly the commit that alters it.
+        if "global-json-file:" in text and re.search(r"^    paths:\s*$", text, re.MULTILINE):
+            if not re.search(r"^      - ['\"]?global\.json['\"]?\s*$", text, re.MULTILINE):
+                unfiltered.append(path.name)
+
+    if drifted:
+        raise BuildTopologyError(
+            "workflows must read the root SDK pin, not a nested path: " + "; ".join(drifted)
+        )
+    if unfiltered:
+        raise BuildTopologyError(
+            "path-filtered workflows that pin the SDK must also trigger on global.json: "
+            + ", ".join(unfiltered)
+        )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Validate IDE-safe project references and canonical build topology gates."
@@ -507,6 +572,7 @@ def main() -> int:
         require_windows_powershell_gate(root)
         require_wist_engine_exact_runtime_binding(root)
         require_benchmark_smoke_trigger_scope(root)
+        require_sdk_pin_is_discoverable(root)
     except (BuildTopologyError, OSError, ValueError) as exc:
         print(f"BUILD_TOPOLOGY=FAIL: {exc}", file=sys.stderr)
         return 1

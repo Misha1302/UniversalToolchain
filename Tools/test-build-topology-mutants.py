@@ -27,6 +27,7 @@ LANGUAGE_RUNTIME = Path("UniversalToolchain/UniversalToolchain.Runtime/LanguageR
 DOTNET_WORKFLOW = Path(".github/workflows/dotnet-ci.yml")
 BENCHMARK_WORKFLOW = Path(".github/workflows/benchmark-smoke.yml")
 SUPPORT_FILES = (
+    Path("global.json"),
     Path("build.sh"),
     Path("build.ps1"),
     Path("Tools/test-build-topology-runtime.py"),
@@ -430,6 +431,37 @@ def main() -> int:
                 "run: Write-Host 'PowerShell build disabled'",
             ),
             "Windows canonical PowerShell CI job",
+        ),
+        (
+            "sdk-pin-relocated-below-root",
+            lambda path: (path / "global.json").rename(path / "UniversalToolchain" / "global.json"),
+            "global.json must live at the repository root",
+        ),
+        (
+            "sdk-pin-shadowed-by-nested-copy",
+            lambda path: shutil.copy2(
+                path / "global.json",
+                path / "UniversalToolchain" / "global.json",
+            ),
+            "nested global.json shadows the root SDK pin",
+        ),
+        (
+            "workflow-reads-nested-sdk-pin",
+            lambda path: replace_once(
+                path / DOTNET_WORKFLOW,
+                "global-json-file: global.json",
+                "global-json-file: UniversalToolchain/global.json",
+            ),
+            "workflows must read the root SDK pin",
+        ),
+        (
+            "sdk-pin-path-filter-dropped",
+            lambda path: replace_once(
+                path / BENCHMARK_WORKFLOW,
+                '      - "global.json"\n',
+                "",
+            ),
+            "path-filtered workflows that pin the SDK must also trigger on global.json",
         ),
     )
 

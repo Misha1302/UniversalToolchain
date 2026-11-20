@@ -11,6 +11,7 @@ on:
       - 'build.sh'
       - 'build.ps1'
       - '.github/workflows/wist-rollout-sample-smoke.yml'
+      - 'global.json'
   push:
     branches: [ master ]
 
@@ -28,7 +29,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          global-json-file: UniversalToolchain/global.json
+          global-json-file: global.json
 
       - name: Prepare optional local NuGet feed
         run: mkdir -p UniversalToolchain/packages

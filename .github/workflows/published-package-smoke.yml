@@ -20,6 +20,7 @@ on:
       - docs/start/installation.md
       - docs/start/first-program.md
       - docs/start/use-case-recipes.md
+      - global.json
 
 permissions:
   contents: read
@@ -36,7 +37,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          global-json-file: UniversalToolchain/global.json
+          global-json-file: global.json
 
       - name: Resolve published package version
         id: release-state
@@ -59,7 +60,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          global-json-file: UniversalToolchain/global.json
+          global-json-file: global.json
 
       - name: Resolve published package version
         id: release-state
