@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "totalPassed": 1324,
+  "totalPassed": 1352,
   "main": [
     {
       "label": "Core",
@@ -34,6 +34,14 @@
       "buildBeforeTest": true,
       "timeoutSeconds": 600,
       "expectedPassed": 62
+    },
+    {
+      "label": "Semantics.Core",
+      "documentationName": "UniversalToolchain.Semantics.Core.Tests",
+      "runner": "project",
+      "path": "UniversalToolchain/UniversalToolchain.Semantics.Core.Tests/UniversalToolchain.Semantics.Core.Tests.csproj",
+      "timeoutSeconds": 300,
+      "expectedPassed": 28
     },
     {
       "label": "LanguageSdk",

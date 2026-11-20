@@ -15,6 +15,7 @@ This page maps conceptual architecture to the repository. It is a navigation aid
 | Role | Project | Key types | Main verification |
 |---|---|---|---|
 | stable IDs, policies and artifact contracts | `UniversalToolchain.Language.Abstractions` | `LanguageArtifactKind<T>`, `LanguageDefinition`, `LanguageRuntimePolicy`, IDs and slots | `UniversalToolchain.LanguageSdk.Tests` |
+| semantic judgments and evidence (experimental spike) | `UniversalToolchain.Semantics.Core` | `SemanticProposition`, `Judgment`, `EvidenceNode`, `ISemanticQuery`, `SemanticKnowledgeBase` | `UniversalToolchain.Semantics.Core.Tests` |
 | feature/contribution descriptors | `UniversalToolchain.FeatureSdk` | feature and contribution descriptors, merge policy, transformation metadata | typed-authoring and planning tests |
 | package registry and deterministic planning | `UniversalToolchain.LanguageSdk` | `LanguagePackageRegistry`, `LanguageDefinitionBuilder`, `LanguageCompiler`, `LanguagePlan`, `LanguageLockFile` | external authoring, architecture and canonicalization tests |
 | coupled descriptor/runtime authoring | `UniversalToolchain.LanguageAuthoring` | `LanguagePackageBuilder`, feature/contribution builders | typed-authoring tests and package smoke |

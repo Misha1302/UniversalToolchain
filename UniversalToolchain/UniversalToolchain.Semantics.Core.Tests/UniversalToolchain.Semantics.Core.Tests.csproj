@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>14</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="NUnit" Version="4.2.2" />
+    <PackageReference Include="NUnit.Analyzers" Version="4.4.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+  </ItemGroup>
+
+  <!-- Deliberately references the semantic core, Language.Abstractions, the owning provider fixture and
+       the optimizer fixture. The optimizer fixture is the interesting one: it is compiled separately and
+       its csproj is asserted below to reference only the semantic core. -->
+  <ItemGroup>
+    <ProjectReference Include="..\UniversalToolchain.Semantics.Core\UniversalToolchain.Semantics.Core.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Language.Abstractions\UniversalToolchain.Language.Abstractions.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Semantics.Core.TestFixtures\UniversalToolchain.Semantics.Core.TestFixtures.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Semantics.Core.TestFixtures.Provider\UniversalToolchain.Semantics.Core.TestFixtures.Provider.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="NUnit.Framework" />
+  </ItemGroup>
+
+</Project>
