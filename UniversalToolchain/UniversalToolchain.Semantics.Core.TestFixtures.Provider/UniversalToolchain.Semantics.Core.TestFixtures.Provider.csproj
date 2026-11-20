@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>14</LangVersion>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- UT-A026 scenario 1: the module that OWNS the semantics. The optimizer fixture deliberately does
+       not reference this project, which is what makes `Query_ExactTarget_ProvedFromIndependentProvider`
+       a real independence proof rather than a same-assembly shortcut. -->
+  <ItemGroup>
+    <ProjectReference Include="..\UniversalToolchain.Semantics.Core\UniversalToolchain.Semantics.Core.csproj" />
+  </ItemGroup>
+
+</Project>

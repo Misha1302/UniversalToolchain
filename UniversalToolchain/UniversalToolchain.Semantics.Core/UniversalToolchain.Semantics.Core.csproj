@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>14</LangVersion>
+    <!-- Spike surface (UT-A026). Not shipped as a package until the kill clause is resolved. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- ADR-003: the semantic core depends on Language.Abstractions only. It must never gain a
+       reference to BasicCore, a module, a backend, or LanguageSdk, because any of those would let the
+       core inherit the .NET execution stack or the planner's selection authority. -->
+  <ItemGroup>
+    <ProjectReference Include="..\UniversalToolchain.Language.Abstractions\UniversalToolchain.Language.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

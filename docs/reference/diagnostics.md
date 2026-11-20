@@ -37,6 +37,7 @@ lastVerifiedAgainst: wist-release-state-2026-08-06
 | slot ownership | `UTL2101`–`UTL2103` | multiple owners or invalid explicit replacement |
 | typed routes and passes | `UTL2201`–`UTL2204` | no compatible route, pass cycle, backend owner ambiguity, unplaceable pass |
 | runtime provider | `UTL2301`–`UTL2304` | missing/ambiguous provider, missing execution input, provider removed by override |
+| semantic judgments | `UTL2401`–`UTL2407` | obligation unknown/disproved/inconsistent, derivation depth bound, predicate arity, stale epoch evidence, trust precedence |
 
 ## Handling pattern
 

@@ -437,8 +437,9 @@ public sealed class RuntimeLifecycleAndCanonicalizationTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(tests, Has.Count.EqualTo(7));
+            Assert.That(tests, Has.Count.EqualTo(8));
             Assert.That(tests, Does.Contain("UniversalToolchain/UniversalToolchain.LanguageSdk.Generic.Tests/UniversalToolchain.LanguageSdk.Generic.Tests.csproj"));
+            Assert.That(tests, Does.Contain("UniversalToolchain/UniversalToolchain.Semantics.Core.Tests/UniversalToolchain.Semantics.Core.Tests.csproj"));
             Assert.That(tests, Does.Contain("UniversalToolchain/UniversalToolchain.LanguageSdk.Tests/UniversalToolchain.LanguageSdk.Tests.csproj"));
             Assert.That(tests, Does.Contain("UniversalToolchain/UniversalToolchain.PlanFuzz.Tests/UniversalToolchain.PlanFuzz.Tests.csproj"));
             Assert.That(tests, Does.Contain("UniversalToolchain/UniversalToolchain.PlanFuzz.IntegrationTests/UniversalToolchain.PlanFuzz.IntegrationTests.csproj"));
