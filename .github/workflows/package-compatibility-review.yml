@@ -128,28 +128,61 @@ jobs:
           import hashlib
           import json
           import os
+          import sys
 
           source = Path(os.environ["SOURCE_ARCHIVE"])
           packages = Path(os.environ["PACKAGE_BUNDLE"])
+
           def digest(path: Path) -> str:
               return hashlib.sha256(path.read_bytes()).hexdigest()
 
-          Path("eng/package-release-baseline.json").write_text(json.dumps({
-              "schemaVersion": 1,
-              "previousBundleFileName": packages.name,
-              "previousBundleSha256": digest(packages),
-              "reviewedSourceCommit": os.environ["REVIEW_BASE_SHA"],
-          }, indent=2) + "\n", encoding="utf-8")
+          # The committed contracts are the reviewed baseline. This step must never rewrite them:
+          # regenerating the expectation from the artifact it is supposed to police turns the gate
+          # into a tautology. When this step still did that, both contracts had silently gone stale
+          # (they named 2026-07-27 artifacts that no longer exist) and the gate reported success.
+          contract_path = Path("eng/package-release-baseline.json")
+          contract = json.loads(contract_path.read_text(encoding="utf-8"))
+          expected_name = contract.get("previousBundleFileName")
+          if expected_name != packages.name:
+              sys.exit(
+                  f"reviewed package baseline is stale: contract expects {expected_name!r}, "
+                  f"rebuilt baseline is {packages.name!r}. Update eng/package-release-baseline.json "
+                  "deliberately and review the package-set change."
+              )
 
           api_path = Path("eng/wist-api-baseline.json")
           api = json.loads(api_path.read_text(encoding="utf-8"))
-          api["baselineSourceArchive"] = source.name
-          api["baselineSourceArchiveSha256"] = digest(source)
-          api["baselineSourceCommit"] = os.environ["REVIEW_BASE_SHA"]
-          api_path.write_text(json.dumps(api, indent=2) + "\n", encoding="utf-8")
+          if api.get("baselineSourceArchive") != source.name:
+              sys.exit(
+                  f"reviewed API baseline is stale: contract expects "
+                  f"{api.get('baselineSourceArchive')!r}, rebuilt archive is {source.name!r}."
+              )
+          if api.get("baselineSourceArchiveSha256") != digest(source):
+              sys.exit(
+                  "reviewed API baseline source digest does not match the rebuilt source archive; "
+                  "the reviewed commit and the archive it produces have diverged."
+              )
+
+          print(f"reviewed baselines match the rebuilt artifacts: {packages.name}, {source.name}")
           PY
 
           git worktree remove "$previous_root" --force
+
+      - name: Assert reviewed baselines were not rewritten
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Regression net for the circular check: nothing in this workflow may modify the reviewed
+          # baseline contracts. If a future edit reintroduces a writer, this fails loudly instead of
+          # silently making the expectation match whatever was just produced.
+          changed="$(git status --porcelain -- eng/package-release-baseline.json eng/wist-api-baseline.json)"
+          if [[ -n "$changed" ]]; then
+            echo "reviewed baseline contracts were modified by this workflow:" >&2
+            echo "$changed" >&2
+            git --no-pager diff -- eng/package-release-baseline.json eng/wist-api-baseline.json >&2 || true
+            exit 1
+          fi
+          echo "reviewed baseline contracts unchanged"
 
       - name: Run canonical baseline-bearing package gate
         shell: bash

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import subprocess
 import tempfile
 import zipfile
@@ -15,9 +16,12 @@ def write_package(path: Path, package_id: str, version: str, marker: str) -> Non
         archive.writestr("lib/net10.0/payload.txt", marker)
 
 
-def run(checker: Path, bundle: Path, current: Path) -> subprocess.CompletedProcess[str]:
+def run(checker: Path, bundle: Path, current: Path, contract: Path | None = None) -> subprocess.CompletedProcess[str]:
+    command = ["python3", str(checker), "--previous-bundle", str(bundle), "--current-packages", str(current)]
+    if contract is not None:
+        command.extend(["--baseline-contract", str(contract)])
     return subprocess.run(
-        ["python3", str(checker), "--previous-bundle", str(bundle), "--current-packages", str(current)],
+        command,
         text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
 
 
@@ -49,6 +53,45 @@ def main() -> int:
         if run(checker, bundle, current).returncode != 0:
             raise RuntimeError("valid monotonic version bump was rejected")
         print("positive-control=1 monotonic-package-version")
+
+        # Schema 2 pins the identity set, not the bundle digest, because the bundle is rebuilt from an
+        # archived source tree on every run and its bytes move with the SDK patch version.
+        contract = tmp / "baseline.json"
+        contract.write_text(json.dumps({
+            "schemaVersion": 2,
+            "previousBundleFileName": bundle.name,
+            "previousPackages": {"Example": "1.0.0-alpha.1"},
+        }), encoding="utf-8")
+        if run(checker, bundle, current, contract).returncode != 0:
+            raise RuntimeError("matching identity-set contract was rejected")
+        print("positive-control=1 identity-set-contract")
+
+        contract.write_text(json.dumps({
+            "schemaVersion": 2,
+            "previousBundleFileName": bundle.name,
+            "previousPackages": {"Example": "1.0.0-alpha.9"},
+        }), encoding="utf-8")
+        if run(checker, bundle, current, contract).returncode == 0:
+            raise RuntimeError("drifted package version in baseline contract survived")
+        print("SURVIVOR=0 mutant=baseline-identity-version-drift")
+
+        contract.write_text(json.dumps({
+            "schemaVersion": 2,
+            "previousBundleFileName": bundle.name,
+            "previousPackages": {"Example": "1.0.0-alpha.1", "Example.Extra": "1.0.0"},
+        }), encoding="utf-8")
+        if run(checker, bundle, current, contract).returncode == 0:
+            raise RuntimeError("phantom package in baseline contract survived")
+        print("SURVIVOR=0 mutant=baseline-identity-phantom-package")
+
+        contract.write_text(json.dumps({
+            "schemaVersion": 2,
+            "previousBundleFileName": "some-other-bundle.zip",
+            "previousPackages": {"Example": "1.0.0-alpha.1"},
+        }), encoding="utf-8")
+        if run(checker, bundle, current, contract).returncode == 0:
+            raise RuntimeError("stale baseline bundle name survived")
+        print("SURVIVOR=0 mutant=baseline-stale-bundle-name")
     return 0
 
 
