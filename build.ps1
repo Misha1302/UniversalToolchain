@@ -99,6 +99,10 @@ function New-RestoreArguments {
 
 Invoke-CheckedNative "python" @("Tools/check-build-topology.py", "--root", $root)
 Invoke-CheckedNative "python" @("Tools/test-build-topology-mutants.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/check-powershell-syntax.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/test-powershell-syntax-mutants.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/check-workflow-commands.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/test-workflow-command-mutants.py", "--root", $root)
 Invoke-CheckedNative "python" @("Tools/check-package-locks.py", "--root", $root)
 Invoke-CheckedNative "python" @("Tools/test-package-locks-mutants.py", "--root", $root)
 
@@ -117,7 +121,7 @@ foreach ($solution in $solutions) {
     ) + $buildServerArguments + @(
         "-m:$Jobs",
         "-p:BuildInParallel=$buildInParallel",
-        "-p:UseSharedCompilation=$sharedCompilation",
+        "-p:UseSharedCompilation=$sharedCompilation"
     ))
 }
 
@@ -136,7 +140,7 @@ foreach ($project in $markdownSampleProjects) {
     ) + $buildServerArguments + @(
         "-m:$Jobs",
         "-p:BuildInParallel=$buildInParallel",
-        "-p:UseSharedCompilation=$sharedCompilation",
+        "-p:UseSharedCompilation=$sharedCompilation"
     ))
 }
 
@@ -189,7 +193,7 @@ if (-not $SkipPack) {
             "-p:BuildInParallel=$buildInParallel",
             "-o", "artifacts/packages",
             "/p:WarningsAsErrors=NU5118",
-            "-p:UseSharedCompilation=$sharedCompilation",
+            "-p:UseSharedCompilation=$sharedCompilation"
         ))
     }
     $packedArchives = @(Get-ChildItem "artifacts/packages" -File |
@@ -249,7 +253,7 @@ if (-not $SkipPack) {
         "-t:MaterializeCanonicalWistRuntimeClosure",
         "-p:Configuration=$Configuration",
         "-p:TargetFramework=net10.0",
-        "-p:CanonicalWistRuntimeReferenceDirectory=$wistReferenceDir",
+        "-p:CanonicalWistRuntimeReferenceDirectory=$wistReferenceDir"
     )
     $wistReferenceAssemblyPath = Join-Path $wistReferenceDir "UniversalToolchain.Wist.dll"
     if (-not (Test-Path -LiteralPath $wistReferenceAssemblyPath -PathType Leaf)) {

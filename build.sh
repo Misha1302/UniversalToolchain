@@ -136,6 +136,10 @@ read_manifest() {
 
 python3 Tools/check-build-topology.py --root "$root"
 python3 Tools/test-build-topology-mutants.py --root "$root"
+python3 Tools/check-powershell-syntax.py --root "$root"
+python3 Tools/test-powershell-syntax-mutants.py --root "$root"
+python3 Tools/check-workflow-commands.py --root "$root"
+python3 Tools/test-workflow-command-mutants.py --root "$root"
 python3 Tools/check-package-locks.py --root "$root"
 python3 Tools/test-package-locks-mutants.py --root "$root"
 
