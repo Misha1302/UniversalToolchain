@@ -163,6 +163,8 @@ Invoke-CheckedNative "python" @("Tools/check-hardening-contract.py", "--root", $
 Invoke-CheckedNative "python" @("Tools/test-hardening-contract-mutants.py", "--root", $root)
 Invoke-CheckedNative "python" @("Tools/check-module-descriptor-boundary.py", "--root", $root)
 Invoke-CheckedNative "python" @("Tools/test-module-descriptor-mutants.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/check-lowering-ownership.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/test-lowering-ownership-mutants.py", "--root", $root)
 Invoke-CheckedNative "python" @("Tools/check_documentation_status.py")
 Invoke-CheckedNative "python" @("Tools/test-documentation-status-mutants.py", "--root", $root)
 

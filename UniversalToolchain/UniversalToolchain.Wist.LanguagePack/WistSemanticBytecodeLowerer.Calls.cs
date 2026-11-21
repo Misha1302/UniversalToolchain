@@ -106,9 +106,16 @@ internal sealed partial class WistSemanticBytecodeLowerer
 
     private void RequireModule(LanguageContributionId syntaxContributionId)
     {
-        if (!SupportsModuleContribution(syntaxContributionId))
+        // Ownership is asked of the registry, not of a predicate in this file. The registry and the
+        // lowering dispatch therefore cannot disagree about who owns a phase, and the error names the
+        // module that would have had to exist rather than only the contribution identifier.
+        if (!WistLoweringOwners.TryGetLoweringOwner(syntaxContributionId, out _))
+        {
             throw new InvalidOperationException(
-                $"Wist module '{syntaxContributionId.Value}' has no native semantic lowering implementation.");
+                $"Wist contribution '{syntaxContributionId.Value}' has no module owning its lowering " +
+                "phase, so no native semantic-to-bytecode implementation exists for it.");
+        }
+
         RequireContribution(WistModulePhaseOwnership.LoweringContributionId(syntaxContributionId));
     }
 

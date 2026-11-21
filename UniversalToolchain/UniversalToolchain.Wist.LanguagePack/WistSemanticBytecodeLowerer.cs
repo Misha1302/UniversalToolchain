@@ -48,20 +48,15 @@ internal sealed partial class WistSemanticBytecodeLowerer
         _functionCallPlanner = new FunctionCallPlanner(capabilityCatalog.BuiltinFunctionRuntimeBindings);
     }
 
+    /// <summary>
+    /// True when <paramref name="contributionId"/> has a native semantic-to-bytecode implementation.
+    /// <para>
+    /// The data lives in <see cref="WistLoweringOwners"/>; this method exists so existing call sites and
+    /// the architecture gates keep a single named predicate instead of open-coding the membership test.
+    /// </para>
+    /// </summary>
     public static bool SupportsModuleContribution(LanguageContributionId contributionId) =>
-        contributionId == WistContributionIds.ScopesModule
-        || contributionId == WistContributionIds.NumbersModule
-        || contributionId == WistContributionIds.ArithmeticModule
-        || contributionId == WistContributionIds.VariablesModule
-        || contributionId == WistContributionIds.ComparisonsModule
-        || contributionId == WistContributionIds.BooleanLogicModule
-        || contributionId == WistContributionIds.ConditionalControlFlowModule
-        || contributionId == WistContributionIds.CSharpInteropModule
-        || contributionId == WistContributionIds.EqualityModule
-        || contributionId == WistContributionIds.FunctionCallsModule
-        || contributionId == WistContributionIds.LabelsModule
-        || contributionId == WistContributionIds.LoopsModule
-        || contributionId == WistContributionIds.NativeTypesModule;
+        WistLoweringOwners.OwnsLowering(contributionId);
 
     public Bytecode Lower(WistSemanticProgram program)
     {
