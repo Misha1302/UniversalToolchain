@@ -31,7 +31,14 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
     public void ProcessTypes(Instruction instruction, List<Type> stack)
     {
-        IntrinsicTypeProcessor.ProcessTypes(instruction, stack);
+        // The descriptor is authoritative for its own name. The static dispatcher recognises only the
+        // hardcoded core families, so consulting it here made the type stack a closed universe while the
+        // registry was open: an external descriptor could emit correctly and then be rejected during type
+        // simulation. Lookup also decides existence, which keeps "unsupported intrinsic" and "unmodelled
+        // intrinsic" from collapsing into one error.
+        var intrinsic = IntrinsicInstructionView.ReadOrThrow(instruction);
+        var descriptor = _registry.GetRequired(intrinsic.CapabilityId);
+        descriptor.ProcessTypes(instruction, stack);
     }
 
     internal static void CompileCallCSharp(CompilationContext context, Instruction instruction, List<Type> stack)

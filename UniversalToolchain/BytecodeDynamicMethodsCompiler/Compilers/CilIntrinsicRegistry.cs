@@ -12,7 +12,15 @@ public sealed class CilIntrinsicRegistry
     {
     }
 
-    private CilIntrinsicRegistry(IReadOnlyList<CilIntrinsicDescriptor> descriptors)
+    /// <summary>
+    /// Builds a registry from an explicit descriptor set.
+    /// </summary>
+    /// <remarks>
+    /// Internal rather than private so a backend composition, and the tests that pin the descriptor
+    /// contract, can supply descriptors without going through the hardcoded default set. Registration is
+    /// what defines the intrinsic universe; <see cref="BuildDefaultDescriptors"/> is only one such set.
+    /// </remarks>
+    internal CilIntrinsicRegistry(IReadOnlyList<CilIntrinsicDescriptor> descriptors)
     {
         descriptors = descriptors.ArgNotNull();
 
