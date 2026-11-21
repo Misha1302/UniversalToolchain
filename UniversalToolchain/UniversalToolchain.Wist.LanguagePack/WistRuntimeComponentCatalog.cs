@@ -198,6 +198,14 @@ internal static class WistRuntimeComponentCatalog
     public static bool IsCanonicalModule(LanguageContributionId contributionId) =>
         ByContributionId.TryGetValue(contributionId, out var component) && component.Kind == WistRuntimeComponentKind.Module;
 
+    /// <summary>
+    /// Every contribution the catalog knows, modules and optimizers, in canonical order. Exposed so
+    /// tests can assert that the module descriptors cover the catalog exactly once instead of
+    /// duplicating its contents in the test.
+    /// </summary>
+    internal static IReadOnlyList<LanguageContributionId> ContributionsForTest { get; } =
+        ByContributionId.Keys.OrderBy(static id => id.Value, StringComparer.Ordinal).ToArray();
+
     public static IReadOnlyList<Type> GetSelectedImplementationTypes(LanguagePlan plan)
     {
         ArgumentNullException.ThrowIfNull(plan);

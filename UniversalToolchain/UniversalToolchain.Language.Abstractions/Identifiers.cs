@@ -66,6 +66,22 @@ public readonly record struct LanguageSlotId
     public override string ToString() => Value;
 }
 
+/// <summary>
+/// Descriptive identity of a grouping of contributions that belong to one mechanism.
+/// <para>
+/// A module is <em>not</em> a planner concept: the planner selects features and contributions, and a
+/// module never adds, removes or reorders anything. The identity exists so that a package can state
+/// which mechanism owns which phase of which contribution, which is what lowering dispatch and
+/// observability need. It carries no selection authority.
+/// </para>
+/// </summary>
+public readonly record struct LanguageModuleId
+{
+    public LanguageModuleId(string value) => Value = LanguageValueValidation.Required(value, nameof(value));
+    public string Value { get; }
+    public override string ToString() => Value;
+}
+
 public readonly record struct LanguageArtifactKindId
 {
     public LanguageArtifactKindId(string value) => Value = LanguageValueValidation.Required(value, nameof(value));
