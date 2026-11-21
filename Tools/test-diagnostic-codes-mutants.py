@@ -122,6 +122,36 @@ CONTRACT_MUTANTS = {
 }
 
 
+# Facade family (`UTC-*`): two constants files, and a reserved list that must stay true.
+
+def facade_unrecorded_dead_code(root: Path) -> None:
+    """Make a live facade constant dead again by removing the only reference."""
+    target = root / 'UniversalToolchain/UniversalToolchain.Capabilities.Core/CapabilityProviderTypeResolver.cs'
+    edit(target, 'ToolchainDiagnosticCodes.CapabilityProviderInvalid',
+         'ToolchainDiagnosticCodes.CapabilityProviderInvalidReserved')
+
+
+def facade_stale_reservation(root: Path) -> None:
+    """Reserve a code that is actually raised, which makes the reservation a lie."""
+    target = root / 'Tools/check-diagnostic-codes.py'
+    edit(target, "    'UTC-TYPE-001':", "    'UTC-CAP-001': 'claiming a live code is reserved',\n    'UTC-TYPE-001':")
+
+
+def facade_duplicate_declaration(root: Path) -> None:
+    """Declare the same facade code twice, so two constants compete for one meaning."""
+    target = root / 'UniversalToolchain/UniversalToolchain.Diagnostics.Abstractions/ToolchainDiagnosticCodes.cs'
+    edit(target, '    public const string DuplicateLanguageFeature = "UTC-CAP-002";',
+         '    public const string DuplicateLanguageFeature = "UTC-CAP-002";\n'
+         '    public const string DuplicateLanguageFeatureAlias = "UTC-CAP-002";')
+
+
+FACADE_MUTANTS = {
+    'facade-unrecorded-dead-code': facade_unrecorded_dead_code,
+    'facade-stale-reservation': facade_stale_reservation,
+    'facade-duplicate-declaration': facade_duplicate_declaration,
+}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[1])
@@ -136,7 +166,10 @@ def main() -> int:
     for name, apply in CONTRACT_MUTANTS.items():
         mutate(root, name, apply)
 
-    print(f'All {4 + len(CONTRACT_MUTANTS)} diagnostic-code mutants killed.')
+    for name, apply in FACADE_MUTANTS.items():
+        mutate(root, name, apply)
+
+    print(f'All {4 + len(CONTRACT_MUTANTS) + len(FACADE_MUTANTS)} diagnostic-code mutants killed.')
     return 0
 
 
