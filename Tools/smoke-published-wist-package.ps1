@@ -38,6 +38,8 @@ try {
     $env:DOTNET_CLI_HOME = Join-Path $smokeDir "dotnet-home"
     $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = "1"
     $env:DOTNET_NOLOGO = "1"
+    # Same rationale as the bash smoke: this exercises package consumption, so an advisory
+    # published after release must not turn the smoke red.
     $env:NuGetAudit = "false"
 
     $nugetConfig = Join-Path $smokeDir "NuGet.Config"

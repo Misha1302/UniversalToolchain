@@ -16,6 +16,11 @@ rm -rf "$output"
 mkdir -p "$inputs" "$output/source-snapshot" "$root/UniversalToolchain/packages"
 CONTRACT_EXPERIMENT_REPLICATES=1 bash "$root/Tools/run-contract-experiment.sh" "$inputs/boundary"
 mechanism_project="$root/UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/UniversalToolchain.MechanismAblations.csproj"
+# Audit stays off here: this harness reproduces a recorded experiment and is executed from
+# documentation blocks with a hard time limit. Fetching the advisory database on a cold
+# cache costs minutes (measured 213s vs 5s for one experiment project), which makes the
+# harness time out for a reason unrelated to the experiment. Vulnerability policy is
+# enforced on the canonical build, not on reproduction harnesses.
 dotnet restore "$mechanism_project" -p:NuGetAudit=false
 dotnet build "$mechanism_project" -c Release --no-restore -p:WarningsAsErrors=true
 CGO27_EXPERIMENT_COMMIT="$commit" dotnet run -c Release --no-build --no-restore --project "$mechanism_project" -- \

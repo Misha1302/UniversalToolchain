@@ -84,6 +84,11 @@ jobs:
           unset PLATFORM || true
 
           mapfile -t projects < <(sed -e 's/[[:space:]]*$//' -e '/^[[:space:]]*#/d' -e '/^[[:space:]]*$/d' "$previous_root/eng/package-projects.txt")
+          # Audit stays off for the frozen baseline on purpose. The baseline must rebuild to the
+          # same artifact on every run, but NuGet's advisory database is external mutable state:
+          # an advisory published today would change the outcome of rebuilding a commit from
+          # months ago. Vulnerability policy belongs to the current tree (enforced by
+          # Directory.Build.props), not to the artefact that serves as the comparison point.
           for project in "${projects[@]}"; do
             dotnet restore "$previous_root/$project" -p:NuGetAudit=false
           done

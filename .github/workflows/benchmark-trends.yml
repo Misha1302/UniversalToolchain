@@ -29,8 +29,8 @@ jobs:
 
       - name: Restore and build benchmark project
         run: |
-          dotnet restore "$BENCHMARK_PROJECT" -p:NuGetAudit=false
-          dotnet build "$BENCHMARK_PROJECT" -c Release --no-restore -p:NuGetAudit=false
+          dotnet restore "$BENCHMARK_PROJECT"
+          dotnet build "$BENCHMARK_PROJECT" -c Release --no-restore
 
       - name: Capture environment identity
         run: |

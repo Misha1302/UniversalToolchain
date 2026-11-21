@@ -40,10 +40,10 @@ jobs:
         run: mkdir -p UniversalToolchain/packages
 
       - name: Restore benchmark project
-        run: dotnet restore UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -p:NuGetAudit=false
+        run: dotnet restore UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj
 
       - name: Build benchmark project
-        run: dotnet build UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -c Release --no-restore -p:NuGetAudit=false
+        run: dotnet build UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -c Release --no-restore
 
       - name: Benchmark self-test
         run: >
