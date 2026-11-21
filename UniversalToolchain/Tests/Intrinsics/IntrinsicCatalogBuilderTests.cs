@@ -41,6 +41,59 @@ public sealed class IntrinsicCatalogBuilderTests
     }
 
     [Test]
+    public void Build_ShouldFail_WhenProviderReturnsDescriptorWithDefaultSymbol()
+    {
+        var builder = new IntrinsicCatalogBuilder();
+        var providers = new IIntrinsicDescriptorProvider[]
+        {
+            new FakeProvider(new IntrinsicSemanticDescriptor
+            {
+                Symbol = default,
+                Category = IntrinsicCategory.Core,
+                StackRule = new NoOpStackRule(),
+                ValidationRule = new NoOpValidationRule()
+            })
+        };
+
+        var exception = Assert.Throws<InvalidOperationException>(() => builder.Build(providers));
+
+        Assert.That(exception!.Message, Does.Contain("default symbol"));
+    }
+
+    [Test]
+    public void Build_ShouldFail_WhenProviderReturnsNullDescriptor()
+    {
+        var builder = new IntrinsicCatalogBuilder();
+        var providers = new IIntrinsicDescriptorProvider[] { new NullElementProvider() };
+
+        var exception = Assert.Throws<InvalidOperationException>(() => builder.Build(providers));
+
+        Assert.That(exception!.Message, Does.Contain("null descriptor"));
+    }
+
+    [Test]
+    public void Build_ShouldFail_WhenProviderReturnsNullCollection()
+    {
+        var builder = new IntrinsicCatalogBuilder();
+        var providers = new IIntrinsicDescriptorProvider[] { new NullCollectionProvider() };
+
+        var exception = Assert.Throws<InvalidOperationException>(() => builder.Build(providers));
+
+        Assert.That(exception!.Message, Does.Contain("null descriptor collection"));
+    }
+
+    [Test]
+    public void Build_ShouldFail_WhenProviderReturnsNullInstance()
+    {
+        var builder = new IntrinsicCatalogBuilder();
+        var providers = new IIntrinsicDescriptorProvider[] { null! };
+
+        var exception = Assert.Throws<InvalidOperationException>(() => builder.Build(providers));
+
+        Assert.That(exception!.Message, Does.Contain("index 0 is null"));
+    }
+
+    [Test]
     public void Build_ShouldProduceDeterministicCatalog_WhenProviderOrderDiffers()
     {
         var builder = new IntrinsicCatalogBuilder();
@@ -87,6 +140,18 @@ public sealed class IntrinsicCatalogBuilderTests
     private sealed class AlphaProvider(params IntrinsicSemanticDescriptor[] descriptors) : FakeProvider(descriptors);
 
     private sealed class ZetaProvider(params IntrinsicSemanticDescriptor[] descriptors) : FakeProvider(descriptors);
+
+    private sealed class NullCollectionProvider : IIntrinsicDescriptorProvider
+    {
+        public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors() => null!;
+    }
+
+    // A null *element* is a different defect from a null *collection*: the collection is enumerable, so a
+    // null check on the collection passes and the element only fails later, at Symbol access.
+    private sealed class NullElementProvider : IIntrinsicDescriptorProvider
+    {
+        public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors() => [null!];
+    }
 
     private sealed class NoOpStackRule : IIntrinsicStackRule
     {
