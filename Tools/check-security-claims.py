@@ -89,17 +89,74 @@ def markdown_files(root: Path) -> list[Path]:
     return sorted({path for path in files if not any(part in {"bin", "obj", "artifacts"} for part in path.parts)})
 
 
-def violations(text: str, name: str) -> list[str]:
-    """Judges each SENTENCE, not each line.
+def logical_units(lines: list[str]) -> list[tuple[int, str, bool]]:
+    """Group physical lines into the unit a reader actually parses: a paragraph or a list item.
 
-    A line such as "They are not hardened sandboxing. Hostile input is handled by the runtime, which
-    provides memory isolation." states a denial and then an unbacked promise. Treating the line as one
-    unit lets the first sentence excuse the second, which is exactly how a real document degrades.
+    Markdown wraps prose across lines, so a physical line is not a sentence and not even a clause.
+    Judging lines produced two opposite defects, both measured on this gate:
+
+      * "The preset does not\\nprovide a security sandbox." - a denial split by a wrap. The continuation
+        starts with "provide", which reads as affirmative, and the gate reported an unbacked claim in a
+        document that says exactly the opposite. A false positive is how a gate gets switched off.
+      * An affirmative split the same way is reported against the second line, so the message names a
+        fragment and the reader has to reconstruct what was actually claimed.
+
+    Joining the paragraph removes the distinction: the wrap disappears, and the denial or the
+    affirmation is judged in the same sentence as the claim it governs. The reported unit carries the
+    1-based number of its first line, which is where a reader looks.
+    """
+    units: list[tuple[int, str, bool]] = []
+    buffer: list[str] = []
+    first_line = 0
+    is_bullet = False
+
+    def flush() -> None:
+        nonlocal buffer, is_bullet
+        if buffer:
+            units.append((first_line + 1, " ".join(buffer), is_bullet))
+            buffer = []
+            is_bullet = False
+
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+
+        if not stripped:
+            flush()
+            continue
+
+        # A heading is its own unit: it never continues the paragraph above or below it.
+        if stripped.startswith("#"):
+            flush()
+            units.append((index + 1, stripped, False))
+            continue
+
+        # A new list item starts a new unit even when no blank line separates the items.
+        if LIST_CONTINUATION.match(line):
+            flush()
+            first_line = index
+            is_bullet = True
+
+        if not buffer:
+            first_line = index
+            is_bullet = is_bullet or bool(LIST_CONTINUATION.match(line))
+        buffer.append(stripped)
+
+    flush()
+    return units
+
+
+def violations(text: str, name: str) -> list[str]:
+    """Judge each logical unit, then each sentence inside it.
+
+    A unit such as "They are not hardened sandboxing. Hostile input is handled by the runtime, which
+    provides memory isolation." states a denial and then an unbacked promise. Splitting the unit into
+    sentences keeps those apart, so the denial cannot excuse the promise - while the wrap between
+    "does not" and "provide" no longer splits a denial from the verb that makes it one.
     """
     found: list[str] = []
     lines = text.splitlines()
-    for index, line in enumerate(lines):
-        for sentence in SENTENCE_SPLIT.split(line):
+    for line_number, block, is_bullet in logical_units(lines):
+        for sentence in SENTENCE_SPLIT.split(block):
             collapsed = " ".join(sentence.split())
             if not collapsed:
                 continue
@@ -117,12 +174,12 @@ def violations(text: str, name: str) -> list[str]:
                 continue
 
             # A bullet continuing a denied/required list inherits that context from the lines above it.
-            if LIST_CONTINUATION.match(line):
-                context = " ".join(lines[max(0, index - DENIAL_LOOKBACK) : index])
+            if is_bullet:
+                context = " ".join(lines[max(0, line_number - 1 - DENIAL_LOOKBACK) : line_number - 1])
                 if NEUTRAL.search(context):
                     continue
 
-            found.append(f"{name}:{index + 1}: unbacked security claim: {collapsed[:180]}")
+            found.append(f"{name}:{line_number}: unbacked security claim: {collapsed[:180]}")
     return found
 
 
