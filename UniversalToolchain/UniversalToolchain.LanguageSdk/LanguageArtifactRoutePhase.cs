@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
 
@@ -139,6 +139,56 @@ internal static class LanguageArtifactRoutePhase
                 continue;
             routes.Add(new LanguageArtifactRoute(backend, definition.EntryArtifact, target, steps));
         }
+
+        // Backend coverage (UT-A004, the `08` A-6 finding). A contribution may be scoped to a backend the
+        // language never enables: today that plans fine, the contribution is listed as selected, it appears
+        // on no route, and nothing says so. The author asked for a pass, the compiler agreed, and the pass
+        // silently never runs - a language can be declared valid and be semantically partial.
+        //
+        // The check is opt-in per contribution. Without the opt-in the planner would have to guess whether
+        // an unrouted contribution is an oversight or an intentional cross-backend declaration, and it would
+        // reject currently-working packages.
+        var covered = new HashSet<(LanguageContributionId Id, string Backend)>();
+        foreach (var route in routes)
+        {
+            foreach (var step in route.Steps)
+                covered.Add((step.ContributionId, route.Backend.Value));
+        }
+
+        foreach (var item in contributions)
+        {
+            if (item.Contribution.BackendCoverage != BackendCoverage.Required)
+                continue;
+
+            var scopedTo = item.Contribution.SupportedBackends.Count == 0
+                ? definition.Backends.ToArray()
+                : definition.Backends.Where(item.Contribution.SupportedBackends.Contains).ToArray();
+            var enabledScope = scopedTo;
+            if (enabledScope.Length == 0)
+            {
+                diagnostics.Add(LanguagePlanningDiagnostics.Error(
+                    "UTL2209", "planning",
+                    $"Contribution '{item.Contribution.Id.Value}' requires backend coverage, but none of its declared backends ({string.Join(", ", item.Contribution.SupportedBackends.Select(static backend => backend.Value))}) is enabled by this language.",
+                    item.Contribution.Id.Value,
+                    "Enable one of the declared backends, or drop BackendCoverage.Required from the contribution."));
+                continue;
+            }
+
+            var uncovered = enabledScope
+                .Where(backend => !covered.Contains((item.Contribution.Id, backend.Value)))
+                .Select(static backend => backend.Value)
+                .OrderBy(static value => value, StringComparer.Ordinal)
+                .ToArray();
+            if (uncovered.Length != 0)
+            {
+                diagnostics.Add(LanguagePlanningDiagnostics.Error(
+                    "UTL2209", "planning",
+                    $"Contribution '{item.Contribution.Id.Value}' requires backend coverage but appears on no route for backend(s): {string.Join(", ", uncovered)}. A selected contribution that never runs makes the language semantically partial.",
+                    item.Contribution.Id.Value,
+                    "Make the contribution reachable on those backends (check its artifact contracts and scope), or remove BackendCoverage.Required."));
+            }
+        }
+
         return routes;
     }
 
