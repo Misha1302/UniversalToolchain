@@ -71,6 +71,57 @@ def renaming_drift(root: Path) -> None:
     edit(target, '"UTL2207"', '"UTL2299"')
 
 
+# Module-contract family. These exercise the half of the gate that cannot be reached by a literal scan,
+# because the codes live in one constants file and are referenced by name.
+
+def contract_undeclared_code(root: Path) -> None:
+    """Document a module-contract code that no constant declares."""
+    edit(root / REFERENCE, '| backend capabilities |', '| planted | `UT-AIR-PLANTED-001` | invented |\n| backend capabilities |')
+
+
+def contract_dead_constant(root: Path) -> None:
+    """Add a declared-but-never-referenced code: it documents a diagnostic that cannot happen."""
+    target = root / 'UniversalToolchain/UniversalToolchain.ModuleContracts/ModuleContractDiagnosticCodes.cs'
+    edit(target, '    public const string MultipleBackendCapabilityFacets = "UT-BACKEND-CAPABILITY-002";',
+         '    public const string MultipleBackendCapabilityFacets = "UT-BACKEND-CAPABILITY-002";\n'
+         '    public const string DeadDiagnostic = "UT-AIR-DEAD-001";')
+
+
+def contract_renaming_drift(root: Path) -> None:
+    """Rename a declared code in the constants file without touching the reference."""
+    target = root / 'UniversalToolchain/UniversalToolchain.ModuleContracts/ModuleContractDiagnosticCodes.cs'
+    edit(target, '"UT-AIR-STACK-001"', '"UT-AIR-STACK-009"')
+
+
+def contract_reference_drift(root: Path) -> None:
+    """Reference a constant that the constants file does not declare."""
+    target = root / 'UniversalToolchain/UniversalToolchain.ModuleContracts/AirVerifier.cs'
+    edit(target, 'ModuleContractDiagnosticCodes.UnsupportedAirIntrinsic',
+         'ModuleContractDiagnosticCodes.UnsupportedAirIntrinsicRenamed')
+
+
+def contract_range_over_gap(root: Path) -> None:
+    """Cover a numbering gap with a range, which would advertise a code that does not exist."""
+    edit(root / REFERENCE, '`UT-CONTRACT-001`\u2013`UT-CONTRACT-003`, `UT-CONTRACT-005`',
+         '`UT-CONTRACT-001`\u2013`UT-CONTRACT-003`, `UT-CONTRACT-004`, `UT-CONTRACT-005`')
+
+
+def contract_prose_only(root: Path) -> None:
+    """Mention an undeclared code in prose so it reads as documented without a table row."""
+    edit(root / REFERENCE, '## Handling pattern',
+         'A reader may also meet `UT-AIR-PROSE-001` while debugging.\n\n## Handling pattern')
+
+
+CONTRACT_MUTANTS = {
+    'contract-undeclared-code': contract_undeclared_code,
+    'contract-dead-constant': contract_dead_constant,
+    'contract-renaming-drift': contract_renaming_drift,
+    'contract-reference-drift': contract_reference_drift,
+    'contract-range-over-gap': contract_range_over_gap,
+    'contract-prose-only': contract_prose_only,
+}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[1])
@@ -81,6 +132,11 @@ def main() -> int:
     mutate(root, 'phantom-code', phantom_code)
     mutate(root, 'drop-single-code', drop_single_code)
     mutate(root, 'renaming-drift', renaming_drift)
+
+    for name, apply in CONTRACT_MUTANTS.items():
+        mutate(root, name, apply)
+
+    print(f'All {4 + len(CONTRACT_MUTANTS)} diagnostic-code mutants killed.')
     return 0
 
 
