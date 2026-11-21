@@ -18,7 +18,7 @@ internal static class ContractNamespaceTableValidator
                 continue;
 
             ValidateIdentifier(moduleGroup.Key.Value, moduleGroup.Key, owners, reservations, diagnostics);
-            foreach (var identifier in moduleGroup.SelectMany(EnumerateOwnedIdentifiers).Distinct(StringComparer.Ordinal))
+            foreach (var identifier in moduleGroup.SelectMany(static facet => facet.OwnedIdentifiers()).Distinct(StringComparer.Ordinal))
                 ValidateIdentifier(identifier, moduleGroup.Key, owners, reservations, diagnostics);
         }
 
@@ -52,45 +52,5 @@ internal static class ContractNamespaceTableValidator
             $"Module '{moduleId}' declares contract identifier '{identifier}' outside its owned namespace set: {expected}.",
             null,
             [new ToolchainDiagnosticHint("Declare the package namespace through IModuleContractDescriptorProvider.NamespaceOwners or move the identifier to an owned namespace.")]));
-    }
-
-    private static IEnumerable<string> EnumerateOwnedIdentifiers(IModuleContractFacet facet)
-    {
-        switch (facet)
-        {
-            case ISyntaxContractFacet syntax:
-                foreach (var node in syntax.ParserNodes)
-                    yield return node.Produces.Value;
-                break;
-            case IAstContractFacet ast:
-                foreach (var ownership in ast.AstOwnership.Where(x => x.OwnerModule == facet.ModuleId))
-                    yield return ownership.NodeKind.Value;
-                break;
-            case IBytecodeContractFacet bytecode:
-                foreach (var emission in bytecode.BytecodeEmissions)
-                {
-                    foreach (var tag in emission.MayEmitTags)
-                        yield return tag.Value;
-                    foreach (var pattern in emission.MayEmitPatterns)
-                        yield return pattern.Value;
-                }
-                break;
-            case ICompilerFactOwnershipFacet facts:
-                foreach (var fact in facts.Facts.Where(x => x.OwnerModule == facet.ModuleId))
-                    yield return fact.FactId.Value;
-                break;
-            case IPipelineEffectContractFacet effects:
-                foreach (var effect in effects.Effects)
-                    yield return effect.EffectId.Value;
-                break;
-            case IVerifierContractFacet verifier:
-                foreach (var rule in verifier.Rules)
-                    yield return rule.RuleId.Value;
-                break;
-            case IBackendCapabilityFacet backend:
-                foreach (var capability in backend.Capabilities)
-                    yield return capability.CapabilityId.Value;
-                break;
-        }
     }
 }

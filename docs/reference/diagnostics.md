@@ -71,7 +71,7 @@ exist.
 
 | Family | Codes | Meaning |
 |---|---|---|
-| contract table and selection | `UT-CONTRACT-001`–`UT-CONTRACT-003`, `UT-CONTRACT-005`–`UT-CONTRACT-009` | duplicate facet, duplicate contract id, identifier outside its owning namespace; schema downgrade, undeclared module, new or declared module missing a descriptor, facet kind without deterministic order |
+| contract table and selection | `UT-CONTRACT-001`–`UT-CONTRACT-003`, `UT-CONTRACT-005`–`UT-CONTRACT-009` | duplicate facet, duplicate contract id inside one facet, identifier outside its owning namespace; schema downgrade, undeclared module, new or declared module missing a descriptor, facet kind without deterministic order |
 | AST and lowerer ownership | `UT-MOD-OWNERSHIP-001`–`UT-MOD-OWNERSHIP-003` | AST node with no lowering owner, with multiple owners, or lowerer handling a node another module owns |
 | compiler facts | `UT-COMPILER-FACT-001`–`UT-COMPILER-FACT-003` | a fact with several owners, referenced but not provided by any selected module, or produced by a module that does not own it |
 | pipeline effects | `UT-PIPELINE-EFFECT-001`–`UT-PIPELINE-EFFECT-005` | effect that both produces and invalidates a fact, required fact missing, reverification not performed, missing pipeline order, module listed twice in one stage |
@@ -82,6 +82,14 @@ exist.
 `UT-AIR-INTRINSIC-001` is the earliest point an unsupported intrinsic is reported today, and
 `UT-BACKEND-CAPABILITY-002` is a hard error rather than a warning: two facets offering the same capability
 mean the pipeline cannot decide which one is in force.
+
+`UT-CONTRACT-002` is reported for a duplicate **inside one facet** — the same identifier listed twice in a
+single declaration of a single module. It is deliberately not raised across facets or across modules:
+the same identifier legitimately appears in two facets of one module, saying different things about it
+(`LabelsModule` produces `wist.labels.ast.label` as a parser node and owns it as an AST node), and two
+modules claiming one AST node exclusively is `UT-MOD-OWNERSHIP-002`, whose resolution depends on the
+lowerer rather than on the table. Bytecode `MayEmitTags`/`MayEmitPatterns` are per-emission capabilities,
+not declarations, so a tag emitted by two different nodes is not a duplicate.
 
 ## Handling pattern
 

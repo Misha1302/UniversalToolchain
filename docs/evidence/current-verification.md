@@ -25,7 +25,7 @@ The documentation guard requires this table to mirror the repository's current e
 
 | Project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
-| `Tests` | 547 | 0 | 0 |
+| `Tests` | 553 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 252 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Generic.Tests` | 71 | 0 | 0 |
@@ -33,7 +33,7 @@ The documentation guard requires this table to mirror the repository's current e
 | `UniversalToolchain.LanguageSdk.Tests` | 242 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,490** | **0** | **0** |
+| **Total** | **1,496** | **0** | **0** |
 | **Total** | **1,441** | **0** | **0** |
 
 The exact manifest belongs to `eng/test-counts.json`. The current candidate adds focused regressions for the real syntax/semantic/lowering boundary, stage-local lifetime, plan-owned lowering activation, phase-owned module ordering, detached optimizer-contract provenance, hidden ownership edges and the documented rollout-scoring public-facade path. The planner-repair branch additionally carries 18 LanguageSdk regressions and metamorphic controls for definition/executable ordering, route-wide mandatory-pass feasibility, aggregate-cost overflow, semantic ambiguity and permutation/irrelevant-alternative stability. Fifty-eight generic implementation tests were moved from mixed Wist-owned suites into the Wist-free generic project rather than restoring forbidden friend edges; together with its four existing ownership tests the canonical generic suite contains 62 tests. `.NET CI` run `31049607823` completed the canonical entrypoint for the pinned historical commit; that receipt corresponds only to its own earlier manifest. A current revision is green only when its own exact manifest is verified.
