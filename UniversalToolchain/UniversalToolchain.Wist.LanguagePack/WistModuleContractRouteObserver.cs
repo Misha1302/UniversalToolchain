@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using AbstractIrConverters;
 using BasicCilCompiler.Contracts;
 using BasicCore.Contracts;
@@ -177,37 +177,27 @@ internal sealed class WistModuleContractRouteObserver : ILanguageArtifactRouteLi
             .Any(step => step.SourceContract == WistArtifactKinds.AirContract &&
                          step.TargetContract == WistArtifactKinds.AirContract);
 
+    /// <summary>
+    /// Builds the backend's contract pipeline component from its declared descriptor.
+    /// <para>
+    /// This used to be two <c>if</c> arms over backend names with a <c>throw</c> default. The descriptor
+    /// supplies the component id and the provider factory, so adding a backend does not touch this method.
+    /// </para>
+    /// </summary>
     private static IReadOnlyList<IBackendPipelineComponent> CreateBackendComponents(BackendId backend)
     {
-        var supportedIntrinsics = GetSupportedIntrinsics(backend);
-        if (backend.Value == "cil")
-        {
-            return
-            [
-                new ModuleContractBackendPipelineComponent(
-                    CilBackendContractDescriptorProvider.Module.Value,
-                    [new CilBackendContractDescriptorProvider(supportedIntrinsics)])
-            ];
-        }
-        if (backend.Value == "interpreter")
-        {
-            return
-            [
-                new ModuleContractBackendPipelineComponent(
-                    InterpreterBackendContractDescriptorProvider.Module.Value,
-                    [new InterpreterBackendContractDescriptorProvider(supportedIntrinsics)])
-            ];
-        }
-
-        throw new InvalidOperationException($"Unsupported Wist backend '{backend.Value}'.");
+        var descriptor = WistBackendCatalog.Canonical.GetRequiredDescriptor(backend);
+        var provider = descriptor.CreateContractDescriptorProvider(descriptor.SupportedIntrinsics);
+        return
+        [
+            new ModuleContractBackendPipelineComponent(
+                descriptor.PipelineComponentId,
+                [(IModuleContractDescriptorProvider)provider])
+        ];
     }
 
-    private static IReadOnlyList<string> GetSupportedIntrinsics(BackendId backend) => backend.Value switch
-    {
-        "cil" => new AbstractMethodsCompilerImpl().SupportedIntrinsics,
-        "interpreter" => AbstractIrToAbstractIrStub.SupportedIntrinsicIds,
-        _ => throw new InvalidOperationException($"Unsupported Wist backend '{backend.Value}'.")
-    };
+    private static IReadOnlyList<string> GetSupportedIntrinsics(BackendId backend) =>
+        WistBackendCatalog.Canonical.GetRequiredDescriptor(backend).SupportedIntrinsics;
 
     private sealed class PlannedFrontendContractComponent(IModuleContractDescriptorProvider provider) :
         IFrontendCoreModule,

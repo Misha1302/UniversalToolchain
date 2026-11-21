@@ -1,4 +1,4 @@
-using BasicCilCompiler.Execution;
+﻿using BasicCilCompiler.Execution;
 using BasicCore.Compilation;
 using BasicCore.Execution;
 using BasicInterpreter;
@@ -53,27 +53,20 @@ internal sealed class WistSsaReportSnapshot
 
 internal static class WistBuiltArtifactActivation
 {
-    private static readonly BackendId CilBackend = new("cil");
-    private static readonly BackendId InterpreterBackend = new("interpreter");
-
+    /// <summary>
+    /// Materializes a built artifact as a durable program by asking the backend descriptor.
+    /// <para>
+    /// This used to be an <c>if/else</c> over two backend names with a <c>throw</c> as the third arm. The
+    /// descriptor carries the projection, so a third backend becomes data rather than a new branch here.
+    /// </para>
+    /// </summary>
     public static IWistDurableProgram Materialize(
         LanguageBuildRuntime runtime,
         LanguageArtifactBuildResult result)
     {
         ArgumentNullException.ThrowIfNull(runtime);
         ArgumentNullException.ThrowIfNull(result);
-        if (result.Backend == CilBackend)
-        {
-            var artifact = runtime.GetBuiltArtifactValue(result, WistDirectBackendArtifactKinds.Cil);
-            return new CilProgram(artifact, runtime.Plan);
-        }
-        if (result.Backend == InterpreterBackend)
-        {
-            var artifact = runtime.GetBuiltArtifactValue(result, WistDirectBackendArtifactKinds.Interpreter);
-            return new InterpreterProgram(artifact, runtime.Plan);
-        }
-        throw new InvalidOperationException(
-            $"Wist built artifact backend '{result.Backend.Value}' cannot be materialized as a durable program.");
+        return WistBackendCatalog.Canonical.GetRequiredDescriptor(result.Backend).MaterializeProgram(runtime, result);
     }
 
     public static WistSsaReportSnapshot? GetSsaReport(
@@ -82,16 +75,18 @@ internal static class WistBuiltArtifactActivation
     {
         ArgumentNullException.ThrowIfNull(runtime);
         ArgumentNullException.ThrowIfNull(result);
-        SsaRouteReport? report;
-        if (result.Backend == CilBackend)
-            report = runtime.GetBuiltArtifactValue(result, WistDirectBackendArtifactKinds.Cil).SsaReport;
-        else if (result.Backend == InterpreterBackend)
-            report = runtime.GetBuiltArtifactValue(result, WistDirectBackendArtifactKinds.Interpreter).SsaReport;
-        else
-            throw new InvalidOperationException(
-                $"Wist built artifact backend '{result.Backend.Value}' has no Wist optimization report projection.");
-        return Project(report);
+        return Project(WistBackendCatalog.Canonical.GetRequiredDescriptor(result.Backend).ProjectSsaReport(runtime, result));
     }
+
+    internal static IWistDurableProgram CreateCilProgram(
+        LanguageBuildRuntime runtime,
+        LanguageArtifactBuildResult result) =>
+        new CilProgram(runtime.GetBuiltArtifactValue(result, WistDirectBackendArtifactKinds.Cil), runtime.Plan);
+
+    internal static IWistDurableProgram CreateInterpreterProgram(
+        LanguageBuildRuntime runtime,
+        LanguageArtifactBuildResult result) =>
+        new InterpreterProgram(runtime.GetBuiltArtifactValue(result, WistDirectBackendArtifactKinds.Interpreter), runtime.Plan);
 
     public static WistSsaReportSnapshot? TryGetSsaReport(Exception exception)
     {
