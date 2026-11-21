@@ -69,8 +69,14 @@ the outermost layer to be observable.
 
 ## Running it
 
-```bash
+```bash ci-timeout=300
 dotnet test UniversalToolchain/Tests/Tests.csproj -c Release --filter "FullyQualifiedName~PlanDeterminismGateTests"
 ```
+
+The fence declares `ci-timeout=300` because the command restores and builds the whole Release graph
+before the two-second test run. Measured on this tree: 78 s when the Release binaries had to be rebuilt,
+44 s on the immediately following run, against the runner's 60 s default. Without the attribute the block
+passes only when the machine happens to be warm, so a clean checkout can fail on infrastructure rather
+than on determinism.
 
 The fixture is part of the `Core` suite and therefore part of `./build.sh --skip-pack`.

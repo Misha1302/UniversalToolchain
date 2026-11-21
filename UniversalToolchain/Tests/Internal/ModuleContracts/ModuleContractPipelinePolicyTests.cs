@@ -1,3 +1,4 @@
+using UniversalToolchain.Diagnostics.Abstractions;
 using UniversalToolchain.ModuleContracts;
 
 namespace Tests.Internal.ModuleContracts;
@@ -75,6 +76,56 @@ public sealed class ModuleContractPipelinePolicyTests
             Is.EqualTo(new[] { AirVerificationScope.Structural }));
     }
 
+    [Test]
+    public void AirBoundary_WhenTwoBackendFacetsAreSelected_ReportsMultipleBackendCapabilityFacets()
+    {
+        // The real factory refuses to choose between two runtime backend facets. The observer must convert that
+        // refusal into a typed diagnostic rather than let a bare InvalidOperationException escape, otherwise the
+        // operator learns nothing about which contract is wrong.
+        var table = new ModuleContractTableBuilder()
+            .AddFacet(new BackendCapabilityFacet(
+                new ModuleId("test.backend.one"),
+                [new BackendCapabilityContract(new BackendCapabilityId("test.capability.one"), [])]))
+            .AddFacet(new BackendCapabilityFacet(
+                new ModuleId("test.backend.two"),
+                [new BackendCapabilityContract(new BackendCapabilityId("test.capability.two"), [])]))
+            .Build();
+        Assert.That(table.Diagnostics, Is.Empty, "the failure must come from selection, not from the table build");
+
+        var observer = CreateObserver(
+            ModuleContractVerificationPolicy.P0Structural,
+            table,
+            new RecordingAirVerifier(),
+            new BackendCapabilitySelectionFactory(AirBackendPolicy.CapabilityGated));
+
+        var exception = Assert.Throws<ModuleContractVerificationException>(() => observer.AfterAir(CreateContext([])));
+
+        Assert.That(exception!.Diagnostics.Select(static diagnostic => diagnostic.Code),
+            Has.Exactly(1).EqualTo(ModuleContractDiagnosticCodes.MultipleBackendCapabilityFacets));
+    }
+
+    [Test]
+    public void AirBoundary_WhenInvalidationRoutesToAnUnhandledVerifier_ReportsReverificationRequired()
+    {
+        // Invalidation of a fact routed to a different verifier cannot be discharged at the AIR stage. Reporting it
+        // is the only honest option: silently dropping the obligation would mean a fact is marked invalid and nobody
+        // ever re-verifies it.
+        var optimizer = new BackendInputInvalidatingOptimizer();
+        var observer = CreateObserver(
+            ModuleContractVerificationPolicy.P3Always,
+            CreateTable(optimizer),
+            new RecordingAirVerifier());
+
+        var exception = Assert.Throws<ModuleContractVerificationException>(() =>
+            observer.AfterAir(CreateContext([optimizer])));
+
+        Assert.That(exception!.Stage, Is.EqualTo("AIR pipeline reverification routing"));
+        var diagnostic = exception.Diagnostics.Single(x =>
+            x.Code == ModuleContractDiagnosticCodes.CompilerFactReverificationRequired);
+        Assert.That(diagnostic.Severity, Is.EqualTo(ToolchainDiagnosticSeverity.Error));
+        Assert.That(diagnostic.Message, Does.Contain(KnownCoreVerifierRules.BackendInputContract.Value));
+    }
+
     private static ModuleContractPipelineObserver CreateObserver(
         ModuleContractVerificationPolicy policy,
         SelectedModuleContractTable table,
@@ -97,6 +148,29 @@ public sealed class ModuleContractPipelinePolicyTests
             new CoreCompilerStageFactSeedProvider());
     }
 
+    private static ModuleContractPipelineObserver CreateObserver(
+        ModuleContractVerificationPolicy policy,
+        SelectedModuleContractTable table,
+        RecordingAirVerifier verifier,
+        IBackendCapabilitySelectionFactory backendSelectionFactory)
+    {
+        var options = ModuleContractPipelineProfiles.StrictEnforced with
+        {
+            VerificationPolicy = policy
+        };
+        return new ModuleContractPipelineObserver(
+            options,
+            new FixedTableProvider(table),
+            new BytecodeObservedEmissionReader(),
+            new BytecodeVerifier(),
+            verifier,
+            backendSelectionFactory,
+            new ModuleContractDiagnosticPolicy(new InMemoryModuleContractDiagnosticSink()),
+            new PipelineEffectVerifier(),
+            CompilerFactVerifierRegistry.Core,
+            new CoreCompilerStageFactSeedProvider());
+    }
+
     private static CompilationPipelineAirContext CreateContext(IReadOnlyList<IAirOptimizer> optimizers) =>
         new(
             new CompilationInput { SourceText = "1" },
@@ -106,12 +180,12 @@ public sealed class ModuleContractPipelinePolicyTests
             [],
             []);
 
-    private static SelectedModuleContractTable CreateTable(InvalidatingOptimizer? optimizer = null)
+    private static SelectedModuleContractTable CreateTable(IModuleContractDescriptorProvider? contributor = null)
     {
         var builder = new ModuleContractTableBuilder()
             .AddFacet(KnownCoreCompilerFacts.CreateOwnershipFacet());
-        if (optimizer != null)
-            builder.AddFacets(optimizer.GetFacets());
+        if (contributor != null)
+            builder.AddFacets(contributor.GetFacets());
         var table = builder.Build();
         Assert.That(table.Diagnostics, Is.Empty);
         return table;
@@ -166,6 +240,27 @@ public sealed class ModuleContractPipelinePolicyTests
                         [],
                         [],
                         [KnownCoreCompilerFacts.AirVerified])
+                ])
+        ];
+    }
+    private sealed class BackendInputInvalidatingOptimizer : IAirOptimizer, IModuleContractDescriptorProvider
+    {
+        private static readonly ModuleId Module = new("test.optimizer.invalidate-backend-input");
+
+        public IAbstractIR Optimize(IAbstractIR current) => current;
+
+        public IReadOnlyList<IModuleContractFacet> GetFacets() =>
+        [
+            new PipelineEffectFacet(
+                Module,
+                [
+                    new PipelineEffectContract(
+                        new CompilerEffectId("test.optimizer.invalidate-backend-input.effect"),
+                        CompilerPipelineStage.Air,
+                        [],
+                        [],
+                        [],
+                        [KnownCoreCompilerFacts.BackendInputVerified])
                 ])
         ];
     }
