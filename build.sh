@@ -272,6 +272,7 @@ if [[ "$skip_pack" == false ]]; then
     --root "$root" \
     --manifest "$package_manifest" \
     --packages artifacts/packages
+  python3 Tools/test-language-sdk-package-matrix-mutants.py --root "$root"
   python3 Tools/package_metadata.py \
     --root "$root" \
     --manifest "$package_manifest" \
