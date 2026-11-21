@@ -1,3 +1,9 @@
+---
+title: Plan determinism gate
+navigation: hidden
+status: Internal maintainer evidence for the planner determinism gate and its mutation self-test.
+---
+
 # Plan determinism gate
 
 A `LanguagePlan` is expected to be a pure function of the *set* of selected features, backends and
