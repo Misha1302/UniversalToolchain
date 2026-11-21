@@ -300,6 +300,45 @@ public sealed class AirVerifierTests
         Assert.That(result.Diagnostics.Select(static x => x.Code), Does.Contain(ModuleContractDiagnosticCodes.UnsupportedAirIntrinsic));
     }
 
+
+    [Test]
+    public void Verify_WhenAirDeclaresTheSameLabelTwice_ReturnsDuplicateAirLabelDiagnostic()
+    {
+        var label = Guid.NewGuid();
+        var air = new AbstractIR();
+        air.AppendInstructions([new Instruction(UOpCode.Label, [label])]);
+        air.AppendInstructions([new Instruction(UOpCode.Label, [label])]);
+        var table = CreateTable(includeBackendOnlySupport: true);
+        var selection = BackendCapabilitySelection.FromContracts(table, [_compilerCapability]);
+
+        var result = new AirVerifier().Verify(new AirVerificationRequest(
+            air,
+            table,
+            selection,
+            VerificationSeverityProfile.Strict));
+
+        Assert.That(result.Diagnostics.Select(static x => x.Code),
+            Has.Exactly(1).EqualTo(ModuleContractDiagnosticCodes.DuplicateAirLabel));
+    }
+
+    [Test]
+    public void Verify_WhenSelectedCapabilityIsNotDeclaredByAnyContract_ReturnsUnknownBackendCapabilityDiagnostic()
+    {
+        var table = CreateTable(includeBackendOnlySupport: true);
+        var undeclared = new BackendCapabilityId("test.backend.undeclared");
+        var selection = new BackendCapabilitySelection([undeclared], [], AirBackendPolicy.CapabilityGated);
+        var air = new AbstractIR();
+
+        var result = new AirVerifier().Verify(new AirVerificationRequest(
+            air,
+            table,
+            selection,
+            VerificationSeverityProfile.Strict));
+
+        Assert.That(result.Diagnostics.Select(static x => x.Code),
+            Has.Exactly(1).EqualTo(ModuleContractDiagnosticCodes.UnknownBackendCapability));
+    }
+
     private static AirVerifier CreateVerifierWithBackendOnlyIntrinsicSemantics()
     {
         var catalog = new IntrinsicCatalogBuilder().Build([new BackendOnlyIntrinsicDescriptorProvider()]);

@@ -211,6 +211,8 @@ python3 Tools/check_documentation_status.py
 python3 Tools/test-documentation-status-mutants.py --root "$root"
 python3 Tools/check-diagnostic-codes.py --root "$root"
 python3 Tools/test-diagnostic-codes-mutants.py --root "$root"
+python3 Tools/check-contract-diagnostic-tests.py --root "$root"
+python3 Tools/test-contract-diagnostic-tests-mutants.py --root "$root"
 python3 Tools/check-markdown-block-hygiene.py --root "$root"
 python3 Tools/test-markdown-block-hygiene-mutants.py --root "$root"
 python3 Tools/check-security-claims.py --root "$root"
