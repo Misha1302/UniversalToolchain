@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Plan hashes for every shipped Wist preset/backend pair, captured from the unchanged planner before module descriptors were introduced. Module descriptors are descriptive, so these values must never change because of them (UT-A005 / ADR-008).",
+  "capturedAtCommit": "e3cde42",
+  "manifest": "c7f78d033181cd38271338f1e0fd30ee995bade94344b27a073b28cc52e136f3",
+  "plans": {
+    "composition-restricted|interpreter": "256e0e216d483b66538b901d703b02f0e2138428c6a8868e56b4837bc8317848",
+    "full-default|cil": "fbc4cd0a594dc69202f2dd6d7efc3e17233d6dfcdbc5727d7f6a9d2eafadc15c",
+    "full-default|interpreter": "47b45d212889e32eb7e2711ca48ddd54ea5b233bdfbe46245b6ed2ea3e613602",
+    "full-default-native|cil": "2f38939aa25db655ac47fb91fc329fa217cd41a319d9e92e7c00d1ec3ffd2bb0",
+    "full-default-native|interpreter": "01c9307ca19b10d91bdbbc9488119a3c2a613cf0853ccefba99e477eb67d3f0a",
+    "function-calls-safe-math|cil": "44e9cb76392c6302a2eaa30a1ae3c51a4c39fda2273158c4318dcb7df7544fd5",
+    "function-calls-safe-math|interpreter": "1ea671b518901354ebcc1602c685bdae30e2d344d18bf3107eb78311353b5107",
+    "minimal-arithmetic|interpreter": "ee8644018864ec1c4e7a57447fe3aa39e848d1531d767f45346288afaad4c01b",
+    "minimal-arithmetic-grouped|interpreter": "ae4908eed5eca904e941435f997489d18176545180d986d3b3a32ede9c43441e",
+    "minimal-arithmetic-native|cil": "29a876b55ade702c7343d29273d216a54e32f0fc6d07ff11a61f808dae19bb3d",
+    "pricing-restricted|cil": "8317074b12409ea5d33a74253c28f407613ee9dea37099721b8904deb430d651",
+    "pricing-restricted|interpreter": "3ae7b7ad99031585aee01cff77f2bc978f524f333543eff1c4335cbb68bff841",
+    "ssa|cil": "0a755a4de69e72fbaeb8a1e250f22ed639c5ab8ffc0d3916c751582c4667ebdb",
+    "ssa|interpreter": "970c819182abb92c7a797932ea778adcd2eb3450bea1b7cd6159af57258c0511"
+  }
+}

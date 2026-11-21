@@ -78,6 +78,40 @@ wist.owner = language-plan
 
 Semantic and lowering ownership is represented by separate contribution IDs in `wist.semantics.features` and `wist.lowering.features`.
 
+## Module identity
+
+Wist's phase ownership is expressed twice today: as plan contributions (authoritative, selected by
+`LanguageCompiler`) and as a hardcoded table keyed by contribution id (`WistModulePhaseOwnership`,
+`WistSemanticBytecodeLowerer.SupportsModuleContribution`). The second one is what every new language
+has to copy, and it is where "which module lowers this node kind" is answered by a thirteen-term `||`
+chain.
+
+`LanguageModuleDescriptor` (in `UniversalToolchain.FeatureSdk`) introduces the missing vocabulary:
+a module identifier, the phases it takes part in, and the contributions it groups. It is
+**descriptive only**. It is not part of `LanguagePackageDescriptor`, it never reaches
+`LanguageCompiler`, and it cannot add, remove or reorder a contribution.
+
+The prohibition is enforced mechanically rather than by review:
+
+- `Tools/check-module-descriptor-boundary.py` rejects any reference to `LanguageModuleDescriptor`
+  from `UniversalToolchain.LanguageSdk`, rejects selection-shaped public methods on
+  `LanguageModuleRegistry`, and requires the descriptor to keep its explicit non-planner statement;
+- `Tools/test-module-descriptor-mutants.py` reintroduces each violation and requires the gate to
+  fail;
+- `ModuleDescriptorNotInPlannerTests` asserts the same dependency direction from inside the test
+  suite;
+- `ModuleDescriptors_CannotChangeAnyWistPlanHash` pins every shipped preset/backend plan hash and the
+  package manifest hash in `GoldenWistPlanHashes.json`, so a future change that lets modules
+  influence planning fails with a diff rather than a subtly different plan.
+
+`LanguageModuleRegistry` resolves "which module owns this phase of this contribution" and treats two
+owners for the same phase as an error, never a tie-break. Wist declares its 21 modules and 7
+optimizers in `WistModuleDescriptors`; the phases are derived from what each component actually
+provides (a semantic binding factory, a lowering implementation) rather than from a hand-maintained
+flag. `WistModuleRegistry_ResolvesLoweringOwnerExactlyWhenLowererSupportsTheContribution` keeps the
+descriptors and the current hardcoded lowering predicate in agreement, which is the precondition for
+replacing the predicate later.
+
 ## Runtime extension boundary
 
 Wist does not rely on `InternalsVisibleTo` from UNIVERSAL assemblies. In particular, `UniversalToolchain.Runtime` does not friend the Wist-owned mixed `UniversalToolchain.LanguageSdk.Tests` assembly.
