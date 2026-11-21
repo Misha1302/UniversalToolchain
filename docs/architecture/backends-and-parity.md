@@ -62,7 +62,12 @@ Parity tests should cover:
 - restricted dialect rejection behavior;
 - optimizer-enabled and optimizer-disabled configurations when relevant.
 
-If interpreter and CIL disagree, treat the compiled path or optimizer as suspect until the semantic rule is clarified.
+If interpreter and CIL disagree, treat the compiled path or optimizer as suspect until the semantic rule
+is clarified.
+
+The parity claim is measured, not asserted. See [Cross-Backend Parity Corpus](./cross-backend-parity.md)
+for the committed corpus, the two execution paths it covers, and the asymmetries that are recorded rather
+than ignored.
 
 ## Backend coverage of required contributions
 

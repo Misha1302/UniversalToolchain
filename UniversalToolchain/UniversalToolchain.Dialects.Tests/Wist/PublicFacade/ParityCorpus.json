@@ -1,0 +1,1896 @@
+{
+  "Schema": 1,
+  "DeclaredRequireDivergences": 10,
+  "Rows": [
+    {
+      "Preset": "full-default",
+      "Source": "2 \u002B 3",
+      "Expected": {
+        "Type": "Double",
+        "Value": "5",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default",
+      "Source": "2 \u002B 3 * 4",
+      "Expected": {
+        "Type": "Double",
+        "Value": "14",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default",
+      "Source": "(2 \u002B 3) * 4",
+      "Expected": {
+        "Type": "Double",
+        "Value": "20",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default",
+      "Source": "10 - 3 - 2",
+      "Expected": {
+        "Type": "Double",
+        "Value": "5",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default",
+      "Source": "-5 \u002B 3",
+      "Expected": {
+        "Type": "Double",
+        "Value": "-2",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default",
+      "Source": "100 / 7",
+      "Expected": {
+        "Type": "Double",
+        "Value": "14.285714285714286",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default",
+      "Source": "100.0 / 7.0",
+      "Expected": {
+        "Type": "Double",
+        "Value": "14.285714285714286",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default",
+      "Source": "2147483647 \u002B 1",
+      "Expected": {
+        "Type": "Double",
+        "Value": "2147483648",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default",
+      "Source": "1000000 * 1000000",
+      "Expected": {
+        "Type": "Double",
+        "Value": "1000000000000",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default",
+      "Source": "1 / 0",
+      "Expected": {
+        "Type": "Double",
+        "Value": "\u002BInf",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default",
+      "Source": "1.0 / 0.0",
+      "Expected": {
+        "Type": "Double",
+        "Value": "\u002BInf",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default",
+      "Source": "0.0 / 0.0",
+      "Expected": {
+        "Type": "Double",
+        "Value": "NaN",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default",
+      "Source": "2 \u003C 3",
+      "Expected": {
+        "Type": "Boolean",
+        "Value": "True",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default",
+      "Source": "2 == 2",
+      "Expected": {
+        "Type": "Boolean",
+        "Value": "True",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default",
+      "Source": "true",
+      "Expected": {
+        "Type": "Boolean",
+        "Value": "True",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Boolean",
+          "Value": "True",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Boolean",
+          "Value": "True",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "full-default",
+      "Source": "true and false",
+      "Expected": {
+        "Type": "Boolean",
+        "Value": "False",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Boolean",
+          "Value": "False",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Boolean",
+          "Value": "False",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "full-default",
+      "Source": "let a = 2\nlet b = 3\na * b",
+      "Expected": {
+        "Type": "Double",
+        "Value": "6",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default",
+      "Source": "let s = 0\nfor (let i = 1) (i \u003C= 5) (i = i \u002B 1) (s = s \u002B i)\ns",
+      "Expected": {
+        "Type": "Double",
+        "Value": "15",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default-native",
+      "Source": "2 \u002B 3",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "5",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "5",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "5",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "full-default-native",
+      "Source": "2 \u002B 3 * 4",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "14",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "14",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "14",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "full-default-native",
+      "Source": "(2 \u002B 3) * 4",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "20",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "20",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "20",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "full-default-native",
+      "Source": "10 - 3 - 2",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "5",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "5",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "5",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "full-default-native",
+      "Source": "-5 \u002B 3",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "-2",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "-2",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "-2",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "full-default-native",
+      "Source": "100 / 7",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "14",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "14",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "14",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "full-default-native",
+      "Source": "100.0 / 7.0",
+      "Expected": {
+        "Type": "Double",
+        "Value": "14.285714285714286",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Double",
+          "Value": "14.285714285714286",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Double",
+          "Value": "14.285714285714286",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "full-default-native",
+      "Source": "2147483647 \u002B 1",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "-2147483648",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "-2147483648",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "-2147483648",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "full-default-native",
+      "Source": "1000000 * 1000000",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "-727379968",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "-727379968",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "-727379968",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "full-default-native",
+      "Source": "1 / 0",
+      "Expected": {
+        "Type": null,
+        "Value": null,
+        "Failure": "DivideByZeroException"
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "DivideByZeroException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default-native",
+      "Source": "1.0 / 0.0",
+      "Expected": {
+        "Type": "Double",
+        "Value": "\u002BInf",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": "Double",
+          "Value": "\u002BInf",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "full-default-native",
+      "Source": "0.0 / 0.0",
+      "Expected": {
+        "Type": "Double",
+        "Value": "NaN",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": "Double",
+          "Value": "NaN",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "full-default-native",
+      "Source": "2 \u003C 3",
+      "Expected": {
+        "Type": "Boolean",
+        "Value": "True",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default-native",
+      "Source": "2 == 2",
+      "Expected": {
+        "Type": "Boolean",
+        "Value": "True",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Boolean",
+          "Value": "True",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default-native",
+      "Source": "true",
+      "Expected": {
+        "Type": "Boolean",
+        "Value": "True",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Boolean",
+          "Value": "True",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Boolean",
+          "Value": "True",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "full-default-native",
+      "Source": "true and false",
+      "Expected": {
+        "Type": "Boolean",
+        "Value": "False",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Boolean",
+          "Value": "False",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Boolean",
+          "Value": "False",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "full-default-native",
+      "Source": "let a = 2\nlet b = 3\na * b",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "6",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "full-default-native",
+      "Source": "let s = 0\nfor (let i = 1) (i \u003C= 5) (i = i \u002B 1) (s = s \u002B i)\ns",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "15",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "function-calls-safe-math",
+      "Source": "2 \u002B 3",
+      "Expected": {
+        "Type": "Double",
+        "Value": "5",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "function-calls-safe-math",
+      "Source": "2 \u002B 3 * 4",
+      "Expected": {
+        "Type": "Double",
+        "Value": "14",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "function-calls-safe-math",
+      "Source": "(2 \u002B 3) * 4",
+      "Expected": {
+        "Type": "Double",
+        "Value": "20",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "function-calls-safe-math",
+      "Source": "10 - 3 - 2",
+      "Expected": {
+        "Type": "Double",
+        "Value": "5",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "function-calls-safe-math",
+      "Source": "-5 \u002B 3",
+      "Expected": {
+        "Type": "Double",
+        "Value": "-2",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "function-calls-safe-math",
+      "Source": "100 / 7",
+      "Expected": {
+        "Type": "Double",
+        "Value": "14.285714285714286",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "function-calls-safe-math",
+      "Source": "100.0 / 7.0",
+      "Expected": {
+        "Type": "Double",
+        "Value": "14.285714285714286",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "function-calls-safe-math",
+      "Source": "2147483647 \u002B 1",
+      "Expected": {
+        "Type": "Double",
+        "Value": "2147483648",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "function-calls-safe-math",
+      "Source": "1000000 * 1000000",
+      "Expected": {
+        "Type": "Double",
+        "Value": "1000000000000",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "function-calls-safe-math",
+      "Source": "1 / 0",
+      "Expected": {
+        "Type": "Double",
+        "Value": "\u002BInf",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "function-calls-safe-math",
+      "Source": "1.0 / 0.0",
+      "Expected": {
+        "Type": "Double",
+        "Value": "\u002BInf",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "function-calls-safe-math",
+      "Source": "0.0 / 0.0",
+      "Expected": {
+        "Type": "Double",
+        "Value": "NaN",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "function-calls-safe-math",
+      "Source": "2 \u003C 3",
+      "Expected": {
+        "Type": "Boolean",
+        "Value": "True",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "function-calls-safe-math",
+      "Source": "2 == 2",
+      "Expected": {
+        "Type": "Boolean",
+        "Value": "True",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "function-calls-safe-math",
+      "Source": "true",
+      "Expected": {
+        "Type": "Boolean",
+        "Value": "True",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Boolean",
+          "Value": "True",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Boolean",
+          "Value": "True",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "function-calls-safe-math",
+      "Source": "true and false",
+      "Expected": {
+        "Type": "Boolean",
+        "Value": "False",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Boolean",
+          "Value": "False",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Boolean",
+          "Value": "False",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "function-calls-safe-math",
+      "Source": "let a = 2\nlet b = 3\na * b",
+      "Expected": {
+        "Type": "Double",
+        "Value": "6",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        }
+      }
+    },
+    {
+      "Preset": "function-calls-safe-math",
+      "Source": "let s = 0\nfor (let i = 1) (i \u003C= 5) (i = i \u002B 1) (s = s \u002B i)\ns",
+      "Expected": {
+        "Type": null,
+        "Value": null,
+        "Failure": "InvalidOperationException"
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "InvalidOperationException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "InvalidOperationException"
+        }
+      }
+    },
+    {
+      "Preset": "pricing-restricted",
+      "Source": "2 \u002B 3",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "5",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "5",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "5",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "pricing-restricted",
+      "Source": "2 \u002B 3 * 4",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "14",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "14",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "14",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "pricing-restricted",
+      "Source": "(2 \u002B 3) * 4",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "20",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "20",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "20",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "pricing-restricted",
+      "Source": "10 - 3 - 2",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "5",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "5",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "5",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "pricing-restricted",
+      "Source": "-5 \u002B 3",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "-2",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "-2",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "-2",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "pricing-restricted",
+      "Source": "100 / 7",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "14",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "14",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "14",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "pricing-restricted",
+      "Source": "100.0 / 7.0",
+      "Expected": {
+        "Type": "Double",
+        "Value": "14.285714285714286",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Double",
+          "Value": "14.285714285714286",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Double",
+          "Value": "14.285714285714286",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "pricing-restricted",
+      "Source": "2147483647 \u002B 1",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "-2147483648",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "-2147483648",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "-2147483648",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "pricing-restricted",
+      "Source": "1000000 * 1000000",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "-727379968",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "-727379968",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "-727379968",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "pricing-restricted",
+      "Source": "1 / 0",
+      "Expected": {
+        "Type": null,
+        "Value": null,
+        "Failure": "DivideByZeroException"
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "DivideByZeroException"
+        }
+      }
+    },
+    {
+      "Preset": "pricing-restricted",
+      "Source": "1.0 / 0.0",
+      "Expected": {
+        "Type": "Double",
+        "Value": "\u002BInf",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": "Double",
+          "Value": "\u002BInf",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "pricing-restricted",
+      "Source": "0.0 / 0.0",
+      "Expected": {
+        "Type": "Double",
+        "Value": "NaN",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": "Double",
+          "Value": "NaN",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "pricing-restricted",
+      "Source": "2 \u003C 3",
+      "Expected": {
+        "Type": null,
+        "Value": null,
+        "Failure": "LexerException"
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "LexerException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "LexerException"
+        }
+      }
+    },
+    {
+      "Preset": "pricing-restricted",
+      "Source": "2 == 2",
+      "Expected": {
+        "Type": null,
+        "Value": null,
+        "Failure": "LexerException"
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "LexerException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "LexerException"
+        }
+      }
+    },
+    {
+      "Preset": "pricing-restricted",
+      "Source": "true",
+      "Expected": {
+        "Type": null,
+        "Value": null,
+        "Failure": "BindingException"
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "BindingException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "BindingException"
+        }
+      }
+    },
+    {
+      "Preset": "pricing-restricted",
+      "Source": "true and false",
+      "Expected": {
+        "Type": null,
+        "Value": null,
+        "Failure": "BindingException"
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "BindingException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "BindingException"
+        }
+      }
+    },
+    {
+      "Preset": "pricing-restricted",
+      "Source": "let a = 2\nlet b = 3\na * b",
+      "Expected": {
+        "Type": null,
+        "Value": null,
+        "Failure": "LexerException"
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "LexerException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "LexerException"
+        }
+      }
+    },
+    {
+      "Preset": "pricing-restricted",
+      "Source": "let s = 0\nfor (let i = 1) (i \u003C= 5) (i = i \u002B 1) (s = s \u002B i)\ns",
+      "Expected": {
+        "Type": null,
+        "Value": null,
+        "Failure": "LexerException"
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "LexerException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "LexerException"
+        }
+      }
+    },
+    {
+      "Preset": "ssa",
+      "Source": "2 \u002B 3",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "5",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "5",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "5",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "ssa",
+      "Source": "2 \u002B 3 * 4",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "14",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "14",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "14",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "ssa",
+      "Source": "(2 \u002B 3) * 4",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "20",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "20",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "20",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "ssa",
+      "Source": "10 - 3 - 2",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "5",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "5",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "5",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "ssa",
+      "Source": "-5 \u002B 3",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "-2",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "-2",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "-2",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "ssa",
+      "Source": "100 / 7",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "14",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "14",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "14",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "ssa",
+      "Source": "100.0 / 7.0",
+      "Expected": {
+        "Type": "Double",
+        "Value": "14.285714285714286",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Double",
+          "Value": "14.285714285714286",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Double",
+          "Value": "14.285714285714286",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "ssa",
+      "Source": "2147483647 \u002B 1",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "-2147483648",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "-2147483648",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "-2147483648",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "ssa",
+      "Source": "1000000 * 1000000",
+      "Expected": {
+        "Type": "Int32",
+        "Value": "-727379968",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": "Int32",
+          "Value": "-727379968",
+          "Failure": null
+        },
+        "interpreter": {
+          "Type": "Int32",
+          "Value": "-727379968",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "ssa",
+      "Source": "1 / 0",
+      "Expected": {
+        "Type": null,
+        "Value": null,
+        "Failure": "DivideByZeroException"
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "DivideByZeroException"
+        }
+      }
+    },
+    {
+      "Preset": "ssa",
+      "Source": "1.0 / 0.0",
+      "Expected": {
+        "Type": "Double",
+        "Value": "\u002BInf",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": "Double",
+          "Value": "\u002BInf",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "ssa",
+      "Source": "0.0 / 0.0",
+      "Expected": {
+        "Type": "Double",
+        "Value": "NaN",
+        "Failure": null
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "AirToSsaConversionException"
+        },
+        "interpreter": {
+          "Type": "Double",
+          "Value": "NaN",
+          "Failure": null
+        }
+      }
+    },
+    {
+      "Preset": "ssa",
+      "Source": "2 \u003C 3",
+      "Expected": {
+        "Type": null,
+        "Value": null,
+        "Failure": "LexerException"
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "LexerException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "LexerException"
+        }
+      }
+    },
+    {
+      "Preset": "ssa",
+      "Source": "2 == 2",
+      "Expected": {
+        "Type": null,
+        "Value": null,
+        "Failure": "LexerException"
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "LexerException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "LexerException"
+        }
+      }
+    },
+    {
+      "Preset": "ssa",
+      "Source": "true",
+      "Expected": {
+        "Type": null,
+        "Value": null,
+        "Failure": "BindingException"
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "BindingException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "BindingException"
+        }
+      }
+    },
+    {
+      "Preset": "ssa",
+      "Source": "true and false",
+      "Expected": {
+        "Type": null,
+        "Value": null,
+        "Failure": "BindingException"
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "BindingException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "BindingException"
+        }
+      }
+    },
+    {
+      "Preset": "ssa",
+      "Source": "let a = 2\nlet b = 3\na * b",
+      "Expected": {
+        "Type": null,
+        "Value": null,
+        "Failure": "LexerException"
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "LexerException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "LexerException"
+        }
+      }
+    },
+    {
+      "Preset": "ssa",
+      "Source": "let s = 0\nfor (let i = 1) (i \u003C= 5) (i = i \u002B 1) (s = s \u002B i)\ns",
+      "Expected": {
+        "Type": null,
+        "Value": null,
+        "Failure": "LexerException"
+      },
+      "RequireOutcomes": {
+        "cil": {
+          "Type": null,
+          "Value": null,
+          "Failure": "LexerException"
+        },
+        "interpreter": {
+          "Type": null,
+          "Value": null,
+          "Failure": "LexerException"
+        }
+      }
+    }
+  ]
+}
