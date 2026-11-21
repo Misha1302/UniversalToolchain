@@ -37,6 +37,18 @@ Traits are package attestations. A malicious package can lie in its implementati
 
 Exact package-manifest binding prevents accidental or unauthorized drift between the package graph used for planning and the package descriptors supplied for runtime assembly. It does not make the selected implementation trustworthy.
 
+### Where the policy is enforced, and why it is not plan time
+
+`LanguageRuntimePolicy` is checked when a **session is created**, not when a plan is compiled. This is a
+deliberate consequence of where the facts live: the traits describe runtime component registrations
+(`ILanguageArtifactTransformer`/`ILanguageArtifactExecutor`), which are supplied to the runtime, not to the
+planner. A plan can be compiled without those registrations in hand, so a plan-time check would be
+checking values it does not have.
+
+The practical consequence for a reviewer: a *plan* is not evidence that policy was enforced. Enforcement
+happens on the first `LanguageRuntime.Create`/session call, and a plan can exist in a repository while
+being unusable under the policy it declares. When auditing, check the session path, not the lock file.
+
 
 ## Threat-scenario matrix
 
