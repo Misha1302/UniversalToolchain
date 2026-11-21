@@ -136,6 +136,8 @@ read_manifest() {
 
 python3 Tools/check-build-topology.py --root "$root"
 python3 Tools/test-build-topology-mutants.py --root "$root"
+python3 Tools/check-package-locks.py --root "$root"
+python3 Tools/test-package-locks-mutants.py --root "$root"
 
 for solution in "${solutions[@]}"; do
   "$dotnet_command" restore "$solution" \
@@ -144,6 +146,7 @@ for solution in "${solutions[@]}"; do
     "${restore_source_args[@]}" \
     "-p:RestoreBuildInParallel=$restore_in_parallel" \
     "-p:UseSharedCompilation=$shared_compilation" \
+    "-p:RestoreLockedMode=true" \
     -p:NuGetAudit=false
 done
 
@@ -154,6 +157,7 @@ for sample_project in "${markdown_sample_projects[@]}"; do
     "${restore_source_args[@]}" \
     "-p:RestoreBuildInParallel=$restore_in_parallel" \
     "-p:UseSharedCompilation=$shared_compilation" \
+    "-p:RestoreLockedMode=true" \
     -p:NuGetAudit=false
 done
 

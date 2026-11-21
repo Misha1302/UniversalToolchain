@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "Microsoft.NET.Test.Sdk": {
+        "type": "Direct",
+        "requested": "[17.12.0, )",
+        "resolved": "17.12.0",
+        "contentHash": "kt/PKBZ91rFCWxVIJZSgVLk+YR+4KxTuHf799ho8WNiK5ZQpJNAEZCAWX86vcKrs+DiYjiibpYKdGZP6+/N17w==",
+        "dependencies": {
+          "Microsoft.CodeCoverage": "17.12.0",
+          "Microsoft.TestPlatform.TestHost": "17.12.0"
+        }
+      },
+      "NUnit": {
+        "type": "Direct",
+        "requested": "[4.2.2, )",
+        "resolved": "4.2.2",
+        "contentHash": "mon0OPko28yZ/foVXrhiUvq1LReaGsBdziumyyYGxV/pOE4q92fuYeN+AF+gEU5pCjzykcdBt5l7xobTaiBjsg=="
+      },
+      "NUnit.Analyzers": {
+        "type": "Direct",
+        "requested": "[4.4.0, )",
+        "resolved": "4.4.0",
+        "contentHash": "VVl1CuQttXRZh52HRw5SIOut3qXw4pmuiTYk02jTELVWZ9uYRY8IVl2qF9Zs7W0ElPiLDUrAglFBzNLBCPzEcw=="
+      },
+      "NUnit3TestAdapter": {
+        "type": "Direct",
+        "requested": "[4.6.0, )",
+        "resolved": "4.6.0",
+        "contentHash": "R7e1+a4vuV/YS+ItfL7f//rG+JBvVeVLX4mHzFEZo4W1qEKl8Zz27AqvQSAqo+BtIzUCo4aAJMYa56VXS4hudw=="
+      },
+      "GrEmit": {
+        "type": "Transitive",
+        "resolved": "3.5.1",
+        "contentHash": "qbBfXj3hBdq1zIk7i9LOCnfK44c1inTKEzQP/Nn+WEJ3GXYp0Cof+WT3rhgruQ6UVf/ng0o/m++y29t0IJfBDA=="
+      },
+      "Microsoft.CodeCoverage": {
+        "type": "Transitive",
+        "resolved": "17.12.0",
+        "contentHash": "4svMznBd5JM21JIG2xZKGNanAHNXplxf/kQDFfLHXQ3OnpJkayRK/TjacFjA+EYmoyuNXHo/sOETEfcYtAzIrA=="
+      },
+      "Microsoft.Extensions.DependencyInjection": {
+        "type": "Transitive",
+        "resolved": "10.0.2",
+        "contentHash": "J/Zmp6fY93JbaiZ11ckWvcyxMPjD6XVwIHQXBjryTBgn7O6O20HYg9uVLFcZlNfgH78MnreE/7EH+hjfzn7VyA==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.2"
+        }
+      },
+      "Microsoft.Extensions.DependencyInjection.Abstractions": {
+        "type": "Transitive",
+        "resolved": "10.0.2",
+        "contentHash": "zOIurr59+kUf9vNcsUkCvKWZv+fPosUZXURZesYkJCvl0EzTc9F7maAO4Cd2WEV7ZJJ0AZrFQvuH6Npph9wdBw=="
+      },
+      "Microsoft.TestPlatform.ObjectModel": {
+        "type": "Transitive",
+        "resolved": "17.12.0",
+        "contentHash": "TDqkTKLfQuAaPcEb3pDDWnh7b3SyZF+/W9OZvWFp6eJCIiiYFdSB6taE2I6tWrFw5ywhzOb6sreoGJTI6m3rSQ=="
+      },
+      "Microsoft.TestPlatform.TestHost": {
+        "type": "Transitive",
+        "resolved": "17.12.0",
+        "contentHash": "MiPEJQNyADfwZ4pJNpQex+t9/jOClBGMiCiVVFuELCMSX2nmNfvUor3uFVxNNCg30uxDP8JDYfPnMXQzsfzYyg==",
+        "dependencies": {
+          "Microsoft.TestPlatform.ObjectModel": "17.12.0",
+          "Newtonsoft.Json": "13.0.1"
+        }
+      },
+      "Newtonsoft.Json": {
+        "type": "Transitive",
+        "resolved": "13.0.1",
+        "contentHash": "ppPFpBcvxdsfUonNcvITKqLl3bqxWbDCZIzDWHzjpdAHRFfZe0Dw9HmA0+za13IdyrgJwpkDTDA9fHaxOrt20A=="
+      },
+      "exceptionsmanager": {
+        "type": "Project"
+      },
+      "universaltoolchain.featuresdk": {
+        "type": "Project",
+        "dependencies": {
+          "UniversalToolchain.Language.Abstractions": "[0.3.0-alpha.4, )"
+        }
+      },
+      "universaltoolchain.language.abstractions": {
+        "type": "Project"
+      },
+      "universaltoolchain.languageauthoring": {
+        "type": "Project",
+        "dependencies": {
+          "UniversalToolchain.FeatureSdk": "[0.3.0-alpha.4, )",
+          "UniversalToolchain.Language.Abstractions": "[0.3.0-alpha.4, )",
+          "UniversalToolchain.Runtime": "[0.3.0-alpha.5, )"
+        }
+      },
+      "universaltoolchain.languagesdk": {
+        "type": "Project",
+        "dependencies": {
+          "UniversalToolchain.FeatureSdk": "[0.3.0-alpha.4, )",
+          "UniversalToolchain.Language.Abstractions": "[0.3.0-alpha.4, )"
+        }
+      },
+      "universaltoolchain.planfuzz.adapter.acme": {
+        "type": "Project",
+        "dependencies": {
+          "ExceptionsManager": "[1.0.0, )",
+          "UniversalToolchain.LanguageAuthoring": "[0.3.0-alpha.5, )",
+          "UniversalToolchain.LanguageSdk": "[0.3.0-alpha.5, )",
+          "UniversalToolchain.PlanFuzz.Core": "[1.0.0, )",
+          "UniversalToolchain.Runtime": "[0.3.0-alpha.5, )"
+        }
+      },
+      "universaltoolchain.planfuzz.adapter.wist": {
+        "type": "Project",
+        "dependencies": {
+          "ExceptionsManager": "[1.0.0, )",
+          "UniversalToolchain.PlanFuzz.Core": "[1.0.0, )",
+          "UniversalToolchain.Wist": "[0.1.0-alpha.7, )"
+        }
+      },
+      "universaltoolchain.planfuzz.core": {
+        "type": "Project",
+        "dependencies": {
+          "ExceptionsManager": "[1.0.0, )",
+          "UniversalToolchain.Language.Abstractions": "[0.3.0-alpha.4, )",
+          "UniversalToolchain.LanguageSdk": "[0.3.0-alpha.5, )"
+        }
+      },
+      "universaltoolchain.runtime": {
+        "type": "Project",
+        "dependencies": {
+          "UniversalToolchain.FeatureSdk": "[0.3.0-alpha.4, )",
+          "UniversalToolchain.Language.Abstractions": "[0.3.0-alpha.4, )",
+          "UniversalToolchain.LanguageSdk": "[0.3.0-alpha.5, )"
+        }
+      },
+      "universaltoolchain.wist": {
+        "type": "Project",
+        "dependencies": {
+          "GrEmit": "[3.5.1, )",
+          "Microsoft.Extensions.DependencyInjection": "[10.0.2, )"
+        }
+      }
+    }
+  }
+}

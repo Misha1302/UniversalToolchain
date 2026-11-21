@@ -10,6 +10,21 @@
         <RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
         <UseSharedCompilation Condition="'$(UseSharedCompilation)' == ''">true</UseSharedCompilation>
 
+        <!-- Enforce the committed lock file, but only for projects that actually have one.
+             Restoring a project that resolves NuGet packages is otherwise free to pick a newer
+             transitive version on any given day, and the repository records nothing about what
+             the green build used. `build.sh` restores with RestoreLockedMode=true, so a lock that
+             has drifted from the project graph fails the build rather than being silently
+             rewritten.
+
+             The condition on file existence is deliberate. Turning this on unconditionally also
+             writes a lock file for every project that resolves only project references, and those
+             68 extra locks carry no information while making every added ProjectReference fail
+             with NU1004 until a broad regeneration is run. Locks live where packages are resolved;
+             `Tools/check-package-locks.py` fails the build if a project gains a PackageReference
+             without gaining a lock. -->
+        <RestorePackagesWithLockFile Condition="'$(RestorePackagesWithLockFile)' == '' And Exists('$(MSBuildProjectDirectory)/packages.lock.json')">true</RestorePackagesWithLockFile>
+
         <!-- Runtime identity generation 2 intentionally breaks binary unification with
              pre-hardening checkouts. The old graph shipped every assembly as 1.0.0.0,
              allowing incompatible DLLs to bind by simple identity and fail much later. -->
@@ -20,6 +35,7 @@
         <DeterministicSourcePaths>true</DeterministicSourcePaths>
         <CanonicalRepositoryRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..'))</CanonicalRepositoryRoot>
         <PathMap>$(CanonicalRepositoryRoot)=/_</PathMap>
+
     </PropertyGroup>
 
     <ItemGroup>
