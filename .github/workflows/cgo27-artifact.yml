@@ -34,7 +34,7 @@ jobs:
     timeout-minutes: 50
     steps:
       - name: Checkout exact source revision
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
         with:
           ref: ${{ env.CGO27_SOURCE_SHA }}
           fetch-depth: 0
@@ -42,11 +42,11 @@ jobs:
         shell: bash
         run: test "$(git rev-parse HEAD)" = "$CGO27_SOURCE_SHA"
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9  # v4.3.1
         with:
           global-json-file: global.json
       - name: Build anonymous paper
-        uses: xu-cheng/latex-action@v4
+        uses: xu-cheng/latex-action@6549dc21effb2730855a1281407ecfcececc6c1b  # 4.1.0
         with:
           root_file: main.tex
           working_directory: CGO27/paper
@@ -119,7 +119,7 @@ jobs:
             test "$(cat "$commit_file")" = "$CGO27_SOURCE_SHA"
           done < <(find artifacts/static-a artifacts/static-b -type f -name COMMIT -print)
       - name: Upload complete artifact evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: cgo27-artifact-${{ env.CGO27_SOURCE_SHA }}
           path: |

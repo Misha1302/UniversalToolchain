@@ -84,6 +84,28 @@ def main() -> None:
             if command not in text:
                 fail(f"{relative}: GitHub Pages invariant gate is not wired: missing `{command}`")
 
+    # A mutable ref (`@v4`) means whoever controls the action's tag can change the code this
+    # repository executes with its own token, and nothing in the diff would show it. Pinning to a
+    # commit SHA makes an upgrade a visible, reviewable change. The trailing version comment keeps
+    # the pin readable so bumping it stays a mechanical edit.
+    unpinned: list[str] = []
+    for workflow in sorted((root / ".github/workflows").glob("*.yml")):
+        for number, line in enumerate(workflow.read_text(encoding="utf-8").splitlines(), start=1):
+            match = re.search(r"^\s*(?:-\s*)?uses:\s*(\S+)", line)
+            if match is None:
+                continue
+            reference = match.group(1)
+            # Local composite actions reference a path, not a remote ref.
+            if reference.startswith("./"):
+                continue
+            if not re.search(r"@[0-9a-f]{40}$", reference):
+                unpinned.append(f"{workflow.name}:{number} {reference}")
+    if unpinned:
+        fail(
+            "workflow steps must pin actions to a commit SHA, not a mutable ref: "
+            + "; ".join(unpinned)
+        )
+
     print(f"CI contract OK: {len(required)} fail-closed required workflows")
 
 
