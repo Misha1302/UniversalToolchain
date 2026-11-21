@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using UniversalToolchain.Language.Abstractions;
 
 namespace UniversalToolchain.FeatureSdk;
@@ -50,6 +50,24 @@ public sealed class ArtifactTransformationDescriptor
     }
 }
 
+/// <summary>
+/// Whether a contribution that declares backend scope must be reachable on every enabled backend.
+/// <para>
+/// <see cref="NotRequired"/> is the default and preserves every existing plan byte-for-byte. A package
+/// opts in when it means "this mechanism must actually run", which is the invariant behind the article's
+/// "every backend supports the whole module set" promise. Without an opt-in the check would have to
+/// guess, and guessing changes existing hashes.
+/// </para>
+/// </summary>
+public enum BackendCoverage
+{
+    /// <summary>Today's behaviour: a backend-scoped contribution may be unreachable.</summary>
+    NotRequired,
+
+    /// <summary>The contribution must appear on the route of every enabled backend its scope allows.</summary>
+    Required
+}
+
 public sealed class LanguageContributionDescriptor
 {
     public LanguageContributionDescriptor(
@@ -71,7 +89,8 @@ public sealed class LanguageContributionDescriptor
         IReadOnlyDictionary<BackendId, LanguageArtifactContract>? runtimeInputContracts = null,
         LanguageArtifactContract? backendInputContract = null,
         IEnumerable<LanguageContributionId>? beforeContributions = null,
-        IEnumerable<LanguageContributionId>? afterContributions = null)
+        IEnumerable<LanguageContributionId>? afterContributions = null,
+        BackendCoverage backendCoverage = BackendCoverage.NotRequired)
     {
         Id = id;
         Slot = slot;
@@ -91,6 +110,7 @@ public sealed class LanguageContributionDescriptor
         BeforeContributions = Snapshot(beforeContributions);
         AfterContributions = Snapshot(afterContributions);
         Order = order;
+        BackendCoverage = backendCoverage;
         Metadata = SnapshotDictionary(metadata);
 
         if (multiplicity == LanguageSlotMultiplicity.Single && mergePolicy is ContributionMergePolicy.Add or ContributionMergePolicy.Decorate)
@@ -125,6 +145,7 @@ public sealed class LanguageContributionDescriptor
     public IReadOnlyList<LanguageContributionId> BeforeContributions { get; }
     public IReadOnlyList<LanguageContributionId> AfterContributions { get; }
     public int Order { get; }
+    public BackendCoverage BackendCoverage { get; }
     public IReadOnlyDictionary<string, string> Metadata { get; }
 
     private static IReadOnlyList<T> Snapshot<T>(IEnumerable<T>? values) where T : notnull =>

@@ -64,6 +64,28 @@ Parity tests should cover:
 
 If interpreter and CIL disagree, treat the compiled path or optimizer as suspect until the semantic rule is clarified.
 
+## Backend coverage of required contributions
+
+Parity above is about two backends agreeing. Coverage is the weaker question one level down: does a
+contribution that the package *requires* actually run on every enabled backend at all?
+
+A contribution may declare `supportedBackends`. Before this check, a contribution scoped to a backend the
+language did not enable was selected, planned, appeared on **no route**, and produced **no diagnostic**.
+The language was declared valid and was semantically partial.
+
+A contribution now opts in with `BackendCoverage.Required`. The planner then rejects any enabled backend
+whose route does not contain it (`UTL2209`, naming the contribution and the missing backends).
+
+Opt-in is deliberate, not caution:
+
+- the planner cannot distinguish an accidental unrouted pass from an intentional cross-backend
+  declaration, and a blanket check would reject currently-working packages;
+- the field is serialized only when it differs from the default, because `ManifestSha256` is computed
+  from the package manifest — writing the default would move every pinned hash.
+
+Author rule: declare `BackendCoverage.Required` when the mechanism is part of the language's meaning.
+Leave it at the default for optional or deliberately cross-backend contributions.
+
 ## Intrinsic support contract
 
 Backend-specific intrinsic use must be capability-gated.

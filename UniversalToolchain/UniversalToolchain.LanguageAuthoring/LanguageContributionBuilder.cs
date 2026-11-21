@@ -1,4 +1,5 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
+using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
 
 namespace UniversalToolchain.LanguageAuthoring;
@@ -16,6 +17,7 @@ public sealed class LanguageContributionBuilder
     private readonly List<LanguageContributionId> _beforeContributions = [];
     private readonly List<LanguageContributionId> _afterContributions = [];
     private readonly SortedDictionary<string, string> _metadata = new(StringComparer.Ordinal);
+    private BackendCoverage _backendCoverage = BackendCoverage.NotRequired;
 
     public LanguageContributionBuilder RequiresContributions(params LanguageContributionId[] contributions)
     {
@@ -59,6 +61,21 @@ public sealed class LanguageContributionBuilder
         return this;
     }
 
+    /// <summary>
+    /// Declares that this contribution must actually run on every enabled backend its scope allows.
+    /// <para>
+    /// Without it a backend-scoped contribution can be selected into a language that does not enable that
+    /// backend, be planned, appear on no route, and produce no diagnostic — the `08` A-6 finding. The
+    /// opt-in is deliberate: guessing the intent would reject packages that legitimately declare a
+    /// cross-backend contribution, and it would change existing plan hashes.
+    /// </para>
+    /// </summary>
+    public LanguageContributionBuilder RequireBackendCoverage()
+    {
+        _backendCoverage = BackendCoverage.Required;
+        return this;
+    }
+
     public LanguageContributionBuilder WithMetadata(string key, string value)
     {
         if (string.IsNullOrWhiteSpace(key))
@@ -74,6 +91,7 @@ public sealed class LanguageContributionBuilder
     internal IReadOnlyList<LanguageCapabilityId> ConflictingCapabilities => Snapshot(_conflictsCapabilities);
     internal IReadOnlyList<LanguageContributionId> BeforeContributionIds => Snapshot(_beforeContributions);
     internal IReadOnlyList<LanguageContributionId> AfterContributionIds => Snapshot(_afterContributions);
+    internal BackendCoverage Coverage => _backendCoverage;
     internal IReadOnlyDictionary<string, string> Metadata =>
         new ReadOnlyDictionary<string, string>(new Dictionary<string, string>(_metadata, StringComparer.Ordinal));
 

@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using UniversalToolchain.Language.Abstractions;
@@ -120,6 +120,11 @@ public static class LanguageFeatureManifestSerializer
         WriteIds(writer, "supportedBackends", contribution.SupportedBackends.Select(static x => x.Value));
         WriteIds(writer, "beforeContributions", contribution.BeforeContributions.Select(static x => x.Value));
         WriteIds(writer, "afterContributions", contribution.AfterContributions.Select(static x => x.Value));
+        // Written only when it differs from the default: ManifestSha256 is computed from this document, so
+        // emitting "backendCoverage": "NotRequired" on every contribution would move every existing
+        // package hash and every pinned plan hash. The default is the absence of the property.
+        if (contribution.BackendCoverage != BackendCoverage.NotRequired)
+            writer.WriteString("backendCoverage", contribution.BackendCoverage.ToString());
         if (contribution.Transformation != null)
         {
             writer.WritePropertyName("transformation");

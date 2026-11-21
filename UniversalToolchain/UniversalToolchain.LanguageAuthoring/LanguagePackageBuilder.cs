@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Collections.ObjectModel;
 using UniversalToolchain.FeatureSdk;
@@ -335,7 +335,8 @@ public sealed class LanguagePackageBuilder
             order: order,
             metadata: options.Metadata,
             beforeContributions: options.BeforeContributionIds,
-            afterContributions: options.AfterContributionIds));
+            afterContributions: options.AfterContributionIds,
+            backendCoverage: options.Coverage));
         feature?.Contributions.Add(contributionId);
         _components.AddTransformer(LanguageTransformerRegistration.Create(
             contributionId,
