@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -99,6 +100,22 @@ def main() -> None:
             encoding="utf-8",
         )
         expect_failure(checker, deploy_gate, "Pages deploy gate removal")
+
+        # A mutable ref lets the action's owner change the executed code with no change to this
+        # repository, so the pinning rule needs its own mutant.
+        unpinned_gate = Path(temporary) / "unpinned-gate"
+        shutil.copytree(baseline, unpinned_gate)
+        pinned_workflow = unpinned_gate / ".github/workflows/docs-check.yml"
+        pinned_workflow.write_text(
+            re.sub(
+                r"uses: (actions/checkout)@[0-9a-f]{40}(\s*#.*)?",
+                r"uses: \1@v4",
+                pinned_workflow.read_text(encoding="utf-8"),
+                count=1,
+            ),
+            encoding="utf-8",
+        )
+        expect_failure(checker, unpinned_gate, "mutable action ref")
 
     print("CI contract mutants rejected")
 
