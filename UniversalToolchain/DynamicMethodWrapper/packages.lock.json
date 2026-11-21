@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "GrEmit": {
+        "type": "Direct",
+        "requested": "[3.5.1, )",
+        "resolved": "3.5.1",
+        "contentHash": "qbBfXj3hBdq1zIk7i9LOCnfK44c1inTKEzQP/Nn+WEJ3GXYp0Cof+WT3rhgruQ6UVf/ng0o/m++y29t0IJfBDA=="
+      },
+      "exceptionsmanager": {
+        "type": "Project"
+      },
+      "intermediaterepresentationabstractions": {
+        "type": "Project",
+        "dependencies": {
+          "UniversalToolchain.Ir.Abstractions": "[1.0.0, )"
+        }
+      },
+      "universalintermediaterepresentation": {
+        "type": "Project",
+        "dependencies": {
+          "ExceptionsManager": "[1.0.0, )",
+          "IntermediateRepresentationAbstractions": "[1.0.0, )"
+        }
+      },
+      "universaltoolchain.ir.abstractions": {
+        "type": "Project"
+      }
+    }
+  }
+}

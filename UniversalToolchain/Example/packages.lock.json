@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "GrEmit": {
+        "type": "Transitive",
+        "resolved": "3.5.1",
+        "contentHash": "qbBfXj3hBdq1zIk7i9LOCnfK44c1inTKEzQP/Nn+WEJ3GXYp0Cof+WT3rhgruQ6UVf/ng0o/m++y29t0IJfBDA=="
+      },
+      "Microsoft.Extensions.DependencyInjection": {
+        "type": "Transitive",
+        "resolved": "10.0.2",
+        "contentHash": "J/Zmp6fY93JbaiZ11ckWvcyxMPjD6XVwIHQXBjryTBgn7O6O20HYg9uVLFcZlNfgH78MnreE/7EH+hjfzn7VyA==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.2"
+        }
+      },
+      "Microsoft.Extensions.DependencyInjection.Abstractions": {
+        "type": "Transitive",
+        "resolved": "10.0.2",
+        "contentHash": "zOIurr59+kUf9vNcsUkCvKWZv+fPosUZXURZesYkJCvl0EzTc9F7maAO4Cd2WEV7ZJJ0AZrFQvuH6Npph9wdBw=="
+      },
+      "universaltoolchain.featuresdk": {
+        "type": "Project",
+        "dependencies": {
+          "UniversalToolchain.Language.Abstractions": "[0.3.0-alpha.4, )"
+        }
+      },
+      "universaltoolchain.language.abstractions": {
+        "type": "Project"
+      },
+      "universaltoolchain.languagesdk": {
+        "type": "Project",
+        "dependencies": {
+          "UniversalToolchain.FeatureSdk": "[0.3.0-alpha.4, )",
+          "UniversalToolchain.Language.Abstractions": "[0.3.0-alpha.4, )"
+        }
+      },
+      "universaltoolchain.runtime": {
+        "type": "Project",
+        "dependencies": {
+          "UniversalToolchain.FeatureSdk": "[0.3.0-alpha.4, )",
+          "UniversalToolchain.Language.Abstractions": "[0.3.0-alpha.4, )",
+          "UniversalToolchain.LanguageSdk": "[0.3.0-alpha.5, )"
+        }
+      },
+      "universaltoolchain.wist": {
+        "type": "Project",
+        "dependencies": {
+          "GrEmit": "[3.5.1, )",
+          "Microsoft.Extensions.DependencyInjection": "[10.0.2, )"
+        }
+      },
+      "universaltoolchain.wist.languagepack": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection": "[10.0.2, )",
+          "UniversalToolchain.FeatureSdk": "[0.3.0-alpha.4, )",
+          "UniversalToolchain.Runtime": "[0.3.0-alpha.5, )"
+        }
+      }
+    }
+  }
+}

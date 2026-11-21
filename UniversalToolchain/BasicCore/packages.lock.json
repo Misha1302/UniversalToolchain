@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "Microsoft.Extensions.DependencyInjection": {
+        "type": "Direct",
+        "requested": "[10.0.2, )",
+        "resolved": "10.0.2",
+        "contentHash": "J/Zmp6fY93JbaiZ11ckWvcyxMPjD6XVwIHQXBjryTBgn7O6O20HYg9uVLFcZlNfgH78MnreE/7EH+hjfzn7VyA==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.2"
+        }
+      },
+      "GrEmit": {
+        "type": "Transitive",
+        "resolved": "3.5.1",
+        "contentHash": "qbBfXj3hBdq1zIk7i9LOCnfK44c1inTKEzQP/Nn+WEJ3GXYp0Cof+WT3rhgruQ6UVf/ng0o/m++y29t0IJfBDA=="
+      },
+      "Microsoft.Extensions.DependencyInjection.Abstractions": {
+        "type": "Transitive",
+        "resolved": "10.0.2",
+        "contentHash": "zOIurr59+kUf9vNcsUkCvKWZv+fPosUZXURZesYkJCvl0EzTc9F7maAO4Cd2WEV7ZJJ0AZrFQvuH6Npph9wdBw=="
+      },
+      "basictypesextensions": {
+        "type": "Project",
+        "dependencies": {
+          "ExceptionsManager": "[1.0.0, )"
+        }
+      },
+      "dotnethelper": {
+        "type": "Project",
+        "dependencies": {
+          "ExceptionsManager": "[1.0.0, )"
+        }
+      },
+      "dynamicmethodwrapper": {
+        "type": "Project",
+        "dependencies": {
+          "ExceptionsManager": "[1.0.0, )",
+          "GrEmit": "[3.5.1, )",
+          "IntermediateRepresentationAbstractions": "[1.0.0, )",
+          "UniversalIntermediateRepresentation": "[1.0.0, )"
+        }
+      },
+      "exceptionsmanager": {
+        "type": "Project"
+      },
+      "intermediaterepresentationabstractions": {
+        "type": "Project",
+        "dependencies": {
+          "UniversalToolchain.Ir.Abstractions": "[1.0.0, )"
+        }
+      },
+      "objectextensions": {
+        "type": "Project"
+      },
+      "universalintermediaterepresentation": {
+        "type": "Project",
+        "dependencies": {
+          "ExceptionsManager": "[1.0.0, )",
+          "IntermediateRepresentationAbstractions": "[1.0.0, )"
+        }
+      },
+      "universaltoolchain.ir.abstractions": {
+        "type": "Project"
+      }
+    }
+  }
+}

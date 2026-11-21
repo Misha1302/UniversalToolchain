@@ -1,0 +1,543 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "Microsoft.Extensions.DependencyInjection": {
+        "type": "Direct",
+        "requested": "[10.0.2, )",
+        "resolved": "10.0.2",
+        "contentHash": "J/Zmp6fY93JbaiZ11ckWvcyxMPjD6XVwIHQXBjryTBgn7O6O20HYg9uVLFcZlNfgH78MnreE/7EH+hjfzn7VyA==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.2"
+        }
+      },
+      "GrEmit": {
+        "type": "Transitive",
+        "resolved": "3.5.1",
+        "contentHash": "qbBfXj3hBdq1zIk7i9LOCnfK44c1inTKEzQP/Nn+WEJ3GXYp0Cof+WT3rhgruQ6UVf/ng0o/m++y29t0IJfBDA=="
+      },
+      "Microsoft.Extensions.DependencyInjection.Abstractions": {
+        "type": "Transitive",
+        "resolved": "10.0.2",
+        "contentHash": "zOIurr59+kUf9vNcsUkCvKWZv+fPosUZXURZesYkJCvl0EzTc9F7maAO4Cd2WEV7ZJJ0AZrFQvuH6Npph9wdBw=="
+      },
+      "abstractirconverters": {
+        "type": "Project",
+        "dependencies": {
+          "AbstractIrExtensions": "[1.0.0, )",
+          "BasicCore": "[1.0.0, )"
+        }
+      },
+      "abstractirextensions": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )",
+          "IntermediateRepresentationAbstractions": "[1.0.0, )",
+          "ListExtensions": "[1.0.0, )",
+          "VariablesRuntime": "[1.0.0, )"
+        }
+      },
+      "arithmeticmodule": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "GenericMath": "[1.0.0, )",
+          "UniversalToolchain.Capabilities.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )"
+        }
+      },
+      "assemblyfinder": {
+        "type": "Project",
+        "dependencies": {
+          "DotnetHelper": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )"
+        }
+      },
+      "basiccilcompiler": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )",
+          "ObjectExtensions": "[1.0.0, )",
+          "UniversalToolchain.ModuleContracts": "[1.0.0, )"
+        }
+      },
+      "basiccodetranslator": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )"
+        }
+      },
+      "basiccore": {
+        "type": "Project",
+        "dependencies": {
+          "BasicTypesExtensions": "[1.0.0, )",
+          "DotnetHelper": "[1.0.0, )",
+          "DynamicMethodWrapper": "[1.0.0, )",
+          "IntermediateRepresentationAbstractions": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection": "[10.0.2, )",
+          "ObjectExtensions": "[1.0.0, )",
+          "UniversalToolchain.Ir.Abstractions": "[1.0.0, )"
+        }
+      },
+      "basicinterpreter": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )",
+          "CommonExceptions": "[1.0.0, )",
+          "DotnetHelper": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "IntermediateRepresentationAbstractions": "[1.0.0, )",
+          "ObjectExtensions": "[1.0.0, )",
+          "UniversalToolchain.ModuleContracts": "[1.0.0, )"
+        }
+      },
+      "basiclexer": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )",
+          "BasicTypesExtensions": "[1.0.0, )",
+          "CommonExceptions": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "ListExtensions": "[1.0.0, )"
+        }
+      },
+      "basicparser": {
+        "type": "Project",
+        "dependencies": {
+          "BasicLexer": "[1.0.0, )",
+          "CommonExceptions": "[1.0.0, )"
+        }
+      },
+      "basicstdlib": {
+        "type": "Project",
+        "dependencies": {
+          "NumbersModule": "[1.0.0, )"
+        }
+      },
+      "basictypesextensions": {
+        "type": "Project",
+        "dependencies": {
+          "ExceptionsManager": "[1.0.0, )"
+        }
+      },
+      "bytecodedynamicmethodscompiler": {
+        "type": "Project",
+        "dependencies": {
+          "AbstractIrExtensions": "[1.0.0, )",
+          "BasicCilCompiler": "[1.0.0, )",
+          "BasicCore": "[1.0.0, )",
+          "DotnetHelper": "[1.0.0, )",
+          "ListExtensions": "[1.0.0, )",
+          "UniversalIntermediateRepresentation": "[1.0.0, )"
+        }
+      },
+      "commentsmodule": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )",
+          "CommonExceptions": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )"
+        }
+      },
+      "commonexceptions": {
+        "type": "Project"
+      },
+      "conditionsmodule": {
+        "type": "Project",
+        "dependencies": {
+          "AbstractIrExtensions": "[1.0.0, )",
+          "BasicCore": "[1.0.0, )",
+          "BasicTypesExtensions": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "ObjectExtensions": "[1.0.0, )",
+          "UniversalIntermediateRepresentation": "[1.0.0, )",
+          "UniversalToolchain.Capabilities.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Diagnostics.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )"
+        }
+      },
+      "csharpinteropmodule": {
+        "type": "Project",
+        "dependencies": {
+          "AbstractIrExtensions": "[1.0.0, )",
+          "AssemblyFinder": "[1.0.0, )",
+          "BasicCore": "[1.0.0, )",
+          "CommonExceptions": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "UniversalIntermediateRepresentation": "[1.0.0, )",
+          "UniversalToolchain.Capabilities.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )"
+        }
+      },
+      "dotnethelper": {
+        "type": "Project",
+        "dependencies": {
+          "ExceptionsManager": "[1.0.0, )"
+        }
+      },
+      "dynamicmethodwrapper": {
+        "type": "Project",
+        "dependencies": {
+          "ExceptionsManager": "[1.0.0, )",
+          "GrEmit": "[3.5.1, )",
+          "IntermediateRepresentationAbstractions": "[1.0.0, )",
+          "UniversalIntermediateRepresentation": "[1.0.0, )"
+        }
+      },
+      "equalitymodule": {
+        "type": "Project",
+        "dependencies": {
+          "AbstractIrExtensions": "[1.0.0, )",
+          "BasicCore": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "UniversalIntermediateRepresentation": "[1.0.0, )",
+          "UniversalToolchain.Capabilities.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )"
+        }
+      },
+      "exceptionsmanager": {
+        "type": "Project"
+      },
+      "functioncallsmodule": {
+        "type": "Project",
+        "dependencies": {
+          "AbstractIrExtensions": "[1.0.0, )",
+          "BasicCore": "[1.0.0, )",
+          "DynamicMethodWrapper": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "GenericMath": "[1.0.0, )",
+          "IntermediateRepresentationAbstractions": "[1.0.0, )",
+          "SettableGettableModule": "[1.0.0, )",
+          "UniversalToolchain.Capabilities.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Capabilities.Core": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Functions.Abstractions": "[1.0.0, )"
+        }
+      },
+      "genericmath": {
+        "type": "Project",
+        "dependencies": {
+          "EqualityModule": "[1.0.0, )",
+          "SettableGettableModule": "[1.0.0, )"
+        }
+      },
+      "identifiermodule": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "UniversalToolchain.Capabilities.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.ModuleContracts": "[1.0.0, )"
+        }
+      },
+      "intermediaterepresentationabstractions": {
+        "type": "Project",
+        "dependencies": {
+          "UniversalToolchain.Ir.Abstractions": "[1.0.0, )"
+        }
+      },
+      "internalpreprocessorlexemesmodule": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )",
+          "CommonExceptions": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )"
+        }
+      },
+      "labelsmodule": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "UniversalToolchain.Capabilities.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.ModuleContracts": "[1.0.0, )"
+        }
+      },
+      "listextensions": {
+        "type": "Project"
+      },
+      "loopsmodule": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "UniversalToolchain.Capabilities.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )"
+        }
+      },
+      "nativemathmodule": {
+        "type": "Project",
+        "dependencies": {
+          "AbstractIrExtensions": "[1.0.0, )",
+          "BasicCore": "[1.0.0, )",
+          "BasicTypesExtensions": "[1.0.0, )",
+          "CommonExceptions": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "ObjectExtensions": "[1.0.0, )",
+          "UniversalToolchain.Capabilities.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )"
+        }
+      },
+      "numbersmodule": {
+        "type": "Project",
+        "dependencies": {
+          "AbstractIrExtensions": "[1.0.0, )",
+          "BasicCore": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "GenericMath": "[1.0.0, )",
+          "UniversalIntermediateRepresentation": "[1.0.0, )",
+          "UniversalToolchain.Capabilities.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Diagnostics.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.ModuleContracts": "[1.0.0, )"
+        }
+      },
+      "objectextensions": {
+        "type": "Project"
+      },
+      "parameterssettermodule": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )"
+        }
+      },
+      "safemathfunctionsmodule": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )",
+          "UniversalToolchain.Capabilities.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Functions.Abstractions": "[1.0.0, )"
+        }
+      },
+      "scopesmodule": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )",
+          "CommonExceptions": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "UniversalToolchain.Capabilities.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.ModuleContracts": "[1.0.0, )"
+        }
+      },
+      "semicolonasnewlinemodule": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "UniversalToolchain.Capabilities.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )"
+        }
+      },
+      "settablegettablemodule": {
+        "type": "Project",
+        "dependencies": {
+          "ExceptionsManager": "[1.0.0, )",
+          "IntermediateRepresentationAbstractions": "[1.0.0, )"
+        }
+      },
+      "universalintermediaterepresentation": {
+        "type": "Project",
+        "dependencies": {
+          "ExceptionsManager": "[1.0.0, )",
+          "IntermediateRepresentationAbstractions": "[1.0.0, )"
+        }
+      },
+      "universaltoolchain.air.analysis": {
+        "type": "Project",
+        "dependencies": {
+          "IntermediateRepresentationAbstractions": "[1.0.0, )",
+          "UniversalToolchain.Ir.Abstractions": "[1.0.0, )"
+        }
+      },
+      "universaltoolchain.capabilities.abstractions": {
+        "type": "Project",
+        "dependencies": {
+          "UniversalToolchain.Diagnostics.Abstractions": "[1.0.0, )"
+        }
+      },
+      "universaltoolchain.capabilities.core": {
+        "type": "Project",
+        "dependencies": {
+          "ExceptionsManager": "[1.0.0, )",
+          "UniversalToolchain.Capabilities.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Diagnostics.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.ExpressionTyping.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Functions.Abstractions": "[1.0.0, )"
+        }
+      },
+      "universaltoolchain.diagnostics.abstractions": {
+        "type": "Project"
+      },
+      "universaltoolchain.dialects.abstractions": {
+        "type": "Project",
+        "dependencies": {
+          "ExceptionsManager": "[1.0.0, )",
+          "ObjectExtensions": "[1.0.0, )"
+        }
+      },
+      "universaltoolchain.dialects.frontend": {
+        "type": "Project",
+        "dependencies": {
+          "AbstractIrConverters": "[1.0.0, )",
+          "BasicCodeTranslator": "[1.0.0, )",
+          "BasicCore": "[1.0.0, )",
+          "BasicLexer": "[1.0.0, )",
+          "BasicParser": "[1.0.0, )",
+          "CommonExceptions": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection": "[10.0.2, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )"
+        }
+      },
+      "universaltoolchain.expressiontyping.abstractions": {
+        "type": "Project",
+        "dependencies": {
+          "UniversalToolchain.Diagnostics.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Functions.Abstractions": "[1.0.0, )"
+        }
+      },
+      "universaltoolchain.featuresdk": {
+        "type": "Project",
+        "dependencies": {
+          "UniversalToolchain.Language.Abstractions": "[0.3.0-alpha.4, )"
+        }
+      },
+      "universaltoolchain.functions.abstractions": {
+        "type": "Project",
+        "dependencies": {
+          "UniversalToolchain.Capabilities.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Diagnostics.Abstractions": "[1.0.0, )"
+        }
+      },
+      "universaltoolchain.ir.abstractions": {
+        "type": "Project"
+      },
+      "universaltoolchain.language.abstractions": {
+        "type": "Project"
+      },
+      "universaltoolchain.languagesdk": {
+        "type": "Project",
+        "dependencies": {
+          "UniversalToolchain.FeatureSdk": "[0.3.0-alpha.4, )",
+          "UniversalToolchain.Language.Abstractions": "[0.3.0-alpha.4, )"
+        }
+      },
+      "universaltoolchain.modulecontracts": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "UniversalToolchain.Air.Analysis": "[1.0.0, )",
+          "UniversalToolchain.Diagnostics.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )"
+        }
+      },
+      "universaltoolchain.runtime": {
+        "type": "Project",
+        "dependencies": {
+          "UniversalToolchain.FeatureSdk": "[0.3.0-alpha.4, )",
+          "UniversalToolchain.Language.Abstractions": "[0.3.0-alpha.4, )",
+          "UniversalToolchain.LanguageSdk": "[0.3.0-alpha.5, )"
+        }
+      },
+      "universaltoolchain.semantics.abstractions": {
+        "type": "Project"
+      },
+      "universaltoolchain.ssa.abstractions": {
+        "type": "Project",
+        "dependencies": {
+          "UniversalToolchain.Ir.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Semantics.Abstractions": "[1.0.0, )"
+        }
+      },
+      "universaltoolchain.ssa.core": {
+        "type": "Project",
+        "dependencies": {
+          "UniversalToolchain.Ir.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Semantics.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Ssa.Abstractions": "[1.0.0, )"
+        }
+      },
+      "universaltoolchain.ssa.emission": {
+        "type": "Project",
+        "dependencies": {
+          "IntermediateRepresentationAbstractions": "[1.0.0, )",
+          "UniversalIntermediateRepresentation": "[1.0.0, )",
+          "UniversalToolchain.Air.Analysis": "[1.0.0, )",
+          "UniversalToolchain.Ir.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Semantics.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Ssa.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Ssa.Core": "[1.0.0, )"
+        }
+      },
+      "universaltoolchain.ssa.lowering": {
+        "type": "Project",
+        "dependencies": {
+          "IntermediateRepresentationAbstractions": "[1.0.0, )",
+          "UniversalToolchain.Air.Analysis": "[1.0.0, )",
+          "UniversalToolchain.Ir.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Semantics.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Ssa.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Ssa.Core": "[1.0.0, )"
+        }
+      },
+      "universaltoolchain.ssa.optimization": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )",
+          "IntermediateRepresentationAbstractions": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Ir.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Semantics.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Ssa.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Ssa.Core": "[1.0.0, )",
+          "UniversalToolchain.Ssa.Emission": "[1.0.0, )",
+          "UniversalToolchain.Ssa.Lowering": "[1.0.0, )"
+        }
+      },
+      "variablesmodule": {
+        "type": "Project",
+        "dependencies": {
+          "AssemblyFinder": "[1.0.0, )",
+          "BasicCore": "[1.0.0, )",
+          "CommonExceptions": "[1.0.0, )",
+          "EqualityModule": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "IdentifierModule": "[1.0.0, )",
+          "InternalPreprocessorLexemesModule": "[1.0.0, )",
+          "ScopesModule": "[1.0.0, )",
+          "SettableGettableModule": "[1.0.0, )",
+          "UniversalIntermediateRepresentation": "[1.0.0, )",
+          "UniversalToolchain.Capabilities.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )",
+          "UniversalToolchain.ModuleContracts": "[1.0.0, )",
+          "VariablesRuntime": "[1.0.0, )"
+        }
+      },
+      "variablesruntime": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )"
+        }
+      },
+      "whitespacesmodule": {
+        "type": "Project",
+        "dependencies": {
+          "BasicCore": "[1.0.0, )",
+          "ExceptionsManager": "[1.0.0, )",
+          "UniversalToolchain.Dialects.Abstractions": "[1.0.0, )"
+        }
+      }
+    }
+  }
+}

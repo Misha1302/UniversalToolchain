@@ -89,6 +89,7 @@ function New-RestoreArguments {
     $arguments = @("restore", $Project) + $restoreModeArguments + $buildServerArguments + @(
         "-p:RestoreBuildInParallel=$restoreInParallel",
         "-p:UseSharedCompilation=$sharedCompilation",
+        "-p:RestoreLockedMode=true",
         "-p:NuGetAudit=false"
     )
     if ($env:NUGET_CONFIG) {
@@ -99,6 +100,8 @@ function New-RestoreArguments {
 
 Invoke-CheckedNative "python" @("Tools/check-build-topology.py", "--root", $root)
 Invoke-CheckedNative "python" @("Tools/test-build-topology-mutants.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/check-package-locks.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/test-package-locks-mutants.py", "--root", $root)
 
 foreach ($solution in $solutions) {
     Invoke-CheckedNative $dotnet (New-RestoreArguments $solution)
