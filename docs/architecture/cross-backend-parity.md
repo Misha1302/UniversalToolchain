@@ -62,11 +62,17 @@ suite while an intended one is a reviewable diff.
 
 Regenerating is a deliberate act:
 
-```bash
+```bash ci-run=false
 WIST_REGENERATE_PARITY_CORPUS=1 dotnet test \
   UniversalToolchain/UniversalToolchain.Dialects.Tests \
   --filter FullyQualifiedName~ParityCorpusGenerator
 ```
+
+The block above is deliberately not executed by the markdown smoke check. `WIST_REGENERATE_PARITY_CORPUS=1`
+makes the fixture **write** the corpus instead of comparing it, so running it in CI would replace the golden
+with whatever the code currently produces — the check would pass by erasing the evidence it exists to
+produce. The canonical test contract already runs the same fixture without the variable and compares against
+the committed file; that is the check. This block is only the recipe for a deliberate, reviewed update.
 
 Then read `git diff` and decide whether that is the change you meant to make. This is an environment switch
 rather than an `[Explicit]` attribute on purpose: an explicit fixture is reported as `NotExecuted`, which the
