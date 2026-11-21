@@ -52,7 +52,7 @@ A `LanguageDiagnostic` contains code, severity, stage, message, owner and sugges
 
 ## Ambiguity is not resolved by arbitrary ordering
 
-Normalized IDs give stable traversal order, but they do not authorize a semantic choice. Ambiguous providers fail with `UTL2002`, multiple single-owner slot participants with `UTL2101`, feasible equal-cost routes with `UTL2207` and unresolved same-artifact pass order with `UTL2208`. Order cycles fail with `UTL2202`. Explicit preferences and ordering constraints belong to the language definition.
+Normalized IDs give stable traversal order, but they do not authorize a semantic choice. Ambiguous providers fail with `UTL2002`, multiple single-owner slot participants with `UTL2101` (the slot table in [`single-owner-slots`](../architecture/single-owner-slots.md) declares which slots are single-owner, so a package cannot opt out by omitting a constructor argument), feasible equal-cost routes with `UTL2207` and unresolved same-artifact pass order with `UTL2208`. Order cycles fail with `UTL2202`. Explicit preferences and ordering constraints belong to the language definition.
 
 A successful plan certifies only that **declared structure** can be resolved. It does not verify whether passes preserve semantics or whether third-party implementations are trustworthy. Runtime traits are package attestations, not sandboxing.
 
