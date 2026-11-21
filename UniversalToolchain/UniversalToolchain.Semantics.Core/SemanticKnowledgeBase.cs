@@ -186,14 +186,13 @@ public sealed class SemanticKnowledgeBase : ISemanticQuery
         {
             // A functional predicate answered by two values for one key is a configuration defect even
             // when the queried tuple is itself established: the consumer cannot know which one holds.
-            var contradiction = FindFunctionalContradiction(closure, question);
-            if (contradiction is not null)
+            // Trust precedence is applied here through the same rule as for positive/negative assertions;
+            // a disagreement that trust *can* resolve is still reported, because the losing provider's
+            // assertion is a fact about the configuration, not about the query.
+            if (TryResolveFunctional(closure, question, out var functionalJudgment, out var functionalDiagnostic))
             {
-                diagnostics.Add(Diagnostic(
-                    SemanticDiagnosticCodes.ObligationInconsistent,
-                    LanguageDiagnosticSeverity.Error,
-                    contradiction));
-                return new SemanticAnswer(question, Judgment.Inconsistent, null, diagnostics);
+                diagnostics.Add(functionalDiagnostic!);
+                return new SemanticAnswer(question, functionalJudgment, null, diagnostics);
             }
 
             closure.Negative.TryGetValue(question, out var disproved);
@@ -254,11 +253,27 @@ public sealed class SemanticKnowledgeBase : ISemanticQuery
         return new SemanticAnswer(question, Judgment.Unknown, null, diagnostics);
     }
 
-    private string? FindFunctionalContradiction(Closure closure, SemanticProposition question)
+    /// <summary>
+    /// Applies one trust rule to a functional predicate: equal-trust disagreement is a contradiction;
+    /// unequal-trust disagreement is resolved in favour of the stronger provider and reported.
+    /// </summary>
+    /// <remarks>
+    /// The reporting half is not cosmetic. A consumer asking about the <b>losing</b> value used to receive
+    /// <see cref="Judgment.Proved"/> with no diagnostic, because the winning value simply outranked it. That
+    /// is an unsound answer: the trusted provider explicitly says the losing value does not hold.
+    /// </remarks>
+    private bool TryResolveFunctional(
+        Closure closure,
+        SemanticProposition question,
+        out Judgment judgment,
+        out LanguageDiagnostic? diagnostic)
     {
+        judgment = Judgment.Unknown;
+        diagnostic = null;
+
         var declaration = _catalog.Find(question.Predicate);
         if (declaration is null || declaration.Kind != SemanticPredicateKind.Functional)
-            return null;
+            return false;
 
         var key = declaration.KeyOf(question);
         var values = closure.Positive
@@ -268,21 +283,61 @@ public sealed class SemanticKnowledgeBase : ISemanticQuery
             .ToArray();
 
         if (values.Length < 2)
-            return null;
+            return false;
 
         var highestTrust = values.Max(static value => value.Trust);
-        var distinct = values
+        var distinctAtHighest = values
             .Where(value => value.Trust == highestTrust)
             .Select(static value => value.Value)
             .Distinct()
             .OrderBy(static value => value)
             .ToArray();
 
-        if (distinct.Length < 2)
-            return null;
+        if (distinctAtHighest.Length > 1)
+        {
+            judgment = Judgment.Inconsistent;
+            diagnostic = Diagnostic(
+                SemanticDiagnosticCodes.ObligationInconsistent,
+                LanguageDiagnosticSeverity.Error,
+                $"Functional predicate '{question.Predicate}' has {distinctAtHighest.Length} different values " +
+                $"for key '{key}' at trust level {highestTrust}: {string.Join(", ", distinctAtHighest)}");
+            return true;
+        }
 
-        return $"Functional predicate '{question.Predicate}' has {distinct.Length} different values for key '{key}' at trust level {highestTrust}: " +
-               string.Join(", ", distinct);
+        var winner = distinctAtHighest[0];
+        var losing = values
+            .Where(value => value.Trust < highestTrust)
+            .Select(static value => value.Value)
+            .Where(value => !value.Equals(winner))
+            .Distinct()
+            .OrderBy(static value => value)
+            .ToArray();
+
+        // Unreachable given the closure's deduplication invariant: `positive` holds at most one witness per
+        // proposition, two facts with the same key and the same value are the same proposition, so 2+ entries
+        // for one key imply at least two distinct values. Kept as a guard rather than deleted, because a
+        // future change to `Consider` could break that invariant and this is the site where it would surface.
+        // A mutant injected here cannot be killed by a test: it is dead code, and pretending otherwise would be
+        // fabricated coverage. `Query_Closure_KeepsOneWitnessPerProposition` pins the invariant instead.
+        if (losing.Length == 0)
+            return false;
+
+        var queried = declaration.ValueOf(question);
+        diagnostic = Diagnostic(
+            SemanticDiagnosticCodes.TrustPrecedence,
+            LanguageDiagnosticSeverity.Warning,
+            $"A value for functional predicate '{question.Predicate}' and key '{key}' at trust {highestTrust} " +
+            $"outranks {losing.Length} different value(s) at lower trust: {string.Join(", ", losing)}");
+
+        // Asking about the losing value must not be answered "Proved": the stronger provider contradicts it.
+        if (losing.Contains(queried))
+        {
+            judgment = Judgment.Unknown;
+            return true;
+        }
+
+        judgment = Judgment.Proved;
+        return true;
     }
 
     private Closure GetClosure()
