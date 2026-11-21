@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "totalPassed": 1477,
+  "totalPassed": 1482,
   "main": [
     {
       "label": "Core",
@@ -33,7 +33,7 @@
       "path": "UniversalToolchain/UniversalToolchain.LanguageSdk.Generic.Tests/UniversalToolchain.LanguageSdk.Generic.Tests.csproj",
       "buildBeforeTest": true,
       "timeoutSeconds": 600,
-      "expectedPassed": 62
+      "expectedPassed": 67
     },
     {
       "label": "Semantics.Core",
