@@ -49,7 +49,8 @@ The route rejects unsupported shapes with explicit codes rather than guessing:
 - `air.to-ssa.opcode` — the AIR opcode is outside the registered lowering surface;
 - `air.to-ssa.managed-call.projection.unregistered` — a projection selected a callable with no active semantic descriptor;
 - `ssa.optimization.managed-call.binding.missing` and `ssa.to-air.managed-call.binding.missing` — a managed callable lost its execution-scoped binding;
-- `ssa.to-air.value-reuse.unsupported` — legal SSA requires a duplicated or spilled stack value, but the minimal AIR emitter has no repeated-value scheduling strategy.
+- `air.to-ssa.value-reuse.unsupported` — legal SSA requires a duplicated or spilled stack value, but the minimal AIR emitter has no repeated-value scheduling strategy;
+- `air.stack.invalid` — the AIR stack/CFG does not verify. A construct whose stack effect the analyzer does not model (an unmodelled intrinsic, an unmodelled opcode, an unreadable intrinsic payload, a push with no operand or an unsupported value type, or an arity disagreement with the descriptor) is reported here **once**, naming the construct. The analyzer then marks the stack state `Unknown` instead of fabricating follow-on conclusions about a shape it never computed: no terminal stack-shape complaint, no "consumes an empty stack", no "incompatible stack state" at a merge. A *known* state still wins a merge with an unknown one, so real imbalances and real merge conflicts elsewhere in the CFG keep being reported.
 
 Route diagnostics preserve their canonical stage (`lowering`, `optimization`, `emission`, or `route`) through the low-level report and the public Wist optimization report. Public failure diagnostics project those values as `SSA Lowering`, `SSA Optimization`, `SSA Emission`, or `SSA Route`.
 
