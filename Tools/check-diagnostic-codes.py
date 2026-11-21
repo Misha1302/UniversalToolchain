@@ -51,6 +51,29 @@ CONTRACT_CONSTANT = re.compile(r'public\s+const\s+string\s+(?P<name>\w+)\s*=\s*"
 CODE = re.compile(r'\b(UTL\d{4})\b')
 RANGE = re.compile(r'`(UTL\d{4})`\s*(?:[\u2013\u2014-]|\.\.)\s*`(UTL\d{4})`')
 
+# The facade family (`UTC-*`) is declared in two constants files and documented either inline or on a
+# table row. It is checked against declarations the same way, because a facade code that is declared and
+# never raised tells a caller to handle a failure that cannot occur.
+FACADE_DECLARATIONS = (
+    Path('UniversalToolchain/UniversalToolchain.Wist/WistDiagnosticCodes.cs'),
+    Path('UniversalToolchain/UniversalToolchain.Diagnostics.Abstractions/ToolchainDiagnosticCodes.cs'),
+)
+FACADE_CONSTANT = re.compile(r'public\s+const\s+string\s+(?P<name>\w+)\s*=\s*"(?P<code>UTC-[A-Z0-9-]+)"')
+
+# Facade codes that are deliberately declared ahead of the code that will raise them. Each entry must say
+# why, and the gate keeps the list honest: an entry that becomes live is stale and must be removed, and a
+# dead code that is not listed fails the gate. This is the opposite default from the numeric family -
+# there, a code that is not emitted is simply wrong; here, the owner may reserve a name, but only on the
+# record.
+FACADE_RESERVED = {
+    'UTC-FUNC-001': 'unknown function; the resolver reports its own diagnostics today',
+    'UTC-FUNC-002': 'function unavailable; no caller distinguishes this from an unknown function yet',
+    'UTC-FUNC-003': 'function unsupported on backend; the backend gate reports through its own codes',
+    'UTC-BIND-001': 'unknown binding; the expression typing layer reports a context diagnostic instead',
+    'UTC-BIND-002': 'binding conflict; no two-binding conflict path exists yet',
+    'UTC-TYPE-001': 'type mismatch; used for surface tests of ToolchainDiagnostic, no production site raises it',
+}
+
 # A module-contract code counts as documented only inside backticks on a table row. Prose and comments
 # discuss codes ("there is no `UT-CONTRACT-004`") and must not read as coverage - the same anchoring
 # principle the numeric family uses. Ranges are expanded, not accepted as opaque text, so a range that
@@ -176,6 +199,67 @@ def contract_codes(root: Path) -> tuple[dict[str, str], dict[str, str], list[str
     return declared, used, problems
 
 
+def facade_codes(root: Path) -> tuple[dict[str, str], dict[str, str], list[str]]:
+    """Return (declared code -> constant name, code -> live reference, problems).
+
+    Same shape as the module-contract family, with one difference: a facade code may be *reserved* rather
+    than live, but only if it appears in FACADE_RESERVED with a reason. Reservation is a claim about the
+    future; the gate makes it a reviewable claim instead of an accident.
+    """
+    declared: dict[str, str] = {}
+    problems: list[str] = []
+
+    for relative in FACADE_DECLARATIONS:
+        path = root / relative
+        if not path.exists():
+            problems.append(f'{relative.as_posix()}: file is missing')
+            continue
+        for match in FACADE_CONSTANT.finditer(path.read_text(encoding='utf-8')):
+            code, name = match.group('code'), match.group('name')
+            if code in declared:
+                problems.append(
+                    f'{relative.as_posix()}: {code} is declared twice '
+                    f'({declared[code]} and {name})'
+                )
+            declared[code] = name
+
+    live: dict[str, str] = {}
+    for path in iter_sources(root):
+        relative = path.relative_to(root)
+        if is_test_path(relative) or relative in FACADE_DECLARATIONS:
+            continue
+        try:
+            text = path.read_text(encoding='utf-8')
+        except UnicodeDecodeError:
+            continue
+        for code, name in declared.items():
+            match = re.search(rf'\b{re.escape(name)}\b', text)
+            if match is not None:
+                line = text.count('\n', 0, match.start()) + 1
+                live.setdefault(code, f'{relative.as_posix()}:{line}')
+
+    for code in sorted(set(declared) - set(live)):
+        if code not in FACADE_RESERVED:
+            problems.append(
+                f'{declared[code]}: {code} is declared but raised nowhere, and it is not listed as '
+                f'reserved; remove it, or record why it is being reserved'
+            )
+
+    for code in sorted(FACADE_RESERVED):
+        if code not in declared:
+            problems.append(
+                f'FACADE_RESERVED lists {code}, but no facade constants file declares it; '
+                f'remove the reservation'
+            )
+        elif code in live:
+            problems.append(
+                f'FACADE_RESERVED lists {code} as reserved, but it is raised at {live[code]}; '
+                f'the reservation is stale'
+            )
+
+    return declared, live, problems
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[1])
@@ -190,11 +274,12 @@ def main() -> int:
     emitted = emitted_codes(root)
     singles, covered, ranges = documented_codes(reference)
     contract_declared, contract_used, contract_problems = contract_codes(root)
+    facade_declared, facade_live, facade_problems = facade_codes(root)
 
     malformed = [description for description in ranges if 'is inverted' in description or 'crosses' in description]
     documented = singles | covered
 
-    errors: list[str] = list(contract_problems)
+    errors: list[str] = list(contract_problems) + list(facade_problems)
     for description in malformed:
         errors.append(f'docs/reference/diagnostics.md: documented range {description}')
 
@@ -265,7 +350,9 @@ def main() -> int:
     print(
         f'Diagnostic-code check passed: {len(emitted)} emitted codes documented '
         f'({len(ranges)} ranges, {len(singles - covered)} single codes), '
-        f'{len(contract_declared)} module-contract codes documented and referenced.'
+        f'{len(contract_declared)} module-contract codes documented and referenced, '
+        f'{len(facade_declared)} facade codes declared ({len(facade_live)} raised, '
+        f'{len(facade_declared)-len(facade_live)} reserved).'
     )
     return 0
 

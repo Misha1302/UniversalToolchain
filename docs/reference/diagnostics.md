@@ -27,6 +27,25 @@ lastVerifiedAgainst: wist-release-state-2026-08-06
 
 `WistDiagnostic` exposes code, severity, stage, source span, message and hints. Expected formula failures should be consumed through `Validate` or `TryCompile`; do not parse exception text as an API.
 
+### Reserved facade codes
+
+Five constants and one test fixture code are declared in `ToolchainDiagnosticCodes` but no production site raises
+them today. They are recorded here rather than deleted, because each names a failure the layer is expected to
+distinguish and the constant is the only place that decision is written down:
+
+| Code | Reservation |
+|---|---|
+| `UTC-FUNC-001` | unknown function; the resolver reports its own diagnostics today |
+| `UTC-FUNC-002` | function unavailable; no caller distinguishes this from an unknown function yet |
+| `UTC-FUNC-003` | function unsupported on backend; the backend gate reports through its own codes |
+| `UTC-BIND-001` | unknown binding; the expression typing layer reports a context diagnostic instead |
+| `UTC-BIND-002` | binding conflict; no two-binding conflict path exists yet |
+| `UTC-TYPE-001` | type mismatch; used to exercise `ToolchainDiagnostic` in tests, not raised in production |
+
+The diagnostic-code gate keeps this list honest: a reserved code that starts being raised fails the gate as a
+stale reservation, and a dead code that is not reserved fails it as an undocumented phantom. Reserving a name is
+a claim about the future, so it is a reviewable claim rather than an accident.
+
 ## Generic Language SDK planning codes
 
 | Family | Codes | Meaning |
