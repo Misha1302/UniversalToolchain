@@ -1,4 +1,4 @@
-using UniversalToolchain.FeatureSdk;
+﻿using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
 using UniversalToolchain.LanguageSdk;
 
@@ -74,14 +74,23 @@ internal static class WistModuleSelection
         }
     }
 
-    public static IReadOnlySet<string> GetExpectedRuntimeBackendAliases(LanguagePlan plan) =>
-        plan.Definition.Backends.Select(static backend => backend.Value switch
-            {
-                "cil" => "cil",
-                "interpreter" => "interpreter",
-                _ => throw new InvalidOperationException($"Unsupported Wist backend '{backend.Value}'.")
-            })
+    /// <summary>
+    /// The backend aliases a plan expects at runtime.
+    /// <para>
+    /// This used to map each configured backend through a string switch whose arms returned the same
+    /// string they matched, and whose default arm threw. That switch could only ever either echo its input
+    /// or fail, so it is replaced by the property it was approximating: the backend must be described by
+    /// the pack. The previous form is recorded here because "identity switch that throws on the unknown
+    /// case" is exactly the shape `WistBackendCatalog` now owns.
+    /// </para>
+    /// </summary>
+    public static IReadOnlySet<string> GetExpectedRuntimeBackendAliases(LanguagePlan plan)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        return plan.Definition.Backends
+            .Select(backend => WistBackendCatalog.Canonical.GetRequiredDescriptor(backend).Id.Value)
             .ToHashSet(StringComparer.Ordinal);
+    }
 
     private static IReadOnlyList<string> ProjectAliases(
         IEnumerable<LanguageContributionId> plannedContributionIds,

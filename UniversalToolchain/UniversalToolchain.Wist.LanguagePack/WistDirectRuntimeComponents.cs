@@ -1,4 +1,4 @@
-using AbstractIrConverters;
+﻿using AbstractIrConverters;
 using BasicCilCompiler.Execution;
 using BasicCore.Capabilities;
 using BasicCore.Compilation;
@@ -205,13 +205,17 @@ internal static class WistDirectRuntimeComponents
         return new BytecodeToAbstractIrConverterImpl(services.GetRequiredService<IInstructionIntrinsicReader>(), services.GetRequiredService<IIntrinsicTypeStackProcessor>());
     }
 
+    /// <summary>
+    /// Builds the optimizer capability context from the backend descriptor.
+    /// <para>
+    /// The factory used to be chosen by comparing the backend to two names. It is now a descriptor member,
+    /// so a third backend contributes its own capability set instead of adding another ternary arm here.
+    /// </para>
+    /// </summary>
     private static IOptimizerIntrinsicCapabilityContext CreateCapabilityContext(LanguagePlan plan, BackendId backend)
     {
-        IOptimizerIntrinsicCapabilityContext inner = backend == CilBackend
-            ? new OptimizerIntrinsicCapabilityContext(new CompilerIntrinsicCapabilitySetFactory().Create(new AbstractMethodsCompilerImpl()))
-            : backend == InterpreterBackend
-                ? new OptimizerIntrinsicCapabilityContext(new CompilerIntrinsicCapabilitySetFactory().Create(new AbstractIrToAbstractIrStub()))
-                : throw new InvalidOperationException($"Backend '{backend.Value}' is not supported by direct Wist optimization.");
+        var descriptor = WistBackendCatalog.Canonical.GetRequiredDescriptor(backend);
+        var inner = new OptimizerIntrinsicCapabilityContext(descriptor.CreateIntrinsicCapabilitySet());
         return WistIntrinsicPlanPolicy.Create(plan, backend).ApplyTo(inner);
     }
 
