@@ -1,4 +1,4 @@
-param(
+﻿param(
     [ValidateSet("Debug", "Release")]
     [string]$Configuration = "Release",
     [switch]$SkipDocs,
@@ -167,6 +167,8 @@ Invoke-CheckedNative "python" @("Tools/check-lowering-ownership.py", "--root", $
 Invoke-CheckedNative "python" @("Tools/test-lowering-ownership-mutants.py", "--root", $root)
 Invoke-CheckedNative "python" @("Tools/check_documentation_status.py")
 Invoke-CheckedNative "python" @("Tools/test-documentation-status-mutants.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/check-security-claims.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/test-security-claims-mutants.py", "--root", $root)
 
 if (-not $SkipPack) {
     if (-not $BaselineSourceArchive -or -not (Test-Path -LiteralPath $BaselineSourceArchive -PathType Leaf)) {

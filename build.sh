@@ -209,6 +209,8 @@ python3 Tools/check-lowering-ownership.py --root "$root"
 python3 Tools/test-lowering-ownership-mutants.py --root "$root"
 python3 Tools/check_documentation_status.py
 python3 Tools/test-documentation-status-mutants.py --root "$root"
+python3 Tools/check-security-claims.py --root "$root"
+python3 Tools/test-security-claims-mutants.py --root "$root"
 
 if [[ "$skip_pack" == false ]]; then
   if [[ -z "$baseline_source_archive" || ! -f "$baseline_source_archive" ]]; then
