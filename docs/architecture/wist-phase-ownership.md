@@ -80,11 +80,10 @@ Semantic and lowering ownership is represented by separate contribution IDs in `
 
 ## Module identity
 
-Wist's phase ownership is expressed twice today: as plan contributions (authoritative, selected by
-`LanguageCompiler`) and as a hardcoded table keyed by contribution id (`WistModulePhaseOwnership`,
-`WistSemanticBytecodeLowerer.SupportsModuleContribution`). The second one is what every new language
-has to copy, and it is where "which module lowers this node kind" is answered by a thirteen-term `||`
-chain.
+Wist's phase ownership used to be expressed twice: as plan contributions (authoritative, selected by
+`LanguageCompiler`) and as a table keyed by contribution id. The second one is what every new language
+had to copy, and it is where "which module lowers this node kind" was answered by a thirteen-term `||`
+chain. That chain is gone; ownership is now data.
 
 `LanguageModuleDescriptor` (in `UniversalToolchain.FeatureSdk`) introduces the missing vocabulary:
 a module identifier, the phases it takes part in, and the contributions it groups. It is
@@ -108,9 +107,44 @@ The prohibition is enforced mechanically rather than by review:
 owners for the same phase as an error, never a tie-break. Wist declares its 21 modules and 7
 optimizers in `WistModuleDescriptors`; the phases are derived from what each component actually
 provides (a semantic binding factory, a lowering implementation) rather than from a hand-maintained
-flag. `WistModuleRegistry_ResolvesLoweringOwnerExactlyWhenLowererSupportsTheContribution` keeps the
-descriptors and the current hardcoded lowering predicate in agreement, which is the precondition for
-replacing the predicate later.
+flag.
+
+## Declarative lowering ownership
+
+The lowering predicate was replaced rather than kept beside a list. `WistLoweringOwners` now holds the
+single list of contributions with a native semantic-to-bytecode implementation, and everything else
+derives from it in one direction:
+
+```text
+WistLoweringOwners (data)
+  -> WistModuleDescriptors (module identity + phases)
+  -> LanguageModuleRegistry (ownership index)
+  -> WistSemanticBytecodeLowerer (dispatch and RequireModule)
+```
+
+`SupportsModuleContribution` survives as a named delegation to `WistLoweringOwners.OwnsLowering`, so
+existing call sites keep a readable predicate while the answer lives in one place. `RequireModule(...)`
+asks the registry for the owning module instead of re-testing membership, which means the dispatch and
+the ownership index cannot disagree. There is deliberately no path back: the lowerer never decides what
+the data says.
+
+Reintroducing the chain is a small edit that compiles and passes every behavioural test, so the shape
+is forbidden mechanically:
+
+- `Tools/check-lowering-ownership.py` requires the predicate to delegate, rejects `||` ownership chains
+  anywhere in the Wist assembly, and requires module descriptors to derive the lowering phase from
+  `WistLoweringOwners` rather than from the lowering predicate;
+- `Tools/test-lowering-ownership-mutants.py` restores the chain, adds a competing chain elsewhere, and
+  reverts the descriptor derivation; the gate must reject each;
+- `WistBytecodeGoldenCorpusTests` pins the canonical semantic-to-bytecode output for a multi-feature
+  corpus in `GoldenWistBytecode.json`. The corpus mixes scopes, variables, arithmetic, comparison,
+  boolean logic, conditional control flow and loops, so an ownership or ordering mistake changes the
+  instruction sequence. A single arithmetic expression would pass even with a wrong dispatch, because
+  only one owner participates.
+
+The golden renderer sorts instruction tags ordinally before pinning them: tags live in a `HashSet`, so
+its default order is not reproducible and a naive golden file would be flaky in a way that looks like a
+lowering change.
 
 ## Runtime extension boundary
 

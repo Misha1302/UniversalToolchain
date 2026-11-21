@@ -29,7 +29,7 @@ internal static class WistModuleDescriptors
             var phases = new List<LanguageModulePhase> { LanguageModulePhase.Frontend };
             if (component.SemanticBindingRulesFactory != null)
                 phases.Add(LanguageModulePhase.Binding);
-            if (WistSemanticBytecodeLowerer.SupportsModuleContribution(component.ContributionId))
+            if (WistLoweringOwners.OwnsLowering(component.ContributionId))
                 phases.Add(LanguageModulePhase.Lowering);
 
             descriptors.Add(new LanguageModuleDescriptor(

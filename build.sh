@@ -205,6 +205,8 @@ python3 Tools/check-hardening-contract.py --root "$root"
 python3 Tools/test-hardening-contract-mutants.py --root "$root"
 python3 Tools/check-module-descriptor-boundary.py --root "$root"
 python3 Tools/test-module-descriptor-mutants.py --root "$root"
+python3 Tools/check-lowering-ownership.py --root "$root"
+python3 Tools/test-lowering-ownership-mutants.py --root "$root"
 python3 Tools/check_documentation_status.py
 python3 Tools/test-documentation-status-mutants.py --root "$root"
 
