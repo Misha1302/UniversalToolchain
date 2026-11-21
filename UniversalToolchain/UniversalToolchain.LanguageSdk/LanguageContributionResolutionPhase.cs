@@ -1,4 +1,4 @@
-using UniversalToolchain.FeatureSdk;
+﻿using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
 
 namespace UniversalToolchain.LanguageSdk;
@@ -271,6 +271,28 @@ internal sealed class LanguageContributionResolutionPhase(LanguagePackageRegistr
 
             if (ordered.Length <= 1)
                 continue;
+
+            // The slot table is the declared law, and it is a property of the SLOT rather than of each
+            // contribution. The check below it stays for the remaining case: a slot the project has not
+            // declared, where the package itself says "exactly one" via multiplicity or merge policy.
+            //
+            // Why the table exists at all: Multiplicity defaults to Many, so before it "a language has one
+            // parser" was enforced only for packages that remembered to declare Single. An external package
+            // that said nothing got a second parser and a silent plan. Convention cannot enforce a law.
+            if (LanguageSlotTable.IsDeclaredSingleOwner(group.Key))
+            {
+                var declared = LanguageSlotTable.Describe(group.Key);
+                // Same code as the package-declared case: to an author it is one problem with one remedy.
+                // The message carries the declared rationale, which is what tells them it is a project law
+                // rather than a choice some package made.
+                diagnostics.Add(LanguagePlanningDiagnostics.Error(
+                    "UTL2101", "planning",
+                    $"Slot '{group.Key.Value}' is a declared single-owner slot but {ordered.Length} contributions own it: {string.Join(", ", ordered.Select(static x => x.Contribution.Id.Value))}. {declared.Rationale}",
+                    group.Key.Value,
+                    "Select one owner with ReplaceSlot, or remove the competing contributions."));
+                continue;
+            }
+
             var hasSingleOwner = ordered.Any(static x =>
                 x.Contribution.Multiplicity == LanguageSlotMultiplicity.Single ||
                 x.Contribution.MergePolicy is ContributionMergePolicy.RejectDuplicate or ContributionMergePolicy.Replace);
