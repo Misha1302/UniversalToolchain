@@ -101,6 +101,8 @@ Invoke-CheckedNative "python" @("Tools/check-build-topology.py", "--root", $root
 Invoke-CheckedNative "python" @("Tools/test-build-topology-mutants.py", "--root", $root)
 Invoke-CheckedNative "python" @("Tools/check-powershell-syntax.py", "--root", $root)
 Invoke-CheckedNative "python" @("Tools/test-powershell-syntax-mutants.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/check-workflow-commands.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/test-workflow-command-mutants.py", "--root", $root)
 Invoke-CheckedNative "python" @("Tools/check-package-locks.py", "--root", $root)
 Invoke-CheckedNative "python" @("Tools/test-package-locks-mutants.py", "--root", $root)
 
