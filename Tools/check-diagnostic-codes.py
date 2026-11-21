@@ -38,11 +38,27 @@ from pathlib import Path
 # comment is a discussion, not an emission site.
 EMITTED = re.compile(r'["\'](UTL\d{4})["\']')
 
+# The module-contract family uses symbol-shaped codes (`UT-AIR-STACK-001`). They are not declared inline
+# at the emission site: one constants file defines the universe and the verifiers reference the constants.
+# That shape needs a different check, because scanning for string literals would only ever see the
+# declaration file and would count a declared-but-unused code as live.
+CONTRACT_DECLARATION = Path('UniversalToolchain/UniversalToolchain.ModuleContracts/ModuleContractDiagnosticCodes.cs')
+CONTRACT_CONSTANT = re.compile(r'public\s+const\s+string\s+(?P<name>\w+)\s*=\s*"(?P<code>UT-[A-Z0-9-]+)"')
+
 # A documented single code, and a documented contiguous range. The dash variants cover the characters
 # actually used in the reference (en dash today); the plain hyphen is accepted so a later edit that
 # changes the dash does not silently disable range parsing.
 CODE = re.compile(r'\b(UTL\d{4})\b')
 RANGE = re.compile(r'`(UTL\d{4})`\s*(?:[\u2013\u2014-]|\.\.)\s*`(UTL\d{4})`')
+
+# A module-contract code counts as documented only inside backticks on a table row. Prose and comments
+# discuss codes ("there is no `UT-CONTRACT-004`") and must not read as coverage - the same anchoring
+# principle the numeric family uses. Ranges are expanded, not accepted as opaque text, so a range that
+# spans a numbering gap fails the "documented but not declared" check instead of inventing a code.
+CONTRACT_CODE = re.compile(r'`(UT-[A-Z0-9]+(?:-[A-Z0-9]+)*-\d{3})`')
+CONTRACT_RANGE = re.compile(
+    r'`(UT-[A-Z0-9]+(?:-[A-Z0-9]+)*)-(\d{3})`\s*(?:[\u2013\u2014-]|\.\.)\s*`(UT-[A-Z0-9]+(?:-[A-Z0-9]+)*)-(\d{3})`'
+)
 
 SKIP_DIRS = {'bin', 'obj', 'artifacts', 'node_modules', '.git', 'packages', '.cache'}
 
@@ -107,6 +123,59 @@ def documented_codes(reference: Path) -> tuple[set[str], set[str], list[str]]:
     return singles, covered, ranges
 
 
+def contract_codes(root: Path) -> tuple[dict[str, str], dict[str, str], list[str]]:
+    """Return (declared code -> constant name, code -> representative live use, problems).
+
+    The module-contract family has two failure modes a literal scan cannot see:
+
+      * a code declared in the constants file but referenced nowhere - it documents a diagnostic that
+        cannot happen, which is the same lie as a phantom code in a widened range;
+      * a constant used by a verifier but never declared - it would emit a code the reference cannot
+        know about.
+    """
+    declaration_path = root / CONTRACT_DECLARATION
+    if not declaration_path.exists():
+        return {}, {}, [f'{CONTRACT_DECLARATION.as_posix()}: file is missing']
+
+    declared = {
+        match.group('code'): match.group('name')
+        for match in CONTRACT_CONSTANT.finditer(declaration_path.read_text(encoding='utf-8'))
+    }
+
+    used: dict[str, str] = {}
+    problems: list[str] = []
+    for path in iter_sources(root):
+        relative = path.relative_to(root)
+        if is_test_path(relative) or path == declaration_path:
+            continue
+        try:
+            text = path.read_text(encoding='utf-8')
+        except UnicodeDecodeError:
+            continue
+        for code, name in declared.items():
+            match = re.search(rf'\b{re.escape(name)}\b', text)
+            if match is not None:
+                line = text.count('\n', 0, match.start()) + 1
+                used.setdefault(code, f'{relative.as_posix()}:{line}')
+
+        for match in re.finditer(r'ModuleContractDiagnosticCodes\.(\w+)', text):
+            if match.group(1) not in declared.values():
+                line = text.count('\n', 0, match.start()) + 1
+                problems.append(
+                    f'{relative.as_posix()}:{line}: references '
+                    f'ModuleContractDiagnosticCodes.{match.group(1)}, which the constants file does not declare'
+                )
+
+    for code, name in sorted(declared.items()):
+        if code not in used:
+            problems.append(
+                f'{CONTRACT_DECLARATION.as_posix()}: {code} ({name}) is declared but referenced nowhere; '
+                f'a declared code that cannot be emitted documents a diagnostic that does not happen'
+            )
+
+    return declared, used, problems
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[1])
@@ -120,11 +189,12 @@ def main() -> int:
 
     emitted = emitted_codes(root)
     singles, covered, ranges = documented_codes(reference)
+    contract_declared, contract_used, contract_problems = contract_codes(root)
 
     malformed = [description for description in ranges if 'is inverted' in description or 'crosses' in description]
     documented = singles | covered
 
-    errors: list[str] = []
+    errors: list[str] = list(contract_problems)
     for description in malformed:
         errors.append(f'docs/reference/diagnostics.md: documented range {description}')
 
@@ -140,6 +210,52 @@ def main() -> int:
             f'narrow the range or remove the code'
         )
 
+    # Module-contract family: symbol-shaped codes. Ranges are expanded against the declaration file so a
+    # range spanning a numbering gap fails instead of silently documenting a code that cannot exist.
+    reference_text = reference.read_text(encoding='utf-8')
+    contract_documented = set(CONTRACT_CODE.findall(reference_text))
+    contract_by_range: set[str] = set()
+
+    for match in CONTRACT_RANGE.finditer(reference_text):
+        low_family, low_digits, high_family, high_digits = match.groups()
+        if low_family != high_family:
+            errors.append(
+                f'docs/reference/diagnostics.md: range `{low_family}-{low_digits}`-`{high_family}-{high_digits}` '
+                f'crosses a family boundary'
+            )
+            continue
+        low_n, high_n = int(low_digits), int(high_digits)
+        if high_n < low_n:
+            errors.append(
+                f'docs/reference/diagnostics.md: range `{low_family}-{low_digits}`-`{high_family}-{high_digits}` is inverted'
+            )
+            continue
+        for number in range(low_n, high_n + 1):
+            contract_by_range.add(f'{low_family}-{number:03d}')
+    contract_documented |= contract_by_range
+
+    # A code mentioned in backticks outside a table row (prose discussing a gap) is not coverage. A code
+    # covered by a documented range is exempt: the range is its table row.
+    for code in sorted(contract_documented - contract_by_range):
+        if not re.search(rf'\|[^\n]*`{re.escape(code)}`', reference_text):
+            errors.append(
+                f'docs/reference/diagnostics.md: {code} appears only in prose, not on a table row; '
+                f'a code mentioned while discussing a gap is not documented coverage'
+            )
+
+    for code in sorted(set(contract_declared) - contract_documented):
+        errors.append(
+            f'docs/reference/diagnostics.md: {code} is emitted at {contract_used.get(code, "an unknown site")} '
+            f'but no row covers it; add it to the module-contract row'
+        )
+
+    for code in sorted(contract_documented - set(contract_declared)):
+        errors.append(
+            f'docs/reference/diagnostics.md: {code} is documented but '
+            f'{CONTRACT_DECLARATION.as_posix()} does not declare it; '
+            f'remove it, or declare and reference it if it is genuinely new'
+        )
+
     if errors:
         print('diagnostic-code check failed:')
         for error in errors:
@@ -148,7 +264,8 @@ def main() -> int:
 
     print(
         f'Diagnostic-code check passed: {len(emitted)} emitted codes documented '
-        f'({len(ranges)} ranges, {len(singles - covered)} single codes).'
+        f'({len(ranges)} ranges, {len(singles - covered)} single codes), '
+        f'{len(contract_declared)} module-contract codes documented and referenced.'
     )
     return 0
 

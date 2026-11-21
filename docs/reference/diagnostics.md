@@ -39,6 +39,31 @@ lastVerifiedAgainst: wist-release-state-2026-08-06
 | runtime provider | `UTL2301`–`UTL2304` | missing/ambiguous provider, missing execution input, provider removed by override |
 | semantic judgments | `UTL2401`–`UTL2407` | obligation unknown/disproved/inconsistent, derivation depth bound, predicate arity, stale epoch evidence, trust precedence |
 
+## Module-contract verification codes
+
+These belong to `UniversalToolchain.ModuleContracts` and are raised while verifying that the selected
+modules agree with each other: their contracts, ownership, pipeline effects, bytecode and AIR. They are
+symbol-shaped rather than numeric because each one names the artifact it judges.
+
+Every code is declared as a named constant in `ModuleContractDiagnosticCodes` and referenced by the
+verifier that raises it. Codes are listed individually rather than as ranges on purpose: the numbering has
+gaps (the contract family has no member numbered 004), so a range would advertise a code that does not
+exist.
+
+| Family | Codes | Meaning |
+|---|---|---|
+| contract table and selection | `UT-CONTRACT-001`–`UT-CONTRACT-003`, `UT-CONTRACT-005`–`UT-CONTRACT-009` | duplicate facet, duplicate contract id, identifier outside its owning namespace; schema downgrade, undeclared module, new or declared module missing a descriptor, facet kind without deterministic order |
+| AST and lowerer ownership | `UT-MOD-OWNERSHIP-001`–`UT-MOD-OWNERSHIP-003` | AST node with no lowering owner, with multiple owners, or lowerer handling a node another module owns |
+| compiler facts | `UT-COMPILER-FACT-001`–`UT-COMPILER-FACT-003` | a fact with several owners, referenced but not provided by any selected module, or produced by a module that does not own it |
+| pipeline effects | `UT-PIPELINE-EFFECT-001`–`UT-PIPELINE-EFFECT-005` | effect that both produces and invalidates a fact, required fact missing, reverification not performed, missing pipeline order, module listed twice in one stage |
+| bytecode | `UT-BYTECODE-TAG-001`, `UT-BYTECODE-TAG-002`, `UT-BYTECODE-SOURCE-001`, `UT-BYTECODE-PATTERN-001`, `UT-BYTECODE-STACK-001`, `UT-BYTECODE-METADATA-001` | unknown tag, undeclared producer, undeclared source node, unknown pattern, stack effect disagreeing with the declaration, contract metadata declared twice |
+| AIR | `UT-AIR-SCHEMA-001`, `UT-AIR-STACK-001`, `UT-AIR-BRANCH-001`, `UT-AIR-BRANCH-002`, `UT-AIR-INTRINSIC-001`, `UT-AIR-INTRINSIC-002`, `UT-AIR-CAPABILITY-001` | invalid operand schema, stack discipline violated, missing branch target, duplicate label, intrinsic unsupported by the selected backend, intrinsic outside the universal interpreter surface, missing backend capability |
+| backend capabilities | `UT-BACKEND-CAPABILITY-001`, `UT-BACKEND-CAPABILITY-002` | selected capability no contract declares, several capability facets competing |
+
+`UT-AIR-INTRINSIC-001` is the earliest point an unsupported intrinsic is reported today, and
+`UT-BACKEND-CAPABILITY-002` is a hard error rather than a warning: two facets offering the same capability
+mean the pipeline cannot decide which one is in force.
+
 ## Handling pattern
 
 ```csharp
