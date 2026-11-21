@@ -34,8 +34,8 @@ lastVerifiedAgainst: wist-release-state-2026-08-06
 | feature graph | `UTL1001`–`UTL1003`, `UTL1203` | missing feature, feature conflict/cycle, unsupported backend |
 | Toolchain API | `UTL1501` | definition/package API incompatibility |
 | contribution graph | `UTL2001`–`UTL2006`, `UTL2010`–`UTL2014` | missing/excluded contribution, dependency cycle, capability provider resolution, conflicts and ownership eligibility |
-| slot ownership | `UTL2101`–`UTL2103` | multiple owners (package-declared or slot-table-declared) or invalid explicit replacement |
-| typed routes and passes | `UTL2201`–`UTL2204` | no compatible route, pass cycle, backend owner ambiguity, unplaceable pass |
+| slot ownership | `UTL2101`–`UTL2103`, `UTL2110`–`UTL2112` | multiple owners or invalid explicit replacement; definition-level contribution order referencing an unselected contribution, crossing slots, or cyclic |
+| typed routes and passes | `UTL2201`–`UTL2209` | no compatible route, pass cycle, backend owner ambiguity, unplaceable pass, violated definition-level order, violated descriptor order, ambiguous minimum-cost route, ambiguous ready pass at equal order, contribution not covered on an enabled backend |
 | runtime provider | `UTL2301`–`UTL2304` | missing/ambiguous provider, missing execution input, provider removed by override |
 | semantic judgments | `UTL2401`–`UTL2407` | obligation unknown/disproved/inconsistent, derivation depth bound, predicate arity, stale epoch evidence, trust precedence |
 
