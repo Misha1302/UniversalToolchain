@@ -146,8 +146,7 @@ for solution in "${solutions[@]}"; do
     "${restore_source_args[@]}" \
     "-p:RestoreBuildInParallel=$restore_in_parallel" \
     "-p:UseSharedCompilation=$shared_compilation" \
-    "-p:RestoreLockedMode=true" \
-    -p:NuGetAudit=false
+    "-p:RestoreLockedMode=true"
 done
 
 for sample_project in "${markdown_sample_projects[@]}"; do
@@ -157,8 +156,7 @@ for sample_project in "${markdown_sample_projects[@]}"; do
     "${restore_source_args[@]}" \
     "-p:RestoreBuildInParallel=$restore_in_parallel" \
     "-p:UseSharedCompilation=$shared_compilation" \
-    "-p:RestoreLockedMode=true" \
-    -p:NuGetAudit=false
+    "-p:RestoreLockedMode=true"
 done
 
 for solution in "${solutions[@]}"; do
@@ -168,8 +166,7 @@ for solution in "${solutions[@]}"; do
     "${build_server_args[@]}" \
     "-m:$jobs" \
     "-p:BuildInParallel=$build_in_parallel" \
-    "-p:UseSharedCompilation=$shared_compilation" \
-    -p:NuGetAudit=false
+    "-p:UseSharedCompilation=$shared_compilation"
 done
 
 python3 Tools/test-build-topology-runtime.py \
@@ -186,8 +183,7 @@ for sample_project in "${markdown_sample_projects[@]}"; do
     "${build_server_args[@]}" \
     "-m:$jobs" \
     "-p:BuildInParallel=$build_in_parallel" \
-    "-p:UseSharedCompilation=$shared_compilation" \
-    -p:NuGetAudit=false
+    "-p:UseSharedCompilation=$shared_compilation"
 done
 
 python3 Tools/run-test-contract.py \
@@ -231,8 +227,7 @@ if [[ "$skip_pack" == false ]]; then
       "${build_server_args[@]}" \
       "${restore_source_args[@]}" \
       "-p:RestoreBuildInParallel=$restore_in_parallel" \
-      "-p:UseSharedCompilation=$shared_compilation" \
-      -p:NuGetAudit=false
+      "-p:UseSharedCompilation=$shared_compilation"
   done
   for package_project in "${package_projects[@]}"; do
     "$dotnet_command" pack "$package_project" \
@@ -243,8 +238,7 @@ if [[ "$skip_pack" == false ]]; then
       "-p:BuildInParallel=$build_in_parallel" \
       -o artifacts/packages \
       /p:WarningsAsErrors=NU5118 \
-      "-p:UseSharedCompilation=$shared_compilation" \
-      -p:NuGetAudit=false
+      "-p:UseSharedCompilation=$shared_compilation"
   done
   mapfile -t packed_archives < <(find artifacts/packages -maxdepth 1 -type f \
     \( -name '*.nupkg' -o -name '*.snupkg' \) -print | sort)
@@ -285,8 +279,7 @@ if [[ "$skip_pack" == false ]]; then
     -t:MaterializeCanonicalWistRuntimeClosure \
     -p:Configuration="$configuration" \
     -p:TargetFramework=net10.0 \
-    -p:CanonicalWistRuntimeReferenceDirectory="$wist_reference_dir" \
-    -p:NuGetAudit=false
+    -p:CanonicalWistRuntimeReferenceDirectory="$wist_reference_dir"
   test -f "$wist_reference_dir/UniversalToolchain.Wist.dll"
   wist_compile_reference="UniversalToolchain/UniversalToolchain.Wist/obj/$configuration/net10.0/ref/UniversalToolchain.Wist.dll"
   test -f "$wist_compile_reference"

@@ -89,8 +89,7 @@ function New-RestoreArguments {
     $arguments = @("restore", $Project) + $restoreModeArguments + $buildServerArguments + @(
         "-p:RestoreBuildInParallel=$restoreInParallel",
         "-p:UseSharedCompilation=$sharedCompilation",
-        "-p:RestoreLockedMode=true",
-        "-p:NuGetAudit=false"
+        "-p:RestoreLockedMode=true"
     )
     if ($env:NUGET_CONFIG) {
         $arguments += @("--configfile", $env:NUGET_CONFIG)
@@ -119,7 +118,6 @@ foreach ($solution in $solutions) {
         "-m:$Jobs",
         "-p:BuildInParallel=$buildInParallel",
         "-p:UseSharedCompilation=$sharedCompilation",
-        "-p:NuGetAudit=false"
     ))
 }
 
@@ -139,7 +137,6 @@ foreach ($project in $markdownSampleProjects) {
         "-m:$Jobs",
         "-p:BuildInParallel=$buildInParallel",
         "-p:UseSharedCompilation=$sharedCompilation",
-        "-p:NuGetAudit=false"
     ))
 }
 
@@ -193,7 +190,6 @@ if (-not $SkipPack) {
             "-o", "artifacts/packages",
             "/p:WarningsAsErrors=NU5118",
             "-p:UseSharedCompilation=$sharedCompilation",
-            "-p:NuGetAudit=false"
         ))
     }
     $packedArchives = @(Get-ChildItem "artifacts/packages" -File |
@@ -254,7 +250,6 @@ if (-not $SkipPack) {
         "-p:Configuration=$Configuration",
         "-p:TargetFramework=net10.0",
         "-p:CanonicalWistRuntimeReferenceDirectory=$wistReferenceDir",
-        "-p:NuGetAudit=false"
     )
     $wistReferenceAssemblyPath = Join-Path $wistReferenceDir "UniversalToolchain.Wist.dll"
     if (-not (Test-Path -LiteralPath $wistReferenceAssemblyPath -PathType Leaf)) {

@@ -36,6 +36,17 @@
         <CanonicalRepositoryRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..'))</CanonicalRepositoryRoot>
         <PathMap>$(CanonicalRepositoryRoot)=/_</PathMap>
 
+        <!-- Audit package vulnerabilities on restore. This was previously disabled with
+             `-p:NuGetAudit=false` on every restore command, which meant a known-vulnerable
+             dependency could enter the graph with every gate green. Restore needs no network
+             access for this once packages are cached, so it does not weaken offline builds.
+
+             `NuGetAuditMode=all` also audits transitive packages, and the four diagnostic ids are
+             promoted to errors: a warning nobody reads is the same as no audit, and the whole
+             point is that the build refuses instead of continuing. -->
+        <NuGetAudit>true</NuGetAudit>
+        <NuGetAuditMode>all</NuGetAuditMode>
+        <WarningsAsErrors>$(WarningsAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsAsErrors>
     </PropertyGroup>
 
     <ItemGroup>

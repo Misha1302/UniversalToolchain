@@ -27,6 +27,9 @@ export NUGET_HTTP_CACHE_PATH="$SMOKE_DIR/http-cache"
 export DOTNET_CLI_HOME="$SMOKE_DIR/dotnet-home"
 export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 export DOTNET_NOLOGO=1
+# The smoke proves a published package can be consumed, not that the consumer's dependency
+# graph is free of advisories. Auditing here would let an advisory published after release
+# turn a published-package smoke red, which says nothing about the package under test.
 export NuGetAudit=false
 
 (

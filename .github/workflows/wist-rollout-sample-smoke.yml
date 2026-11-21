@@ -40,7 +40,7 @@ jobs:
           --disable-parallel
           -p:RestoreBuildInParallel=false
           -p:UseSharedCompilation=false
-          -p:NuGetAudit=false
+         
           --verbosity quiet
 
       - name: Build sample
@@ -51,7 +51,7 @@ jobs:
           -m:1
           -p:BuildInParallel=false
           -p:UseSharedCompilation=false
-          -p:NuGetAudit=false
+         
           --verbosity quiet
 
       - name: Run and verify sample

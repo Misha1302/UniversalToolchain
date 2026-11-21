@@ -61,8 +61,13 @@ for file in \
 done
 cp "Tools/run-contract-experiment.sh" "$out_dir/source/run-contract-experiment.sh"
 
+# Audit stays off here: this harness reproduces a recorded experiment and is executed from
+# documentation blocks with a hard time limit. Fetching the advisory database on a cold
+# cache costs minutes (measured 213s vs 5s for one experiment project), which makes the
+# harness time out for a reason unrelated to the experiment. Vulnerability policy is
+# enforced on the canonical build, not on reproduction harnesses.
 dotnet restore "$project" -p:NuGetAudit=false
-dotnet build "$project" -c Release --no-restore -p:NuGetAudit=false
+dotnet build "$project" -c Release --no-restore
 
 CGO27_RUN_ID="${commit}-main" \
   dotnet run -c Release --no-build --no-restore --project "$project" -- "$out_dir/main"
