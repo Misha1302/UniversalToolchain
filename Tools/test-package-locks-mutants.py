@@ -42,6 +42,15 @@ PROJECT_ONLY_LOCK = {
     "version": 1,
     "dependencies": {"net10.0": {"lib": {"type": "Project"}}},
 }
+# What a RID-parameterised restore writes into an otherwise correct lock. The empty section is
+# the whole damage: it records that a restore ran for `linux-x64`, not what the project depends on.
+RID_LOCK = {
+    "version": 1,
+    "dependencies": {
+        **PACKAGE_LOCK["dependencies"],
+        "net10.0/linux-x64": {},
+    },
+}
 
 
 def write_tree(root: Path, *, packages: bool = True, lock: dict | None = PACKAGE_LOCK,
@@ -130,6 +139,28 @@ def main() -> int:
         if result.returncode != 0:
             raise RuntimeError(f"project-reference-only project incorrectly required a lock:\n{result.stdout}")
         print("SURVIVOR=0 mutant=none-lock-for-project-reference-only")
+
+        # Mutant 6: a committed lock carrying a runtime-identifier section. This is not hypothetical:
+        # the RID layout probe in Tools/test-build-topology-runtime.py restores with
+        # -p:RuntimeIdentifier=<rid>, which appended `"net10.0/linux-x64": {}` to 35 committed locks
+        # and left the working tree dirty after every local canonical build.
+        write_tree(root, lock=RID_LOCK)
+        result = run(checker, root)
+        if result.returncode == 0:
+            raise RuntimeError("lock with a runtime-identifier section survived")
+        if "runtime-identifier-specific" not in result.stdout:
+            raise RuntimeError(f"wrong diagnostic for RID lock:\n{result.stdout}")
+        print("SURVIVOR=0 mutant=lock-with-runtime-identifier-section")
+
+        # Negative control for the same rule: a lock whose only section is the plain target
+        # framework must keep passing. A rule that flags every lock would pass mutant 6 and be
+        # useless, so the rejection above is proved to be about the RID section specifically.
+        write_tree(root, lock=PACKAGE_LOCK)
+        result = run(checker, root)
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"lock without a RID section was rejected by the RID rule:\n{result.stdout}")
+        print("SURVIVOR=0 mutant=target-framework-lock-not-flagged")
 
     return 0
 
