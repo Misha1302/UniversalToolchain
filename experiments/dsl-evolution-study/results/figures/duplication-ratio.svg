@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420">
+<rect width="100%" height="100%" fill="white"/>
+<text x="380.0" y="30" text-anchor="middle" font-family="sans-serif" font-size="20">Deterministic clone approximation</text>
+<text x="18" y="210.0" transform="rotate(-90 18 210.0)" text-anchor="middle" font-family="sans-serif" font-size="13">Repeated normalized-line ratio</text>
+<line x1="90" y1="60" x2="90" y2="350" stroke="black"/>
+<line x1="90" y1="350" x2="730" y2="350" stroke="black"/>
+<rect x="137.40740740740742" y="350.0" width="118.5185185185185" height="0.0" fill="#777"/>
+<text x="196.66666666666669" y="342.0" text-anchor="middle" font-family="sans-serif" font-size="14">0.0000</text>
+<text x="196.66666666666669" y="375" text-anchor="middle" font-family="sans-serif" font-size="13">Control</text>
+<rect x="350.74074074074076" y="208.915" width="118.5185185185185" height="141.085" fill="#777"/>
+<text x="410.0" y="200.915" text-anchor="middle" font-family="sans-serif" font-size="14">0.4865</text>
+<text x="410.0" y="375" text-anchor="middle" font-family="sans-serif" font-size="13">Clone-own</text>
+<rect x="564.0740740740741" y="285.562" width="118.5185185185185" height="64.438" fill="#777"/>
+<text x="623.3333333333334" y="277.562" text-anchor="middle" font-family="sans-serif" font-size="14">0.2222</text>
+<text x="623.3333333333334" y="375" text-anchor="middle" font-family="sans-serif" font-size="13">UT</text>
+</svg>

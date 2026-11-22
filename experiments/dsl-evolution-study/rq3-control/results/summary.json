@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "before_commit": "214204c5668007353033e6c00f2fecca73e39923",
+  "downstream_change_commit": "5bca2e701a8e213416f0bf1965a5b53b63e9c953",
+  "metrics": {
+    "shared-pipeline": {
+      "changed_existing_loc": 3,
+      "added": 3,
+      "deleted": 0,
+      "touched_existing_files": 1,
+      "propagation_sites": 1,
+      "new_downstream_loc": 3,
+      "variant_semantic_files_touched": 0
+    },
+    "universal-toolchain": {
+      "changed_existing_loc": 5,
+      "added": 5,
+      "deleted": 0,
+      "touched_existing_files": 1,
+      "propagation_sites": 1,
+      "new_downstream_loc": 5,
+      "variant_semantic_files_touched": 0
+    }
+  },
+  "interpretation": "Shared downstream reuse is available to both the ordinary shared-pipeline baseline and UT; this control does not establish a source-language extensibility advantage."
+}

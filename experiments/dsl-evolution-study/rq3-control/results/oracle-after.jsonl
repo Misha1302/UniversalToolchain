@@ -1,0 +1,2 @@
+{"treatment": "shared-pipeline", "expect": "canonicalized", "status": "PASS", "failures": []}
+{"treatment": "universal-toolchain", "expect": "canonicalized", "status": "PASS", "failures": []}

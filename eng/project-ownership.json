@@ -44,7 +44,9 @@
     ],
     "UNIVERSAL": [
       "UniversalToolchain/**/*.csproj",
-      "samples/Acme.PricingLanguage/Acme.PricingLanguage.csproj"
+      "samples/Acme.PricingLanguage/Acme.PricingLanguage.csproj",
+      "experiments/dsl-evolution-study/DslEvolutionStudy.csproj",
+      "experiments/dsl-evolution-study/rq3-control/Rq3Control.csproj"
     ]
   },
   "classification": {

@@ -1,0 +1,6 @@
+[
+  {"id":"base","source":"price 100","features":[],"expected":"100"},
+  {"id":"discount","source":"price 100 | discount 10","features":["discount"],"expected":"90"},
+  {"id":"surcharge","source":"price 100 | surcharge 10","features":["surcharge"],"expected":"110"},
+  {"id":"both","source":"price 100 | discount 10 | surcharge 10","features":["discount","surcharge"],"expected":"99"}
+]

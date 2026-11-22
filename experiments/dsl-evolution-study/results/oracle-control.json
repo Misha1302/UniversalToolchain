@@ -1,0 +1,22 @@
+{
+  "treatment": "control",
+  "status": "PASS",
+  "cases": [
+    {
+      "Id": "base",
+      "Value": "100",
+      "Error": null
+    },
+    {
+      "Id": "discount",
+      "Value": "90",
+      "Error": null
+    },
+    {
+      "Id": "discount-invalid",
+      "Value": null,
+      "Error": "PERCENT_RANGE"
+    }
+  ],
+  "failures": []
+}
