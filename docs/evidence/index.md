@@ -18,7 +18,7 @@ lastVerifiedAgainst: wist-release-state-2026-08-12
 - [Performance model](/reference/performance-model)
 - [Release notes](/releases/external-language-authoring-hardening-2026-07-21)
 
-The package currently verified from NuGet.org and the source candidate are different identities. `eng/documentation-release-state.json` binds the published version, source version, target framework, first-contact install pages and active stability record.
+The package currently verified from NuGet.org and the source candidate are different identities. `eng/documentation-release-state.json` binds the pinned installation/CI smoke version (`publishedVersion`), source version, target framework, first-contact pages and active stability record. Its dated `nugetAvailability` snapshot is separate from recommendation and binary provenance; see [Installation](/start/installation#availability-and-binary-provenance).
 
 Evidence records are tied to named artifacts or commits. A test count does not by itself prove package publication, restore, runtime policy, benchmark validity, sandboxing or outsider usability.
 

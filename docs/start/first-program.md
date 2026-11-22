@@ -169,7 +169,7 @@ The same supported source should produce the same observable result in CIL and i
 
 ## Common mistakes
 
-- installing a source-candidate version that is not published on NuGet.org;
+- changing the pinned package version without checking availability, provenance and consumer compatibility;
 - adding a local `./artifacts/packages` feed that has not been produced by the release package gate;
 - installing into a project that does not target `net10.0`;
 - exposing CLR assemblies to untrusted input;

@@ -25,7 +25,7 @@ Wist is the reference language and most approachable executable example. Its lex
 
 ## Choose the correct installation path
 
-The repository distinguishes the package currently available on NuGet.org from the newer source candidate in this tree.
+The repository distinguishes the pinned installation/CI smoke version, observed NuGet availability, and the source candidate in this tree.
 
 ### Published package
 
@@ -44,7 +44,7 @@ Use this path when you want an installable package without cloning the repositor
 ### Current source candidate
 
 <!-- wist-source-candidate:begin -->
-This source tree defines `UniversalToolchain.Wist` `0.1.0-alpha.7`. That candidate is **not published on NuGet.org**. Do not replace the published command above with `0.1.0-alpha.7` unless you have a reviewed package feed containing that exact artifact.
+This source tree defines `UniversalToolchain.Wist` `0.1.0-alpha.7`. The same version number is **available on NuGet.org** (see the dated [availability snapshot](docs/start/installation.md#availability-and-binary-provenance)); availability does not establish binary provenance from this checkout. The pinned installation and CI smoke version remains `0.1.0-alpha.1`.
 <!-- wist-source-candidate:end -->
 
 To evaluate the current repository implementation, clone the repository and use the source build/sample path below. Release packaging is a separate baseline-bearing maintainer gate.
@@ -161,8 +161,8 @@ Do not use the current alpha when:
 
 | Capability | Status |
 |---|---|
-| Published NuGet package | `UniversalToolchain.Wist` `0.1.0-alpha.1`, clean-room smoke verified |
-| Current source candidate | `UniversalToolchain.Wist` `0.1.0-alpha.7`, not published on NuGet.org |
+| Pinned installation / CI smoke | `UniversalToolchain.Wist` `0.1.0-alpha.1`; not an enumeration of published versions |
+| Current source identity | `UniversalToolchain.Wist` `0.1.0-alpha.7`; same-number NuGet artifact exists, current-source binary equivalence not verified |
 | `WistEngine` facade | available |
 | Restricted arithmetic preset | `CreateRestrictedArithmetic()` |
 | Broad native preview preset | `CreateFullNative()` with explicit host assembly allowlist |

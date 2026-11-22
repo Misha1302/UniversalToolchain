@@ -4,7 +4,7 @@
     "docs:dev": "vitepress dev docs --host 0.0.0.0",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs --host 0.0.0.0",
-    "docs:release-state": "python3 Tools/check_documentation_release_state.py",
+    "docs:release-state": "python3 Tools/check_documentation_release_state.py && python3 Tools/test-documentation-external.py",
     "docs:readiness": "python3 Tools/check-wist-release-readiness-docs.py",
     "docs:readiness-mutants": "python3 Tools/test-wist-release-readiness-doc-mutants.py",
     "docs:first-contact": "python3 -c \"from pathlib import Path; Path('UniversalToolchain/packages').mkdir(parents=True, exist_ok=True)\" && python3 Tools/check-wist-documentation-first-contact.py",
@@ -12,7 +12,8 @@
     "docs:links": "python3 Tools/check_documentation_links.py",
     "docs:pages": "python3 Tools/check_documentation_pages.py",
     "docs:pages-selftest": "python3 Tools/test-documentation-pages.py",
-    "docs:check": "npm run docs:status && npm run docs:readiness-mutants && npm run docs:links && npm run docs:first-contact && npm run docs:pages-selftest && npm run docs:build && npm run docs:pages"
+    "docs:check": "npm run docs:status && npm run docs:readiness-mutants && npm run docs:links && npm run docs:first-contact && npm run docs:pages-selftest && npm run docs:build && npm run docs:pages",
+    "docs:external": "python3 Tools/check_documentation_external.py"
   },
   "devDependencies": {
     "vitepress": "1.6.4"

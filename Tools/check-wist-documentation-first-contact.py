@@ -10,6 +10,8 @@ import subprocess
 import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from urllib.parse import urlsplit
+from check_documentation_pages import vitepress_base
 from xml.sax.saxutils import escape
 
 DEFAULT_STATE = Path("eng/documentation-release-state.json")
@@ -155,6 +157,18 @@ def validate_package_readmes(root: Path, state: dict[str, object]) -> tuple[list
                 f"{relative}: package README must not assume a repository-local artifacts/packages feed"
             )
         paths.append(document)
+    base, errors = vitepress_base(root)
+    if errors or base is None:
+        raise FirstContactError("cannot validate package links without a valid VitePress base")
+    site = child_text(ET.parse(project).getroot(), "PackageProjectUrl") or ""
+    parsed_site = urlsplit(site)
+    if parsed_site.scheme != "https" or not parsed_site.netloc.endswith(".github.io") or parsed_site.path != base:
+        raise FirstContactError("PackageProjectUrl must match the current HTTPS GitHub Pages base")
+    for document in paths:
+        for url in re.findall(r"https?://[^\s<>()[\]`]+", document.read_text(encoding="utf-8")):
+            parsed = urlsplit(url)
+            if parsed.netloc.endswith(".github.io") and not url.startswith(site):
+                raise FirstContactError(f"{document.relative_to(root)}: documentation URL is outside the current package site: {url}")
     return paths, project
 
 

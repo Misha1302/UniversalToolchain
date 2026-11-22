@@ -35,7 +35,7 @@ The generic SDK does not force every language through Wist AST, Bytecode or AIR.
 ## Current maturity
 
 - The package currently verified from NuGet.org is `UniversalToolchain.Wist` `0.1.0-alpha.1`.
-- The repository source candidate is `0.1.0-alpha.7`; it is not published on NuGet.org.
+- The source project declares `0.1.0-alpha.7`; a same-number NuGet artifact exists, but current-source binary equivalence is not verified. See the [availability snapshot](/start/installation#availability-and-binary-provenance).
 - Both are alpha surfaces for controlled evaluation and prototypes, not stable 1.0 contracts.
 - Generic language authoring is a low-level alpha with typed routing, deterministic planning and runtime lifecycle contracts.
 - Restricted composition is not a hardened sandbox.
