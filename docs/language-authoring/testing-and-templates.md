@@ -49,6 +49,8 @@ dotnet new install ./artifacts/packages/UniversalToolchain.Templates.0.3.0-alpha
 dotnet new ut-language -n Example.Language
 ```
 
+For the complete consumer commands, including an absolute local feed and explicit restore, see [Quickstart: release packages](/language-authoring/quickstart#7-create-a-project-from-release-packages).
+
 Template token replacement covers package, language, feature, contribution, runtime and artifact identifiers. The release smoke verifies that generated projects do not retain `Acme.Pricing` or Wist identifiers.
 
 ## Package family

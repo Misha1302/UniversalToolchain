@@ -18,7 +18,7 @@ The Language Authoring SDK is the generic framework surface for building a langu
 - `LanguageRuntime` validates provider identity and policy, creates a runtime session and executes the selected backend route;
 - `LanguageContractSuite` provides a backend-parity test helper;
 - `dotnet new ut-language` creates a standalone non-Wist project;
-- `samples/Acme.PricingLanguage` demonstrates a parser, interpreter backend and compiled backend without a Wist reference.
+- `samples/Acme.PricingLanguage` demonstrates a parser, interpreter route and delegate route named `compiled` without a Wist reference; this minimal sample does not emit CIL.
 
 ## Read in this order
 
