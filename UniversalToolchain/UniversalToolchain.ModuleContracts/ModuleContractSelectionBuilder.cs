@@ -32,7 +32,7 @@ public sealed class ModuleContractSelectionBuilder
         var facets = providerDescriptors
             .SelectMany(static descriptor => descriptor.Facets)
             .OrderBy(static x => x.ModuleId.Value, StringComparer.Ordinal)
-            .ThenBy(static x => ContractFacetKindOrder.GetSortKey(x.Kind))
+            .ThenBy(static x => ContractFacetKindOrder.GetSortKeyOrLast(x.Kind))
             .ThenBy(static x => x.GetType().FullName, StringComparer.Ordinal)
             .ToArray();
 

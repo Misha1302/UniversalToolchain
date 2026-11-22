@@ -91,6 +91,12 @@ modules claiming one AST node exclusively is `UT-MOD-OWNERSHIP-002`, whose resol
 lowerer rather than on the table. Bytecode `MayEmitTags`/`MayEmitPatterns` are per-emission capabilities,
 not declarations, so a tag emitted by two different nodes is not a duplicate.
 
+`UT-CONTRACT-009` is reported for a facet whose kind is not in `ContractFacetKindOrder`, which makes the
+table's ordering undefined. It is judged over the facets actually present, not over the declared enum:
+every declared kind already has an order, so an enum-driven check would always return empty and the code
+could never be emitted. Such a facet sorts after every ordered kind and is reported, rather than throwing
+from inside the sort.
+
 ## Handling pattern
 
 ```csharp

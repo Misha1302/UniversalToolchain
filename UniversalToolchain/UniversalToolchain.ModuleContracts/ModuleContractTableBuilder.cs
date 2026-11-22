@@ -69,7 +69,7 @@ public sealed class ModuleContractTableBuilder
     {
         var orderedFacets = _facets
             .OrderBy(static x => x.ModuleId.Value, StringComparer.Ordinal)
-            .ThenBy(static x => ContractFacetKindOrder.GetSortKey(x.Kind))
+            .ThenBy(static x => ContractFacetKindOrder.GetSortKeyOrLast(x.Kind))
             .ThenBy(static x => x.GetType().FullName, StringComparer.Ordinal)
             .ToArray();
 
@@ -91,7 +91,7 @@ public sealed class ModuleContractTableBuilder
                     null,
                     [new ToolchainDiagnosticHint("Use a compatible contract validator or add an explicit compatibility alias before reading newer schema data.")]))
             )
-            .Concat(ContractFacetKindOrder.ValidateComplete())
+            .Concat(ContractFacetKindOrder.Validate(orderedFacets))
             .OrderBy(static x => x.Code, StringComparer.Ordinal)
             .ThenBy(static x => x.Message, StringComparer.Ordinal)
             .ToArray();
