@@ -72,7 +72,7 @@ exist.
 | Family | Codes | Meaning |
 |---|---|---|
 | contract table and selection | `UT-CONTRACT-001`–`UT-CONTRACT-003`, `UT-CONTRACT-005`–`UT-CONTRACT-009` | duplicate facet, duplicate contract id inside one facet, identifier outside its owning namespace; schema downgrade, undeclared module, new or declared module missing a descriptor, facet kind without deterministic order |
-| AST and lowerer ownership | `UT-MOD-OWNERSHIP-001`–`UT-MOD-OWNERSHIP-003` | AST node with no lowering owner, with multiple owners, or lowerer handling a node another module owns |
+| AST and lowerer ownership | `UT-MOD-OWNERSHIP-001`–`UT-MOD-OWNERSHIP-003` | AST node with no lowering owner, with contradicting owners, or lowerer handling a node no contract lets it lower |
 | compiler facts | `UT-COMPILER-FACT-001`–`UT-COMPILER-FACT-003` | a fact with several owners, referenced but not provided by any selected module, or produced by a module that does not own it |
 | pipeline effects | `UT-PIPELINE-EFFECT-001`–`UT-PIPELINE-EFFECT-005` | effect that both produces and invalidates a fact, required fact missing, reverification not performed, missing pipeline order, module listed twice in one stage |
 | bytecode | `UT-BYTECODE-TAG-001`, `UT-BYTECODE-TAG-002`, `UT-BYTECODE-SOURCE-001`, `UT-BYTECODE-PATTERN-001`, `UT-BYTECODE-STACK-001`, `UT-BYTECODE-METADATA-001` | unknown tag, undeclared producer, undeclared source node, unknown pattern, stack effect disagreeing with the declaration, contract metadata declared twice |
@@ -90,6 +90,17 @@ the same identifier legitimately appears in two facets of one module, saying dif
 modules claiming one AST node exclusively is `UT-MOD-OWNERSHIP-002`, whose resolution depends on the
 lowerer rather than on the table. Bytecode `MayEmitTags`/`MayEmitPatterns` are per-emission capabilities,
 not declarations, so a tag emitted by two different nodes is not a duplicate.
+
+`UT-MOD-OWNERSHIP-002` is reported when ownership declarations for one node kind contradict each other:
+two exclusive owners, or an exclusive owner alongside any cooperative declaration. Two **cooperative**
+declarations are not a conflict — that is the shape cooperation exists for. It is checked by the table
+build, so it no longer depends on a caller remembering to ask.
+
+`UT-MOD-OWNERSHIP-003` compares a lowerer against everything allowed to lower its node kind, not just
+against a single `OwnerModule`. A cooperative contract names its helpers in `CooperatingModules`, and
+those modules may lower the node. Before that field was read, cooperative lowering was impossible by
+construction: a contract declaring `Cooperative` and naming a helper still reported the helper as an
+intruder, so the documented remedy for an ownership conflict could not be followed.
 
 `UT-CONTRACT-009` is reported for a facet whose kind is not in `ContractFacetKindOrder`, which makes the
 table's ordering undefined. It is judged over the facets actually present, not over the declared enum:

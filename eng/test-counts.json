@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "totalPassed": 1512,
+  "totalPassed": 1525,
   "main": [
     {
       "label": "Core",
@@ -8,7 +8,7 @@
       "runner": "assembly",
       "path": "UniversalToolchain/Tests/bin/Release/net10.0/Tests.dll",
       "timeoutSeconds": 480,
-      "expectedPassed": 569
+      "expectedPassed": 582
     },
     {
       "label": "Modules",

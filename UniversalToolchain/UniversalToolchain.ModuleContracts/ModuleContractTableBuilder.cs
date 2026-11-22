@@ -98,6 +98,7 @@ public sealed class ModuleContractTableBuilder
 
         var initialTable = new SelectedModuleContractTable(SupportedSchemaVersion, orderedFacets, diagnostics);
         var pipelineDiagnostics = PipelineEffectContractValidator.Validate(initialTable);
+        var astOwnershipDiagnostics = AstOwnershipRegistry.ValidateTableDeclarations(initialTable);
         var identifierDiagnostics = orderedFacets
             .SelectMany(ContractIdRegistryValidator.ValidateUniqueDeclarations)
             .OrderBy(static x => x.Code, StringComparer.Ordinal)
@@ -120,6 +121,7 @@ public sealed class ModuleContractTableBuilder
             diagnostics
                 .Concat(identifierDiagnostics)
                 .Concat(pipelineDiagnostics)
+                .Concat(astOwnershipDiagnostics)
                 .Concat(namespaceDiagnostics)
                 .OrderBy(static x => x.Code, StringComparer.Ordinal)
                 .ThenBy(static x => x.Message, StringComparer.Ordinal)
