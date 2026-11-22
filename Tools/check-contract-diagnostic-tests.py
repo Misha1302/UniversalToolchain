@@ -47,18 +47,7 @@ SKIP_DIRS = {'bin', 'obj', 'artifacts', 'node_modules', '.git', '.cache'}
 
 # Codes with no test today, each with the measured reason. This is a record, not a permission slip: the
 # reviewer sees the reasoning, and the gate fails the moment the reason stops being true.
-CONTRACT_UNTESTED: dict[str, str] = {
-    'UT-CONTRACT-009': (
-        'unreachable by construction, not merely untested. ValidateComplete() enumerates '
-        'Enum.GetValues<ContractFacetKind>() and reports every value missing from the order table; all eight '
-        'declared values are present, so it always returns empty. The one way to reach the code - a facet whose '
-        'Kind is outside the enum - never gets there, because GetSortKey throws InvalidOperationException while '
-        'ordering, several lines before ValidateComplete() runs. Measured: one such facet builds silently with no '
-        'diagnostic, two of them throw a raw InvalidOperationException. Fixing this is a production change with '
-        'its own PR; reserving it here keeps the gate honest instead of pretending a Does.Not.Contain control '
-        'proves the code fires.'
-    ),
-}
+CONTRACT_UNTESTED: dict[str, str] = {}
 
 
 def is_test_path(relative: Path) -> bool:
