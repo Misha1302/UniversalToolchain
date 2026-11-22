@@ -17,7 +17,7 @@ lastVerifiedAgainst: wist-release-state-2026-08-06
 | `UTC-WIST-LEX-001` | lexer failure |
 | `UTC-WIST-PARSE-001` | parser failure |
 | `UTC-WIST-DIALECT-001` | dialect composition failure |
-| `UTC-WIST-RESOLVE-001` | type/member resolution failure |
+| `UTC-WIST-RESOLVE-001` | binding, type or member resolution failure — an unknown identifier reports this |
 | `UTC-WIST-RESOLVE-002` | ambiguous resolution |
 | `UTC-WIST-COMPILE-001` | backend compilation failure |
 | `UTC-WIST-SSA-001` | experimental SSA route failure |
@@ -26,6 +26,12 @@ lastVerifiedAgainst: wist-release-state-2026-08-06
 | `UTC-WIST-999` | unexpected internal failure |
 
 `WistDiagnostic` exposes code, severity, stage, source span, message and hints. Expected formula failures should be consumed through `Validate` or `TryCompile`; do not parse exception text as an API.
+
+A facade code describes the failure, not the entry point that observed it. `Validate("missing + 1")` and
+`TryCompile("missing + 1")` therefore report the same code for the same unknown identifier. This requires the
+factory to read the typed stage from the **inner** exception: a binding failure is thrown as
+`InvalidOperationException` wrapping `BindingException`, and reading only the outer exception made the stage
+invisible so the code fell back to the entry point.
 
 ### Reserved facade codes
 
