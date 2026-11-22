@@ -294,4 +294,27 @@ public sealed class SemanticCoreQueryTests
                 Does.Contain(SemanticDiagnosticCodes.TrustPrecedence));
         });
     }
+
+    [Test]
+    public void Query_SameNameDifferentArity_ReportsArityMismatchRatherThanUnknown()
+    {
+        // Arity is part of predicate identity. A same-name predicate declared with a different arity is a caller
+        // defect, so it must be reported instead of disappearing into Unknown - otherwise a typo in the arity
+        // reads as "no evidence exists" and the consumer concludes the wrong thing.
+        var question = SpikeVocabulary.Proposition(new SemanticPredicateId("ExactTarget", 3), "call#1", "lambda#1", "extra");
+        var catalog = SpikeVocabulary.Catalog();
+
+        var answer = new SemanticKnowledgeBase(catalog, maxDerivationDepth: 8).Ask(question);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(answer.Diagnostics.Select(static diagnostic => diagnostic.Code),
+                Does.Contain(SemanticDiagnosticCodes.PredicateArityMismatch));
+            Assert.That(
+                answer.Diagnostics.First(static diagnostic => diagnostic.Code == SemanticDiagnosticCodes.PredicateArityMismatch).Message,
+                Does.Contain("arity"));
+            Assert.That(answer.Judgment, Is.Not.EqualTo(Judgment.Proved));
+        });
+    }
+
 }
