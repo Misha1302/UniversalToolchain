@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "totalPassed": 1525,
+  "totalPassed": 1532,
   "main": [
     {
       "label": "Core",
@@ -24,7 +24,7 @@
       "runner": "project",
       "path": "UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj",
       "timeoutSeconds": 600,
-      "expectedPassed": 252
+      "expectedPassed": 259
     },
     {
       "label": "LanguageSdk.Generic",
