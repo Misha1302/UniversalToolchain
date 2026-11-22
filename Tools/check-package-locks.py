@@ -13,6 +13,13 @@ Three failure modes are covered:
 2. a committed lock file is empty, which means it pins nothing while looking authoritative;
 3. a lock file is committed where it must not be, notably inside the `dotnet new` template
    content, which is packed verbatim into the template package.
+
+A fourth failure mode is covered because it actually happened: a committed lock file carrying a
+runtime-identifier-specific section (`"net10.0/linux-x64": {}`). Restore legitimately adds one
+when it runs with `-p:RuntimeIdentifier=<rid>`, so a layout probe that restores with a RID
+rewrites 35 committed files and leaves the tree dirty. No committed lock has ever needed a RID
+section - every project here is restored without one - so the section in a committed lock is
+always an accident, and one machine's accident would otherwise ship to every other machine.
 """
 from __future__ import annotations
 
@@ -86,6 +93,21 @@ def pins_anything(lock_path: Path) -> bool:
     return False
 
 
+def rid_specific_sections(lock_path: Path) -> list[str]:
+    """Runtime-identifier-specific sections in a lock file.
+
+    Every project in this repository restores without a `RuntimeIdentifier`, so no committed lock
+    should name one. `"net10.0/linux-x64"` appearing in a lock means a RID-parameterised restore
+    wrote it - which pins the build to the machine that ran it.
+    """
+    data = json.loads(lock_path.read_text(encoding="utf-8"))
+    return [
+        section
+        for section in data.get("dependencies", {})
+        if "/" in section
+    ]
+
+
 def verify(root: Path) -> list[str]:
     problems: list[str] = []
 
@@ -116,6 +138,15 @@ def verify(root: Path) -> list[str]:
             )
         elif not siblings:
             problems.append(f"{relative} has no project beside it")
+
+        rid_sections = rid_specific_sections(lock_path)
+        if rid_sections:
+            problems.append(
+                f"{relative} pins runtime-identifier-specific sections "
+                f"({', '.join(sorted(rid_sections))}); no project here restores with a "
+                "RuntimeIdentifier, so this pins the build to the machine that ran restore - "
+                "remove those sections so the lock describes the real dependency graph"
+            )
 
     return problems
 

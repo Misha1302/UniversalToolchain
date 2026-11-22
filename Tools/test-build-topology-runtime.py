@@ -2,14 +2,17 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import os
 import platform
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
 from dataclasses import dataclass
+from collections.abc import Iterator
 from pathlib import Path
 
 
@@ -181,6 +184,54 @@ def run_restore(
         root=root,
         description=f"restore for {project} with properties {properties}",
     )
+
+
+def committed_lock_snapshot(root: Path) -> dict[Path, bytes]:
+    """Record every committed `packages.lock.json` byte-for-byte before a probe rewrite.
+
+    A layout case restores with `-p:RuntimeIdentifier=<rid>`, which *legitimately* requires a
+    RID-specific lock section: NuGet adds `"<tfm>/<rid>": {}` to every reachable lock. Passing
+    `RestoreLockedMode=true` would refuse that (NU1004), and `RestorePackagesWithLockFile=false`
+    would refuse the existing lock (NU1005), so the probe must be allowed to write. What it must
+    not do is leave the rewrite behind: a local canonical build would then dirty 35 committed
+    files, and `git add -A` would ship one machine's RID section to every other machine.
+    """
+    return {
+        path: path.read_bytes()
+        for path in root.rglob("packages.lock.json")
+        if not {"bin", "obj", "node_modules"}.intersection(path.relative_to(root).parts)
+        and path.relative_to(root).parts[0] != "artifacts"
+    }
+
+
+def restore_lock_snapshot(snapshot: dict[Path, bytes]) -> list[Path]:
+    """Return every lock to its committed content; report the ones the probe changed."""
+    changed = []
+    for path, original in snapshot.items():
+        if path.read_bytes() != original:
+            path.write_bytes(original)
+            changed.append(path)
+    return changed
+
+
+def _signal_exit(signum: int, _frame: object) -> None:
+    # `finally` does not run on SIGTERM/SIGINT, and a killed probe is exactly when the tree is
+    # most likely to be left dirty. Re-raise as a normal exception so the `finally` in
+    # verify_language_pack_layouts restores the snapshot before the process dies.
+    raise SystemExit(128 + signum)
+
+
+@contextlib.contextmanager
+def interrupted_guard() -> Iterator[None]:
+    previous = {
+        signum: signal.signal(signum, _signal_exit)
+        for signum in (signal.SIGTERM, signal.SIGINT)
+    }
+    try:
+        yield
+    finally:
+        for signum, handler in previous.items():
+            signal.signal(signum, handler)
 
 
 def run_build(
@@ -355,61 +406,80 @@ def verify_language_pack_layouts(
     emitter_directory = root / FEATURE_EMITTER
     wist_directory = root / WIST
 
-    with tempfile.TemporaryDirectory(prefix="wist-provider-layout-") as temporary:
-        temporary_root = Path(temporary).resolve()
-        for case in language_pack_cases(temporary_root):
-            for project_directory in (
-                language_pack_directory,
-                emitter_directory,
-                wist_directory,
-            ):
-                remove_configuration_outputs(project_directory, configuration)
-            if case.external_output_root is not None:
-                shutil.rmtree(case.external_output_root, ignore_errors=True)
-            if case.requires_restore:
-                run_restore(dotnet, root, LANGUAGE_PACK, case.properties)
+    # The layout cases restore with `-p:RuntimeIdentifier=<rid>`, which rewrites committed locks
+    # (see committed_lock_snapshot). Snapshot first, restore afterwards, so the probe observes real
+    # layout behaviour without leaving one machine's RID section in the working tree.
+    locks = committed_lock_snapshot(root)
+    try:
+        with interrupted_guard(), tempfile.TemporaryDirectory(prefix="wist-provider-layout-") as temporary:
+            temporary_root = Path(temporary).resolve()
+            for case in language_pack_cases(temporary_root):
+                for project_directory in (
+                    language_pack_directory,
+                    emitter_directory,
+                    wist_directory,
+                ):
+                    remove_configuration_outputs(project_directory, configuration)
+                if case.external_output_root is not None:
+                    shutil.rmtree(case.external_output_root, ignore_errors=True)
+                if case.requires_restore:
+                    run_restore(dotnet, root, LANGUAGE_PACK, case.properties)
 
-            run_build(
-                dotnet,
-                root,
-                LANGUAGE_PACK,
-                configuration,
-                build_project_references=case.build_project_references,
-                properties=case.properties,
-            )
+                run_build(
+                    dotnet,
+                    root,
+                    LANGUAGE_PACK,
+                    configuration,
+                    build_project_references=case.build_project_references,
+                    properties=case.properties,
+                )
 
-            if case.external_output_root is None:
-                language_pack_roots = (language_pack_directory,)
-                emitter_roots = (emitter_directory,)
-            else:
-                language_pack_roots = (case.external_output_root,)
-                emitter_roots = (case.external_output_root,)
+                if case.external_output_root is None:
+                    language_pack_roots = (language_pack_directory,)
+                    emitter_roots = (emitter_directory,)
+                else:
+                    language_pack_roots = (case.external_output_root,)
+                    emitter_roots = (case.external_output_root,)
 
-            language_pack = require_output(
-                language_pack_roots,
-                "UniversalToolchain.Wist.LanguagePack.dll",
-                case.name,
-            )
-            feature_manifest = require_output(
-                language_pack_roots,
-                "UniversalToolchain.Wist.LanguagePack.toolchain.feature.json",
-                case.name,
-            )
-            emitter = require_output(
-                emitter_roots,
-                "UniversalToolchain.FeatureManifestEmitter.dll",
-                case.name,
-            )
-            require_absent_output(
-                language_pack_roots,
-                "UniversalToolchain.Wist.dll",
-                case.name,
-            )
-            for artifact in (language_pack, feature_manifest, emitter):
-                if artifact.stat().st_size == 0:
-                    raise RuntimeTopologyError(
-                        f"layout case {case.name} produced an empty artifact: {artifact}"
-                    )
+                language_pack = require_output(
+                    language_pack_roots,
+                    "UniversalToolchain.Wist.LanguagePack.dll",
+                    case.name,
+                )
+                feature_manifest = require_output(
+                    language_pack_roots,
+                    "UniversalToolchain.Wist.LanguagePack.toolchain.feature.json",
+                    case.name,
+                )
+                emitter = require_output(
+                    emitter_roots,
+                    "UniversalToolchain.FeatureManifestEmitter.dll",
+                    case.name,
+                )
+                require_absent_output(
+                    language_pack_roots,
+                    "UniversalToolchain.Wist.dll",
+                    case.name,
+                )
+                for artifact in (language_pack, feature_manifest, emitter):
+                    if artifact.stat().st_size == 0:
+                        raise RuntimeTopologyError(
+                            f"layout case {case.name} produced an empty artifact: {artifact}"
+                        )
+    finally:
+        restore_lock_snapshot(locks)
+
+    # Self-guard: the repair above must be observable, not just performed. If a future edit drops
+    # the `finally`, this check fails instead of the tree silently going dirty.
+    dirty = [
+        path.relative_to(root).as_posix()
+        for path, original in locks.items()
+        if path.read_bytes() != original
+    ]
+    if dirty:
+        raise RuntimeTopologyError(
+            "layout probe left committed package lock files rewritten: " + ", ".join(dirty)
+        )
 
 
 def main() -> int:
